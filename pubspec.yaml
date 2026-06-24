@@ -1,0 +1,37 @@
+name: mysuite
+description: "mySuite — All-in-one daily productivity & wellness app. Notes, Medicine, Habits, Tasks, Expenses & Focus in one modular, offline-first suite."
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.6.0 <4.0.0"
+  flutter: ">=3.27.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # UI / Icons
+  cupertino_icons: ^1.0.8
+  lucide_icons_flutter: ^3.0.5
+  google_fonts: ^6.2.1
+  fl_chart: ^0.69.2
+
+  # State management
+  provider: ^6.1.2
+
+  # Persistence (offline-first)
+  shared_preferences: ^2.3.3
+
+  # Utilities
+  intl: ^0.19.0
+  uuid: ^4.5.1
+  collection: ^1.18.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
