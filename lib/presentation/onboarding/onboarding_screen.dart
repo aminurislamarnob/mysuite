@@ -181,7 +181,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                             color: color, shape: BoxShape.circle),
-                        child: Icon(icon, color: Colors.white, size: 21),
+                        child: AppIcon(icon, color: Colors.white, size: 21),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -287,7 +287,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             final (icon, color) = ModulesScreen.metaFor(m);
             return CheckboxListTile(
               contentPadding: EdgeInsets.zero,
-              secondary: Icon(icon, color: color),
+              secondary: AppIcon(icon, color: color),
               title: Text(m.label,
                   style: const TextStyle(fontWeight: FontWeight.w600)),
               subtitle: Text(m.blurb, style: const TextStyle(fontSize: 12)),
@@ -310,7 +310,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               runSpacing: 8,
               children: HabitRepository.presets
                   .map((p) => FilterChip(
-                        avatar: Icon(AppIcons.habit(p.icon),
+                        avatar: AppIcon(AppIcons.habit(p.icon),
                             size: 16, color: Color(p.color)),
                         label: Text(p.name),
                         selected: _habits.contains(p.name),
@@ -335,7 +335,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         children: [
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            secondary: const Icon(Icons.lock_outline),
+            secondary: const AppIcon(AppIcons.lock),
             title: const Text('Lock the app'),
             subtitle: const Text('Use biometrics or a PIN on launch',
                 style: TextStyle(fontSize: 12)),
@@ -355,11 +355,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ),
           ListTile(
             contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.notifications_active_outlined),
+            leading: const AppIcon(AppIcons.notificationsActive),
             title: const Text('Allow reminders'),
             subtitle: const Text('Dose times, tasks and bills',
                 style: TextStyle(fontSize: 12)),
-            trailing: const Icon(Icons.chevron_right),
+            trailing: const AppIcon(AppIcons.chevronRight),
             onTap: () async {
               final granted = await ref
                   .read(notificationServiceProvider)
@@ -379,7 +379,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             padding: EdgeInsets.all(16),
             child: Row(
               children: [
-                Icon(Icons.shield_outlined,
+                AppIcon(AppIcons.privacy,
                     size: 20, color: AppColors.coral),
                 SizedBox(width: 12),
                 Expanded(
@@ -418,10 +418,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 style: const TextStyle(
                     fontWeight: FontWeight.w600, fontSize: 15)),
             subtitle: sublabel == null ? null : Text(sublabel),
-            trailing: Icon(
+            trailing: AppIcon(
               selected
-                  ? Icons.check_circle_rounded
-                  : Icons.radio_button_unchecked,
+                  ? AppIcons.checkCircle
+                  : AppIcons.circle,
               color: selected ? primary : context.muted,
             ),
           ),

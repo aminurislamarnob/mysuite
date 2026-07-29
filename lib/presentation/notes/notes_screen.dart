@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_icons.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/common.dart';
 import 'providers/notes_provider.dart';
@@ -26,12 +27,12 @@ class NotesScreen extends ConsumerWidget {
         actions: [
           IconButton(
             tooltip: 'Search',
-            icon: const Icon(Icons.search),
+            icon: const AppIcon(AppIcons.search),
             onPressed: () => context.push('/search'),
           ),
           IconButton(
             tooltip: "Today's journal",
-            icon: const Icon(Icons.auto_stories_outlined),
+            icon: const AppIcon(AppIcons.journal),
             onPressed: () async {
               final note = await repo.journalNoteFor(DateTime.now());
               if (context.mounted) context.push('/note_editor', extra: note.id);
@@ -40,7 +41,7 @@ class NotesScreen extends ConsumerWidget {
           if (filter.scope == NoteScope.trash)
             IconButton(
               tooltip: 'Empty trash',
-              icon: const Icon(Icons.delete_forever_outlined),
+              icon: const AppIcon(AppIcons.deleteForever),
               onPressed: () async {
                 final ok = await confirmDialog(context, 'Empty trash?',
                     'Every note in the trash will be permanently deleted.');
@@ -54,7 +55,7 @@ class NotesScreen extends ConsumerWidget {
         data: (notes) {
           if (notes.isEmpty) {
             return EmptyState(
-              icon: Icons.description_outlined,
+              icon: AppIcons.notes,
               title: switch (filter.scope) {
                 NoteScope.trash => 'Trash is empty',
                 NoteScope.archived => 'Nothing archived',
@@ -80,7 +81,7 @@ class NotesScreen extends ConsumerWidget {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => EmptyState(
-          icon: Icons.error_outline,
+          icon: AppIcons.error,
           title: 'Could not load notes',
           message: '$e',
         ),
@@ -91,7 +92,7 @@ class NotesScreen extends ConsumerWidget {
               onPressed: () => newNoteFlow(context, ref),
               backgroundColor: AppColors.noteAccent,
               foregroundColor: Colors.white,
-              child: const Icon(Icons.add),
+              child: const AppIcon(AppIcons.add),
             ),
     );
   }
@@ -107,7 +108,7 @@ Future<void> newNoteFlow(BuildContext context, WidgetRef ref,
       child: Column(
         children: NoteTemplate.all
             .map((t) => ListTile(
-                  leading: Icon(t.icon, color: AppColors.noteAccent),
+                  leading: AppIcon(t.icon, color: AppColors.noteAccent),
                   title: Text(t.name),
                   onTap: () => Navigator.pop(context, t),
                 ))
@@ -186,10 +187,10 @@ class _NoteCard extends ConsumerWidget {
                     ),
                   ),
                   if (note.isPinned)
-                    const Icon(Icons.push_pin,
+                    const AppIcon(AppIcons.pin,
                         size: 14, color: AppColors.noteAccent),
                   if (note.isLocked)
-                    Icon(Icons.lock_outline, size: 14, color: muted),
+                    AppIcon(AppIcons.lock, size: 14, color: muted),
                 ],
               ),
               if (preview.isNotEmpty) ...[
@@ -251,7 +252,7 @@ class _NoteCard extends ConsumerWidget {
           children: scope == NoteScope.trash
               ? [
                   ListTile(
-                    leading: const Icon(Icons.restore),
+                    leading: const AppIcon(AppIcons.restore),
                     title: const Text('Restore'),
                     onTap: () {
                       repo.restoreFromTrash(note.id);
@@ -259,7 +260,7 @@ class _NoteCard extends ConsumerWidget {
                     },
                   ),
                   ListTile(
-                    leading: const Icon(Icons.delete_forever_outlined),
+                    leading: const AppIcon(AppIcons.deleteForever),
                     title: const Text('Delete forever'),
                     onTap: () {
                       repo.deleteForever(note.id);
@@ -269,9 +270,9 @@ class _NoteCard extends ConsumerWidget {
                 ]
               : [
                   ListTile(
-                    leading: Icon(note.isPinned
-                        ? Icons.push_pin
-                        : Icons.push_pin_outlined),
+                    leading: AppIcon(note.isPinned
+                        ? AppIcons.pin
+                        : AppIcons.pin),
                     title: Text(note.isPinned ? 'Unpin' : 'Pin to top'),
                     onTap: () {
                       repo.updateNote(note.id, isPinned: !note.isPinned);
@@ -280,7 +281,7 @@ class _NoteCard extends ConsumerWidget {
                   ),
                   ListTile(
                     leading:
-                        Icon(note.isFavorite ? Icons.star : Icons.star_outline),
+                        AppIcon(note.isFavorite ? AppIcons.star : AppIcons.star),
                     title: Text(note.isFavorite
                         ? 'Remove from favorites'
                         : 'Add to favorites'),
@@ -290,9 +291,9 @@ class _NoteCard extends ConsumerWidget {
                     },
                   ),
                   ListTile(
-                    leading: Icon(note.isArchived
-                        ? Icons.unarchive_outlined
-                        : Icons.archive_outlined),
+                    leading: AppIcon(note.isArchived
+                        ? AppIcons.unarchive
+                        : AppIcons.archive),
                     title: Text(note.isArchived ? 'Unarchive' : 'Archive'),
                     onTap: () {
                       repo.updateNote(note.id, isArchived: !note.isArchived);
@@ -300,9 +301,9 @@ class _NoteCard extends ConsumerWidget {
                     },
                   ),
                   ListTile(
-                    leading: Icon(note.isLocked
-                        ? Icons.lock_open_outlined
-                        : Icons.lock_outline),
+                    leading: AppIcon(note.isLocked
+                        ? AppIcons.unlock
+                        : AppIcons.lock),
                     title: Text(note.isLocked ? 'Remove lock' : 'Lock note'),
                     onTap: () {
                       repo.updateNote(note.id, isLocked: !note.isLocked);
@@ -310,7 +311,7 @@ class _NoteCard extends ConsumerWidget {
                     },
                   ),
                   ListTile(
-                    leading: const Icon(Icons.delete_outline),
+                    leading: const AppIcon(AppIcons.delete),
                     title: const Text('Move to trash'),
                     onTap: () {
                       repo.moveToTrash(note.id);
@@ -355,25 +356,25 @@ class _NotesDrawer extends ConsumerWidget {
             ),
           ),
           _DrawerItem(
-            icon: Icons.description_outlined,
+            icon: AppIcons.notes,
             label: 'All Notes',
             selected: filter == const NoteFilter(),
             onTap: () => apply(const NoteFilter()),
           ),
           _DrawerItem(
-            icon: Icons.star_outline,
+            icon: AppIcons.star,
             label: 'Favorites',
             selected: filter.scope == NoteScope.favorites,
             onTap: () => apply(const NoteFilter(scope: NoteScope.favorites)),
           ),
           _DrawerItem(
-            icon: Icons.archive_outlined,
+            icon: AppIcons.archive,
             label: 'Archive',
             selected: filter.scope == NoteScope.archived,
             onTap: () => apply(const NoteFilter(scope: NoteScope.archived)),
           ),
           _DrawerItem(
-            icon: Icons.delete_outline,
+            icon: AppIcons.delete,
             label: 'Trash',
             trailing: trashCount > 0 ? '$trashCount' : null,
             selected: filter.scope == NoteScope.trash,
@@ -389,7 +390,7 @@ class _NotesDrawer extends ConsumerWidget {
                       style: TextStyle(fontWeight: FontWeight.w700)),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.add, size: 20),
+                  icon: const AppIcon(AppIcons.add, size: 20),
                   onPressed: () => _createFolder(context, ref),
                 ),
               ],
@@ -399,7 +400,7 @@ class _NotesDrawer extends ConsumerWidget {
             data: (list) => Column(
               children: list
                   .map((f) => _DrawerItem(
-                        icon: Icons.folder_outlined,
+                        icon: AppIcons.folder,
                         label: f.name,
                         selected: filter.folderId == f.id,
                         onTap: () =>
@@ -436,7 +437,7 @@ class _NotesDrawer extends ConsumerWidget {
                 : Column(
                     children: list
                         .map((t) => _DrawerItem(
-                              icon: Icons.sell_outlined,
+                              icon: AppIcons.tag,
                               iconColor: Color(t.color),
                               label: '#${t.name}',
                               selected: filter.tagId == t.id,
@@ -482,7 +483,7 @@ class _NotesDrawer extends ConsumerWidget {
 }
 
 class _DrawerItem extends StatelessWidget {
-  final IconData icon;
+  final HugeIconData icon;
   final Color? iconColor;
   final String label;
   final String? trailing;
@@ -506,7 +507,7 @@ class _DrawerItem extends StatelessWidget {
       dense: true,
       selected: selected,
       selectedTileColor: AppColors.noteAccent.withValues(alpha: 0.12),
-      leading: Icon(icon, size: 20, color: iconColor),
+      leading: AppIcon(icon, size: 20, color: iconColor),
       title: Text(label, overflow: TextOverflow.ellipsis),
       trailing: trailing == null
           ? null

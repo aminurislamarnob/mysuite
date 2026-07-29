@@ -145,7 +145,7 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
         if (_isEditing)
           IconButton(
             tooltip: 'Delete',
-            icon: const Icon(Icons.delete_outline),
+            icon: const AppIcon(AppIcons.delete),
             onPressed: () async {
               await ref
                   .read(taskRepositoryProvider)
@@ -197,7 +197,7 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
           const SizedBox(height: 20),
 
           _row(
-            icon: Icons.event_outlined,
+            icon: AppIcons.calendar,
             label: 'Due date',
             value: _dueDate == null
                 ? 'None'
@@ -209,7 +209,7 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
             }),
           ),
           _row(
-            icon: Icons.alarm_outlined,
+            icon: AppIcons.alarm,
             label: 'Reminder',
             value: _reminder == null
                 ? 'None'
@@ -219,7 +219,7 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
                 _reminder == null ? null : () => setState(() => _reminder = null),
           ),
           _row(
-            icon: Icons.repeat,
+            icon: AppIcons.repeat,
             label: 'Repeat',
             value: Recurrence.label(_recurrence),
             onTap: _pickRecurrence,
@@ -228,7 +228,7 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
                 : () => setState(() => _recurrence = null),
           ),
           _row(
-            icon: Icons.timer_outlined,
+            icon: AppIcons.focus,
             label: 'Time estimate',
             value: _estimate == null
                 ? 'None'
@@ -251,7 +251,7 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
                 onSelected: (_) => setState(() => _projectId = null),
               ),
               ...projects.map((p) => ChoiceChip(
-                    avatar: Icon(AppIcons.project(p.icon),
+                    avatar: AppIcon(AppIcons.project(p.icon),
                         size: 16, color: Color(p.color)),
                     label: Text(p.name),
                     selected: _projectId == p.id,
@@ -266,7 +266,7 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
             decoration: const InputDecoration(
               labelText: 'Tags',
               hintText: 'work, errands',
-              prefixIcon: Icon(Icons.sell_outlined),
+              prefixIcon: AppIcon(AppIcons.tag),
             ),
           ),
 
@@ -289,7 +289,7 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
                   ),
                 ),
                 IconButton(
-                    icon: const Icon(Icons.add), onPressed: _addSubtask),
+                    icon: const AppIcon(AppIcons.add), onPressed: _addSubtask),
               ],
             ),
           ],
@@ -308,7 +308,7 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
   }
 
   Widget _row({
-    required IconData icon,
+    required HugeIconData icon,
     required String label,
     required String value,
     required VoidCallback onTap,
@@ -317,13 +317,13 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       dense: true,
-      leading: Icon(icon, size: 20),
+      leading: AppIcon(icon, size: 20),
       title: Text(label),
       subtitle: Text(value),
       trailing: onClear == null
-          ? const Icon(Icons.chevron_right)
+          ? const AppIcon(AppIcons.chevronRight)
           : IconButton(
-              icon: const Icon(Icons.close, size: 18), onPressed: onClear),
+              icon: const AppIcon(AppIcons.close, size: 18), onPressed: onClear),
       onTap: onTap,
     );
   }
@@ -425,7 +425,7 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
         child: Column(
           children: [15, 25, 30, 45, 60, 90, 120]
               .map((m) => ListTile(
-                    leading: const Icon(Icons.timer_outlined),
+                    leading: const AppIcon(AppIcons.focus),
                     title: Text(Fmt.durationFromMinutes(m)),
                     selected: _estimate == m,
                     onTap: () => Navigator.pop(context, m),
@@ -468,7 +468,7 @@ class _SubtaskList extends ConsumerWidget {
                     ),
                   ),
                   trailing: IconButton(
-                    icon: const Icon(Icons.close, size: 16),
+                    icon: const AppIcon(AppIcons.close, size: 16),
                     onPressed: () =>
                         ref.read(taskRepositoryProvider).deleteTask(s.id),
                   ),

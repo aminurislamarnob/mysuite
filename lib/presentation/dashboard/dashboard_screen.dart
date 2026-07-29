@@ -58,13 +58,13 @@ class DashboardScreen extends ConsumerWidget {
               initials: 'mS',
               actions: [
                 CircleIconButton(
-                  icon: Icons.search_rounded,
+                  icon: AppIcons.search,
                   tooltip: 'Search everything',
                   onPressed: () => context.push('/search'),
                 ),
                 const SizedBox(width: 8),
                 CircleIconButton(
-                  icon: Icons.notifications_none_rounded,
+                  icon: AppIcons.notifications,
                   tooltip: 'Reminders',
                   onPressed: () => context.push('/reminders'),
                 ),
@@ -81,7 +81,7 @@ class DashboardScreen extends ConsumerWidget {
               const Padding(
                 padding: EdgeInsets.only(top: 24),
                 child: EmptyState(
-                  icon: Icons.widgets_outlined,
+                  icon: AppIcons.modules,
                   title: 'No modules enabled',
                   message: 'Turn some on in Settings to fill your dashboard.',
                 ),
@@ -159,7 +159,7 @@ class _NextUpBanner extends ConsumerWidget {
       label: 'All clear',
       headline: 'Nothing needs you right now',
       footnote: Fmt.fullDate(DateTime.now()),
-      icon: Icons.check_circle_outline,
+      icon: AppIcons.checkCircle,
       accent: AppColors.habitAccent,
       onTap: () => context.push('/insights'),
     );
@@ -427,10 +427,10 @@ class _HabitsWidget extends ConsumerWidget {
                       children: [
                         Row(
                           children: [
-                            Icon(AppIcons.habit(h.icon), color: color, size: 22),
+                            AppIcon(AppIcons.habit(h.icon), color: color, size: 22),
                             const Spacer(),
                             if (done)
-                              Icon(Icons.check_circle_rounded,
+                              AppIcon(AppIcons.checkCircle,
                                   size: 16, color: color),
                           ],
                         ),
@@ -456,7 +456,7 @@ class _HabitsWidget extends ConsumerWidget {
                             InkWell(
                               onTap: () => repo.addToDay(h.id, 1),
                               customBorder: const CircleBorder(),
-                              child: Icon(Icons.add_circle_rounded,
+                              child: AppIcon(AppIcons.addCircle,
                                   color: color, size: 24),
                             ),
                           ],
@@ -507,7 +507,7 @@ class _ExpensesWidget extends ConsumerWidget {
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
                       dense: true,
-                      leading: Icon(AppIcons.category(cat?.icon ?? 'other'),
+                      leading: AppIcon(AppIcons.category(cat?.icon ?? 'other'),
                           color: Color(cat?.color ?? 0xFF6C6C6C), size: 22),
                       title: Text(
                         e.note?.isNotEmpty == true
@@ -614,7 +614,7 @@ class _NotesWidget extends ConsumerWidget {
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     dense: true,
-                    leading: const Icon(AppIcons.notes,
+                    leading: const AppIcon(AppIcons.notes,
                         color: AppColors.noteAccent, size: 22),
                     title: Text(n.title,
                         style: const TextStyle(fontSize: 14),

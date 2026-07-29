@@ -13,9 +13,9 @@ class ModulesScreen extends ConsumerWidget {
   const ModulesScreen({super.key});
 
   /// Icon and accent colour for each module, shared with onboarding.
-  static (IconData, Color) metaFor(AppModule m) => _meta[m]!;
+  static (HugeIconData, Color) metaFor(AppModule m) => _meta[m]!;
 
-  static const _meta = <AppModule, (IconData, Color)>{
+  static const _meta = <AppModule, (HugeIconData, Color)>{
     AppModule.notes: (AppIcons.notes, AppColors.noteAccent),
     AppModule.medicine: (AppIcons.medicine, AppColors.medicineAccent),
     AppModule.habits: (AppIcons.habits, AppColors.habitAccent),
@@ -36,7 +36,7 @@ class ModulesScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('Modules')),
       body: enabled.isEmpty
           ? const EmptyState(
-              icon: Icons.apps_outlined,
+              icon: AppIcons.modules,
               title: 'Everything is switched off',
               message: 'Turn a module back on below to start using it.',
             )
@@ -77,7 +77,7 @@ class ModulesScreen extends ConsumerWidget {
                             horizontal: 18, vertical: 4),
                         child: ListTile(
                           contentPadding: EdgeInsets.zero,
-                          leading: Icon(icon, color: context.muted),
+                          leading: AppIcon(icon, color: context.muted),
                           title: Text(m.label),
                           subtitle: Text(m.blurb,
                               style: const TextStyle(fontSize: 12)),
@@ -101,7 +101,7 @@ class ModulesScreen extends ConsumerWidget {
 
 class _ModuleCard extends ConsumerWidget {
   final AppModule module;
-  final IconData icon;
+  final HugeIconData icon;
   final Color color;
   final int tintIndex;
   final VoidCallback onTap;
@@ -128,7 +128,7 @@ class _ModuleCard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Icon(icon, color: color, size: 32),
+            AppIcon(icon, color: color, size: 32),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,

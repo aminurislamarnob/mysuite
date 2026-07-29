@@ -100,13 +100,13 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
         actions: [
           IconButton(
             tooltip: 'Search',
-            icon: const Icon(Icons.search),
+            icon: const AppIcon(AppIcons.search),
             onPressed: () => context.push('/search'),
           ),
           if (projectId != null)
             IconButton(
               tooltip: 'Clear project filter',
-              icon: const Icon(Icons.filter_alt_off_outlined),
+              icon: const AppIcon(AppIcons.filterOff),
               onPressed: () =>
                   ref.read(taskProjectFilterProvider.notifier).state = null,
             ),
@@ -161,7 +161,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
             projectId: ref.read(taskProjectFilterProvider)),
         backgroundColor: AppColors.taskAccent,
         foregroundColor: Colors.white,
-        child: const Icon(Icons.add),
+        child: const AppIcon(AppIcons.add),
       ),
     );
   }
@@ -176,19 +176,19 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
         decoration: InputDecoration(
           isDense: true,
           hintText: 'Buy milk tomorrow 5pm #shopping !high',
-          prefixIcon: const Icon(Icons.add, size: 20),
+          prefixIcon: const AppIcon(AppIcons.add, size: 20),
           suffixIcon: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
                 tooltip: 'Dictate',
-                icon: Icon(_listening ? Icons.mic : Icons.mic_none, size: 20),
+                icon: AppIcon(_listening ? AppIcons.mic : AppIcons.mic, size: 20),
                 color: _listening ? AppColors.dangerLight : null,
                 onPressed: _dictate,
               ),
               IconButton(
                 tooltip: 'Add',
-                icon: const Icon(Icons.arrow_upward, size: 20),
+                icon: const AppIcon(AppIcons.arrowUp, size: 20),
                 color: AppColors.taskAccent,
                 onPressed: _submitQuickAdd,
               ),
@@ -229,7 +229,7 @@ class _TaskListView extends ConsumerWidget {
         final tasks = _applyFilter(all, projectId);
         if (tasks.isEmpty) {
           return EmptyState(
-            icon: Icons.check_circle_outline,
+            icon: AppIcons.checkCircle,
             title: emptyTitle,
             message: emptyMessage,
           );
@@ -270,7 +270,7 @@ class _TaskListView extends ConsumerWidget {
       },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) =>
-          EmptyState(icon: Icons.error_outline, title: 'Error', message: '$e'),
+          EmptyState(icon: AppIcons.error, title: 'Error', message: '$e'),
     );
   }
 }
@@ -306,7 +306,7 @@ class _CalendarView extends ConsumerWidget {
           child: Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.chevron_left),
+                icon: const AppIcon(AppIcons.chevronLeft),
                 onPressed: () => ref
                     .read(_calendarMonthProvider.notifier)
                     .state = DateTime(month.year, month.month - 1),
@@ -319,7 +319,7 @@ class _CalendarView extends ConsumerWidget {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.chevron_right),
+                icon: const AppIcon(AppIcons.chevronRight),
                 onPressed: () => ref
                     .read(_calendarMonthProvider.notifier)
                     .state = DateTime(month.year, month.month + 1),
@@ -408,7 +408,7 @@ class _CalendarView extends ConsumerWidget {
         Expanded(
           child: selectedTasks.isEmpty
               ? EmptyState(
-                  icon: Icons.event_available_outlined,
+                  icon: AppIcons.calendarDone,
                   title: 'Nothing on ${Fmt.relativeDay(selected)}',
                 )
               : ListView(
@@ -553,7 +553,7 @@ class _KanbanView extends ConsumerWidget {
       },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) =>
-          EmptyState(icon: Icons.error_outline, title: 'Error', message: '$e'),
+          EmptyState(icon: AppIcons.error, title: 'Error', message: '$e'),
     );
   }
 }
@@ -738,7 +738,7 @@ class _MatrixView extends ConsumerWidget {
       },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) =>
-          EmptyState(icon: Icons.error_outline, title: 'Error', message: '$e'),
+          EmptyState(icon: AppIcons.error, title: 'Error', message: '$e'),
     );
   }
 }
@@ -771,7 +771,7 @@ class _ProjectDrawer extends ConsumerWidget {
           ),
           ListTile(
             dense: true,
-            leading: const Icon(Icons.all_inbox_outlined, size: 20),
+            leading: const AppIcon(AppIcons.inbox, size: 20),
             title: const Text('All tasks'),
             selected: selected == null,
             selectedTileColor: AppColors.taskAccent.withValues(alpha: 0.12),
@@ -788,7 +788,7 @@ class _ProjectDrawer extends ConsumerWidget {
                     counts.where((t) => t.projectId == p.id).length;
                 return ListTile(
                   dense: true,
-                  leading: Icon(AppIcons.project(p.icon),
+                  leading: AppIcon(AppIcons.project(p.icon),
                       size: 20, color: Color(p.color)),
                   title: Text(p.name),
                   trailing: open == 0
@@ -813,7 +813,7 @@ class _ProjectDrawer extends ConsumerWidget {
           const Divider(),
           ListTile(
             dense: true,
-            leading: const Icon(Icons.add, size: 20),
+            leading: const AppIcon(AppIcons.add, size: 20),
             title: const Text('New project'),
             onTap: () => _createProject(context, ref),
           ),

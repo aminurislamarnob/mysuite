@@ -243,7 +243,7 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
       actions: [
         IconButton(
           tooltip: 'Scan prescription',
-          icon: const Icon(Icons.document_scanner_outlined),
+          icon: const AppIcon(AppIcons.scan),
           onPressed: _scanPrescription,
         ),
         TextButton(onPressed: _save, child: const Text('Save')),
@@ -267,7 +267,7 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
             runSpacing: 8,
             children: AppIcons.medicineForms.keys
                 .map((f) => ChoiceChip(
-                      avatar: Icon(AppIcons.medicineForm(f), size: 16),
+                      avatar: AppIcon(AppIcons.medicineForm(f), size: 16),
                       label: Text(f[0].toUpperCase() + f.substring(1)),
                       selected: _form == f,
                       onSelected: (_) => setState(() {
@@ -365,7 +365,7 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
                     style: TextStyle(color: muted, fontSize: 12)),
                 const Spacer(),
                 TextButton.icon(
-                  icon: const Icon(Icons.add, size: 16),
+                  icon: const AppIcon(AppIcons.add, size: 16),
                   label: const Text('Add time'),
                   onPressed: _addTime,
                 ),
@@ -462,12 +462,12 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
           const SizedBox(height: 12),
           ListTile(
             contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.flight_takeoff_outlined),
+            leading: const AppIcon(AppIcons.travel),
             title: const Text('Skip dates'),
             subtitle: Text(_skip.isEmpty
                 ? 'Travel or holiday — none set'
                 : '${_skip.length} date${_skip.length == 1 ? '' : 's'} skipped'),
-            trailing: const Icon(Icons.chevron_right),
+            trailing: const AppIcon(AppIcons.chevronRight),
             onTap: _pickSkipDates,
           ),
 
@@ -475,7 +475,7 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
           TextField(
             controller: _doctor,
             decoration: const InputDecoration(
-                labelText: 'Doctor', prefixIcon: Icon(Icons.person_outline)),
+                labelText: 'Doctor', prefixIcon: AppIcon(AppIcons.person)),
           ),
           const SizedBox(height: 12),
           TextField(
@@ -495,7 +495,7 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
             children: [
               Expanded(
                 child: StatTile(
-                  icon: Icons.medication_outlined,
+                  icon: AppIcons.medicine,
                   color: AppColors.medicineAccent,
                   label: 'Total doses',
                   value: '${preview.length}',
@@ -504,7 +504,7 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
               const SizedBox(width: 12),
               Expanded(
                 child: StatTile(
-                  icon: Icons.inventory_2_outlined,
+                  icon: AppIcons.inventory,
                   color: runOut == null
                       ? AppColors.successLight
                       : AppColors.warningLight,
@@ -552,7 +552,7 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.warning_amber_outlined,
+            const AppIcon(AppIcons.warning,
                 size: 18, color: AppColors.warningLight),
             const SizedBox(width: 10),
             Expanded(child: Text(message, style: const TextStyle(fontSize: 12))),
@@ -579,7 +579,7 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
       },
       child: InputDecorator(
         decoration: InputDecoration(
-            labelText: label, prefixIcon: const Icon(Icons.event_outlined)),
+            labelText: label, prefixIcon: const AppIcon(AppIcons.calendar)),
         child: Text(Fmt.dayMonthYear(value)),
       ),
     );

@@ -46,12 +46,12 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen>
         actions: [
           IconButton(
             tooltip: 'Scan receipt',
-            icon: const Icon(Icons.document_scanner_outlined),
+            icon: const AppIcon(AppIcons.scan),
             onPressed: _scanReceipt,
           ),
           IconButton(
             tooltip: 'Export',
-            icon: const Icon(Icons.ios_share),
+            icon: const AppIcon(AppIcons.share),
             onPressed: _showExportSheet,
           ),
         ],
@@ -78,7 +78,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen>
         onPressed: () => ExpenseEntrySheet.show(context),
         backgroundColor: AppColors.expenseAccent,
         foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
+        icon: const AppIcon(AppIcons.add),
         label: const Text('Add'),
       ),
     );
@@ -108,7 +108,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen>
         child: Column(
           children: [
             ListTile(
-              leading: const Icon(Icons.table_chart_outlined),
+              leading: const AppIcon(AppIcons.spreadsheet),
               title: const Text('Transactions as CSV'),
               onTap: () async {
                 Navigator.pop(sheetContext);
@@ -116,7 +116,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen>
               },
             ),
             ListTile(
-              leading: const Icon(Icons.picture_as_pdf_outlined),
+              leading: const AppIcon(AppIcons.pdf),
               title: const Text('This month as PDF'),
               onTap: () async {
                 Navigator.pop(sheetContext);
@@ -206,7 +206,7 @@ class _OverviewTab extends ConsumerWidget {
                             children: [
                               Row(
                                 children: [
-                                  Icon(AppIcons.account(a.type),
+                                  AppIcon(AppIcons.account(a.type),
                                       size: 13, color: Color(a.color)),
                                   const SizedBox(width: 4),
                                   Text(a.name,
@@ -236,7 +236,7 @@ class _OverviewTab extends ConsumerWidget {
             children: [
               Expanded(
                 child: StatTile(
-                  icon: Icons.arrow_downward,
+                  icon: AppIcons.arrowDown,
                   color: AppColors.successLight,
                   label: 'Income this month',
                   value: Fmt.compactMoney(report.income, currency),
@@ -245,7 +245,7 @@ class _OverviewTab extends ConsumerWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: StatTile(
-                  icon: Icons.arrow_upward,
+                  icon: AppIcons.arrowUp,
                   color: AppColors.dangerLight,
                   label: 'Spent this month',
                   value: Fmt.compactMoney(report.expense, currency),
@@ -274,7 +274,7 @@ class _OverviewTab extends ConsumerWidget {
         recent.when(
           data: (rows) => rows.isEmpty
               ? const EmptyState(
-                  icon: Icons.receipt_long_outlined,
+                  icon: AppIcons.bills,
                   title: 'No transactions yet',
                   message: 'Tap Add to record your first one.',
                 )
@@ -307,8 +307,8 @@ class _TxTile extends ConsumerWidget {
       _ => Color(cat?.color ?? 0xFF6C6C6C),
     };
     final icon = switch (tx.kind) {
-      TxKind.income => Icons.arrow_downward,
-      TxKind.transfer => Icons.swap_horiz,
+      TxKind.income => AppIcons.arrowDown,
+      TxKind.transfer => AppIcons.transfer,
       _ => AppIcons.category(cat?.icon ?? 'other'),
     };
     final sign = switch (tx.kind) {
@@ -327,7 +327,7 @@ class _TxTile extends ConsumerWidget {
           color: AppColors.dangerLight,
           borderRadius: BorderRadius.circular(20),
         ),
-        child: const Icon(Icons.delete_outline, color: Colors.white),
+        child: const AppIcon(AppIcons.delete, color: Colors.white),
       ),
       onDismissed: (_) =>
           ref.read(expenseRepositoryProvider).deleteTransaction(tx.id),
@@ -337,7 +337,7 @@ class _TxTile extends ConsumerWidget {
           padding: const EdgeInsets.all(9),
           decoration: BoxDecoration(
               color: color.withValues(alpha: 0.14), shape: BoxShape.circle),
-          child: Icon(icon, color: color, size: 18),
+          child: AppIcon(icon, color: color, size: 18),
         ),
         title: Text(
           tx.note?.isNotEmpty == true
@@ -381,7 +381,7 @@ class _ReportsTab extends ConsumerWidget {
         Row(
           children: [
             IconButton(
-              icon: const Icon(Icons.chevron_left),
+              icon: const AppIcon(AppIcons.chevronLeft),
               onPressed: () => ref.read(reportMonthProvider.notifier).state =
                   DateTime(month.year, month.month - 1),
             ),
@@ -391,7 +391,7 @@ class _ReportsTab extends ConsumerWidget {
                   style: const TextStyle(fontWeight: FontWeight.w700)),
             ),
             IconButton(
-              icon: const Icon(Icons.chevron_right),
+              icon: const AppIcon(AppIcons.chevronRight),
               onPressed: () => ref.read(reportMonthProvider.notifier).state =
                   DateTime(month.year, month.month + 1),
             ),
@@ -406,7 +406,7 @@ class _ReportsTab extends ConsumerWidget {
           data: (report) {
             if (report.expense == 0 && report.income == 0) {
               return const EmptyState(
-                icon: Icons.bar_chart_outlined,
+                icon: AppIcons.barChart,
                 title: 'Nothing recorded this month',
               );
             }
@@ -421,7 +421,7 @@ class _ReportsTab extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: StatTile(
-                        icon: Icons.arrow_downward,
+                        icon: AppIcons.arrowDown,
                         color: AppColors.successLight,
                         label: 'Income',
                         value: Fmt.compactMoney(report.income, currency),
@@ -430,7 +430,7 @@ class _ReportsTab extends ConsumerWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: StatTile(
-                        icon: Icons.arrow_upward,
+                        icon: AppIcons.arrowUp,
                         color: AppColors.dangerLight,
                         label: 'Expense',
                         value: Fmt.compactMoney(report.expense, currency),
@@ -439,7 +439,7 @@ class _ReportsTab extends ConsumerWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: StatTile(
-                        icon: Icons.savings_outlined,
+                        icon: AppIcons.savings,
                         color: report.net >= 0
                             ? AppColors.successLight
                             : AppColors.dangerLight,
@@ -600,7 +600,7 @@ class _BudgetsTab extends ConsumerWidget {
           error: (e, _) => Text('$e'),
           data: (rows) => rows.isEmpty
               ? EmptyState(
-                  icon: Icons.pie_chart_outline,
+                  icon: AppIcons.pieChart,
                   title: 'No budgets set',
                   message: 'Cap a category or your whole month.',
                   actionLabel: 'Set a budget',
@@ -641,7 +641,7 @@ class _BudgetsTab extends ConsumerWidget {
                               ),
                               const Spacer(),
                               IconButton(
-                                icon: const Icon(Icons.delete_outline, size: 18),
+                                icon: const AppIcon(AppIcons.delete, size: 18),
                                 onPressed: () => ref
                                     .read(expenseRepositoryProvider)
                                     .deleteBudget(p.budget.id),
@@ -662,7 +662,7 @@ class _BudgetsTab extends ConsumerWidget {
             onPressed: () => _editBudget(context, ref),
             backgroundColor: AppColors.expenseAccent,
             foregroundColor: Colors.white,
-            child: const Icon(Icons.add),
+            child: const AppIcon(AppIcons.add),
           ),
         ),
       ],
@@ -709,7 +709,7 @@ class _BudgetsTab extends ConsumerWidget {
                   ),
                   ...categories.where((c) => !c.isIncome).map(
                         (c) => ChoiceChip(
-                          avatar: Icon(AppIcons.category(c.icon),
+                          avatar: AppIcon(AppIcons.category(c.icon),
                               size: 16, color: Color(c.color)),
                           label: Text(c.name),
                           selected: categoryId == c.id,
@@ -752,7 +752,7 @@ class _BillsTab extends ConsumerWidget {
           error: (e, _) => Text('$e'),
           data: (rows) => rows.isEmpty
               ? EmptyState(
-                  icon: Icons.event_repeat_outlined,
+                  icon: AppIcons.calendarRepeat,
                   title: 'No bills or subscriptions',
                   message: 'Track rent, internet, Netflix — anything recurring.',
                   actionLabel: 'Add a bill',
@@ -765,7 +765,7 @@ class _BillsTab extends ConsumerWidget {
                       Padding(
                         padding: const EdgeInsets.only(bottom: 16),
                         child: StatTile(
-                          icon: Icons.subscriptions_outlined,
+                          icon: AppIcons.subscription,
                           color: AppColors.expenseAccent,
                           label: 'Subscriptions',
                           value: '${Fmt.money(subsTotal, currency)}/month',
@@ -781,10 +781,10 @@ class _BillsTab extends ConsumerWidget {
                       return Card(
                         margin: const EdgeInsets.only(bottom: 10),
                         child: ListTile(
-                          leading: Icon(
+                          leading: AppIcon(
                             b.isSubscription
-                                ? Icons.subscriptions_outlined
-                                : Icons.receipt_long_outlined,
+                                ? AppIcons.subscription
+                                : AppIcons.bills,
                             color: overdue
                                 ? AppColors.dangerLight
                                 : AppColors.expenseAccent,
@@ -807,7 +807,7 @@ class _BillsTab extends ConsumerWidget {
                                 child: const Text('Pay'),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.delete_outline, size: 18),
+                                icon: const AppIcon(AppIcons.delete, size: 18),
                                 onPressed: () => repo.deleteRecurring(b.id),
                               ),
                             ],
@@ -826,7 +826,7 @@ class _BillsTab extends ConsumerWidget {
             onPressed: () => _addBill(context, ref),
             backgroundColor: AppColors.expenseAccent,
             foregroundColor: Colors.white,
-            child: const Icon(Icons.add),
+            child: const AppIcon(AppIcons.add),
           ),
         ),
       ],
@@ -891,7 +891,7 @@ class _BillsTab extends ConsumerWidget {
               ),
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.event_outlined),
+                leading: const AppIcon(AppIcons.calendar),
                 title: const Text('Next due'),
                 subtitle: Text(Fmt.dayMonthYear(due)),
                 onTap: () async {

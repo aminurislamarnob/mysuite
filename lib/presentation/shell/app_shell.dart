@@ -52,22 +52,22 @@ class AppShell extends ConsumerWidget {
         items: const [
           CurvedNavItem(
             icon: AppIcons.dashboard,
-            selectedIcon: Icons.grid_view_rounded,
+            selectedIcon: AppIcons.dashboard,
             label: 'Today',
           ),
           CurvedNavItem(
             icon: AppIcons.modules,
-            selectedIcon: Icons.apps_rounded,
+            selectedIcon: AppIcons.modules,
             label: 'Modules',
           ),
           CurvedNavItem(
             icon: AppIcons.insights,
-            selectedIcon: Icons.insights_rounded,
+            selectedIcon: AppIcons.insights,
             label: 'Insights',
           ),
           CurvedNavItem(
             icon: AppIcons.settings,
-            selectedIcon: Icons.settings_rounded,
+            selectedIcon: AppIcons.settings,
             label: 'Settings',
           ),
         ],
@@ -111,7 +111,7 @@ class QuickAddButton extends StatelessWidget {
               child: const SizedBox(
                 width: 58,
                 height: 58,
-                child: Icon(Icons.add_rounded, color: Colors.white, size: 30),
+                child: AppIcon(AppIcons.add, color: Colors.white, size: 30),
               ),
             ),
           ),
@@ -196,7 +196,7 @@ Future<void> showQuickAdd(BuildContext context, WidgetRef ref) {
             ),
           if (settings.isEnabled(AppModule.expenses))
             _tile(
-              icon: Icons.swap_horiz,
+              icon: AppIcons.transfer,
               color: AppColors.primaryLight,
               title: 'Transfer money',
               onTap: () {
@@ -213,7 +213,7 @@ Future<void> showQuickAdd(BuildContext context, WidgetRef ref) {
 /// One row of the Quick Add sheet, on the same tinted-card chrome as the rest
 /// of the app.
 Widget _tile({
-  required IconData icon,
+  required HugeIconData icon,
   required Color color,
   required String title,
   String? subtitle,
@@ -234,7 +234,7 @@ Widget _tile({
               alignment: Alignment.center,
               decoration:
                   BoxDecoration(color: color, shape: BoxShape.circle),
-              child: Icon(icon, color: Colors.white, size: 21),
+              child: AppIcon(icon, color: Colors.white, size: 21),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -252,7 +252,7 @@ Widget _tile({
                 ],
               ),
             ),
-            Icon(Icons.chevron_right_rounded, color: context.muted),
+            AppIcon(AppIcons.chevronRight, color: context.muted),
           ],
         ),
       ),
@@ -277,12 +277,12 @@ Future<void> _showHabitPicker(BuildContext context, WidgetRef ref) async {
       child: Column(
         children: habits.map((h) {
           return ListTile(
-            leading: Icon(AppIcons.habit(h.icon), color: Color(h.color)),
+            leading: AppIcon(AppIcons.habit(h.icon), color: Color(h.color)),
             title: Text(h.name),
             subtitle: h.unit == null
                 ? null
                 : Text('+1 ${h.unit}', style: const TextStyle(fontSize: 11)),
-            trailing: Icon(Icons.add_circle, color: Color(h.color)),
+            trailing: AppIcon(AppIcons.addCircle, color: Color(h.color)),
             onTap: () async {
               await ref.read(habitRepositoryProvider).addToDay(h.id, 1);
               if (sheetContext.mounted) Navigator.pop(sheetContext);
@@ -319,14 +319,14 @@ Future<void> _showDosePicker(BuildContext context, WidgetRef ref) async {
       child: Column(
         children: doses.map((v) {
           return ListTile(
-            leading: Icon(AppIcons.medicineForm(v.medicine.form),
+            leading: AppIcon(AppIcons.medicineForm(v.medicine.form),
                 color: AppColors.medicineAccent),
             title: Text(v.medicine.name),
             subtitle: Text(
               '${v.dosageLabel}${v.mealLabel.isEmpty ? '' : ' · ${v.mealLabel}'}',
               style: const TextStyle(fontSize: 11),
             ),
-            trailing: const Icon(Icons.check_circle_outline),
+            trailing: const AppIcon(AppIcons.checkCircle),
             onTap: () async {
               await ref
                   .read(medicineRepositoryProvider)

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
+import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 
 /// The signature pieces of the coral fitness identity.
@@ -77,7 +78,7 @@ class TintCard extends StatelessWidget {
 /// The thin outlined circle that holds the bell, close and settings glyphs in
 /// the reference screens' top bars.
 class CircleIconButton extends StatelessWidget {
-  final IconData icon;
+  final HugeIconData icon;
   final VoidCallback? onPressed;
   final String? tooltip;
   final double size;
@@ -115,7 +116,7 @@ class CircleIconButton extends StatelessWidget {
         child: SizedBox(
           width: size,
           height: size,
-          child: Icon(
+          child: AppIcon(
             icon,
             size: size * 0.45,
             color: filled ? Colors.white : tone,
@@ -132,16 +133,16 @@ class CircleIconButton extends StatelessWidget {
 /// bold centred title and an optional trailing circle.
 class BrandTopBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
-  final IconData leadingIcon;
+  final HugeIconData leadingIcon;
   final VoidCallback? onLeading;
-  final IconData? trailingIcon;
+  final HugeIconData? trailingIcon;
   final VoidCallback? onTrailing;
   final String? trailingTooltip;
 
   const BrandTopBar({
     super.key,
     required this.title,
-    this.leadingIcon = Icons.close,
+    this.leadingIcon = AppIcons.close,
     this.onLeading,
     this.trailingIcon,
     this.onTrailing,
@@ -265,7 +266,7 @@ class HeroBanner extends StatelessWidget {
   final String label;
   final String headline;
   final String footnote;
-  final IconData icon;
+  final HugeIconData icon;
   final Color accent;
   final VoidCallback? onTap;
 
@@ -320,7 +321,7 @@ class HeroBanner extends StatelessWidget {
           SizedBox(
             width: 108,
             height: 108,
-            child: Icon(icon, size: 76, color: accent.withValues(alpha: 0.28)),
+            child: AppIcon(icon, size: 76, color: accent.withValues(alpha: 0.28)),
           ),
         ],
       ),
@@ -333,7 +334,7 @@ class Pill extends StatelessWidget {
   final String label;
   final Color color;
   final bool selected;
-  final IconData? icon;
+  final HugeIconData? icon;
   final VoidCallback? onTap;
 
   const Pill({
@@ -365,7 +366,7 @@ class Pill extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (icon != null) ...[
-                Icon(icon, size: 15, color: foreground),
+                AppIcon(icon!, size: 15, color: foreground),
                 const SizedBox(width: 6),
               ],
               Text(
@@ -387,7 +388,7 @@ class Pill extends StatelessWidget {
 /// One of the "My Plans" cards: a coloured glyph over a bold label and a muted
 /// value. Sized to sit in a fixed-height row.
 class PlanCard extends StatelessWidget {
-  final IconData icon;
+  final HugeIconData icon;
   final String label;
   final String value;
   final Color accent;
@@ -415,7 +416,7 @@ class PlanCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Icon(icon, size: 28, color: accent),
+          AppIcon(icon, size: 28, color: accent),
           const SizedBox(height: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -931,7 +932,7 @@ class _DayCell extends StatelessWidget {
 /// The metric trio under the running ring: a coral glyph over a bold value and
 /// a muted caption.
 class MetricColumn extends StatelessWidget {
-  final IconData icon;
+  final HugeIconData icon;
   final String value;
   final String caption;
   final Color? color;
@@ -951,7 +952,7 @@ class MetricColumn extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 28, color: tone),
+        AppIcon(icon, size: 28, color: tone),
         const SizedBox(height: 14),
         Text(value,
             maxLines: 1,
@@ -1049,8 +1050,8 @@ class CurvedNavBar extends StatelessWidget {
 /// One destination in a [CurvedNavBar].
 @immutable
 class CurvedNavItem {
-  final IconData icon;
-  final IconData? selectedIcon;
+  final HugeIconData icon;
+  final HugeIconData? selectedIcon;
   final String label;
 
   const CurvedNavItem({
@@ -1089,7 +1090,7 @@ class _NavButton extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
+                AppIcon(
                   selected ? (item.selectedIcon ?? item.icon) : item.icon,
                   color: tone,
                   size: 24,

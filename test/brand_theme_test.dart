@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:mysuite/core/theme/app_colors.dart';
+import 'package:mysuite/core/theme/app_icons.dart';
 import 'package:mysuite/core/theme/app_theme.dart';
 import 'package:mysuite/core/widgets/brand.dart';
 
@@ -18,6 +20,44 @@ Future<void> pumpBranded(
 }
 
 void main() {
+  group('AppIcon', () {
+    testWidgets('holds its size inside a tight box instead of stretching',
+        (tester) async {
+      // CircleIconButton sizes a 44px SizedBox and asks for a ~20px glyph. An
+      // SVG will happily fill a tight constraint, which is what made the top
+      // bar glyphs overflow their circle.
+      await pumpBranded(
+        tester,
+        SizedBox(
+          width: 44,
+          height: 44,
+          child: AppIcon(AppIcons.barChart, size: 20),
+        ),
+      );
+
+      expect(tester.getSize(find.byType(AppIcon)), const Size(44, 44));
+      expect(
+        tester.getSize(find.descendant(
+          of: find.byType(AppIcon),
+          matching: find.byType(HugeIcon),
+        )),
+        const Size(20, 20),
+      );
+    });
+
+    testWidgets('falls back to the ambient IconTheme size', (tester) async {
+      await pumpBranded(
+        tester,
+        IconTheme(
+          data: const IconThemeData(size: 30),
+          child: AppIcon(AppIcons.star),
+        ),
+      );
+
+      expect(tester.getSize(find.byType(AppIcon)), const Size(30, 30));
+    });
+  });
+
   group('BrandColors', () {
     test('tint wraps around the rotation instead of running off the end', () {
       const brand = BrandColors(
@@ -223,16 +263,18 @@ void main() {
           onSelected: (i) => picked = i,
           centerAction: const SizedBox(width: 58, height: 58),
           items: const [
-            CurvedNavItem(icon: Icons.home, label: 'Today'),
-            CurvedNavItem(icon: Icons.apps, label: 'Modules'),
-            CurvedNavItem(icon: Icons.insights, label: 'Insights'),
-            CurvedNavItem(icon: Icons.settings, label: 'Settings'),
+            CurvedNavItem(icon: AppIcons.dashboard, label: 'Today'),
+            CurvedNavItem(icon: AppIcons.modules, label: 'Modules'),
+            CurvedNavItem(icon: AppIcons.insights, label: 'Insights'),
+            CurvedNavItem(icon: AppIcons.settings, label: 'Settings'),
           ],
         ),
       ),
     ));
 
-    await tester.tap(find.byIcon(Icons.insights));
+    // The bar shows a glyph and a selection dot rather than a label, so the
+    // destination is addressed by its tooltip.
+    await tester.tap(find.byTooltip('Insights'));
     await tester.pump();
 
     expect(picked, 2);

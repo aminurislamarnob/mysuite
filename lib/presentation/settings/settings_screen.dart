@@ -6,6 +6,7 @@ import '../../core/services/notification_service.dart';
 import '../../core/services/security_service.dart';
 import '../../core/settings/app_settings.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_icons.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/common.dart';
 
@@ -44,19 +45,19 @@ class SettingsScreen extends ConsumerWidget {
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.brightness_6_outlined),
+                  leading: const AppIcon(AppIcons.themeMode),
                   title: const Text('Theme'),
                   trailing: SegmentedButton<ThemeMode>(
                     segments: const [
                       ButtonSegment(
                           value: ThemeMode.light,
-                          icon: Icon(Icons.light_mode_outlined, size: 16)),
+                          icon: AppIcon(AppIcons.lightMode, size: 16)),
                       ButtonSegment(
                           value: ThemeMode.system,
-                          icon: Icon(Icons.brightness_auto_outlined, size: 16)),
+                          icon: AppIcon(AppIcons.themeSystem, size: 16)),
                       ButtonSegment(
                           value: ThemeMode.dark,
-                          icon: Icon(Icons.dark_mode_outlined, size: 16)),
+                          icon: AppIcon(AppIcons.darkMode, size: 16)),
                     ],
                     selected: {settings.themeMode},
                     showSelectedIcon: false,
@@ -64,25 +65,25 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                 ),
                 SwitchListTile(
-                  secondary: const Icon(Icons.contrast),
+                  secondary: const AppIcon(AppIcons.highContrast),
                   title: const Text('High contrast'),
                   value: settings.highContrast,
                   onChanged: notifier.setHighContrast,
                 ),
                 SwitchListTile(
-                  secondary: const Icon(Icons.density_small),
+                  secondary: const AppIcon(AppIcons.compact),
                   title: const Text('Compact density'),
                   value: settings.compactDensity,
                   onChanged: notifier.setCompactDensity,
                 ),
                 SwitchListTile(
-                  secondary: const Icon(Icons.motion_photos_off_outlined),
+                  secondary: const AppIcon(AppIcons.reduceMotion),
                   title: const Text('Reduce motion'),
                   value: settings.reduceMotion,
                   onChanged: notifier.setReduceMotion,
                 ),
                 ListTile(
-                  leading: const Icon(Icons.format_size),
+                  leading: const AppIcon(AppIcons.textSize),
                   title: const Text('Text size'),
                   subtitle: Slider(
                     value: settings.textScale,
@@ -103,7 +104,7 @@ class SettingsScreen extends ConsumerWidget {
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.language),
+                  leading: const AppIcon(AppIcons.language),
                   title: const Text('Language'),
                   subtitle:
                       Text(settings.locale == 'bn' ? 'বাংলা' : 'English'),
@@ -118,7 +119,7 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.payments_outlined),
+                  leading: const AppIcon(AppIcons.cash),
                   title: const Text('Currency symbol'),
                   subtitle: Text(settings.currencySymbol),
                   onTap: () => _pickCurrency(context, notifier),
@@ -133,12 +134,12 @@ class SettingsScreen extends ConsumerWidget {
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.notifications_active_outlined),
+                  leading: const AppIcon(AppIcons.notificationsActive),
                   title: const Text('Allow notifications'),
                   subtitle: const Text(
                       'Medicine reminders always override quiet hours',
                       style: TextStyle(fontSize: 11)),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: const AppIcon(AppIcons.chevronRight),
                   onTap: () async {
                     final granted = await ref
                         .read(notificationServiceProvider)
@@ -153,7 +154,7 @@ class SettingsScreen extends ConsumerWidget {
                   },
                 ),
                 SwitchListTile(
-                  secondary: const Icon(Icons.bedtime_outlined),
+                  secondary: const AppIcon(AppIcons.sleep),
                   title: const Text('Quiet hours'),
                   subtitle: Text(
                     '${Fmt.minutesOfDay(settings.dndStartMinutes)} — '
@@ -210,7 +211,7 @@ class SettingsScreen extends ConsumerWidget {
             child: Column(
               children: [
                 SwitchListTile(
-                  secondary: const Icon(Icons.lock_outline),
+                  secondary: const AppIcon(AppIcons.lock),
                   title: const Text('Lock the app'),
                   subtitle: const Text('Biometric or PIN on launch',
                       style: TextStyle(fontSize: 11)),
@@ -227,11 +228,11 @@ class SettingsScreen extends ConsumerWidget {
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.pin_outlined),
+                  leading: const AppIcon(AppIcons.pin),
                   title: Text(security.hasPin ? 'Change PIN' : 'Set a PIN'),
                   trailing: security.hasPin
                       ? IconButton(
-                          icon: const Icon(Icons.delete_outline),
+                          icon: const AppIcon(AppIcons.delete),
                           onPressed: () async {
                             await security.clearPin();
                             if (context.mounted) {
@@ -241,17 +242,17 @@ class SettingsScreen extends ConsumerWidget {
                             }
                           },
                         )
-                      : const Icon(Icons.chevron_right),
+                      : const AppIcon(AppIcons.chevronRight),
                   onTap: () => _setPin(context, security),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.timer_outlined),
+                  leading: const AppIcon(AppIcons.focus),
                   title: const Text('Auto-lock after'),
                   subtitle: Text('${settings.autoLockMinutes} minutes'),
                   onTap: () => _pickAutoLock(context, notifier),
                 ),
                 ExpansionTile(
-                  leading: const Icon(Icons.folder_special_outlined),
+                  leading: const AppIcon(AppIcons.folderSpecial),
                   title: const Text('Lock individual modules'),
                   children: AppModule.values
                       .map((m) => SwitchListTile(
@@ -273,7 +274,7 @@ class SettingsScreen extends ConsumerWidget {
                 _exportTile(
                   context,
                   ref,
-                  icon: Icons.backup_outlined,
+                  icon: AppIcons.backup,
                   title: 'Full backup (JSON)',
                   subtitle: 'Everything, restorable',
                   build: (e) => e.fullJsonBackup(),
@@ -281,28 +282,28 @@ class SettingsScreen extends ConsumerWidget {
                 _exportTile(
                   context,
                   ref,
-                  icon: Icons.checklist_outlined,
+                  icon: AppIcons.checklist,
                   title: 'Tasks (CSV)',
                   build: (e) => e.tasksCsv(),
                 ),
                 _exportTile(
                   context,
                   ref,
-                  icon: Icons.account_balance_wallet_outlined,
+                  icon: AppIcons.expenses,
                   title: 'Transactions (CSV)',
                   build: (e) => e.expensesCsv(),
                 ),
                 _exportTile(
                   context,
                   ref,
-                  icon: Icons.medication_outlined,
+                  icon: AppIcons.medicine,
                   title: 'Medicine log (CSV)',
                   build: (e) => e.medicineCsv(),
                 ),
                 _exportTile(
                   context,
                   ref,
-                  icon: Icons.local_cafe_outlined,
+                  icon: AppIcons.habits,
                   title: 'Habit log (CSV)',
                   build: (e) => e.habitsCsv(),
                 ),
@@ -316,12 +317,12 @@ class SettingsScreen extends ConsumerWidget {
             child: Column(
               children: [
                 const ListTile(
-                  leading: Icon(Icons.info_outline),
+                  leading: AppIcon(AppIcons.info),
                   title: Text('mySuite'),
                   subtitle: Text('Version 1.0.0 · offline-first'),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.notifications_paused_outlined),
+                  leading: const AppIcon(AppIcons.notificationsOff),
                   title: const Text('Clear all scheduled reminders'),
                   onTap: () async {
                     await ref.read(notificationServiceProvider).cancelAll();
@@ -343,18 +344,18 @@ class SettingsScreen extends ConsumerWidget {
   Widget _exportTile(
     BuildContext context,
     WidgetRef ref, {
-    required IconData icon,
+    required HugeIconData icon,
     required String title,
     String? subtitle,
     required Future Function(ExportService) build,
   }) {
     return ListTile(
-      leading: Icon(icon),
+      leading: AppIcon(icon),
       title: Text(title),
       subtitle: subtitle == null
           ? null
           : Text(subtitle, style: const TextStyle(fontSize: 11)),
-      trailing: const Icon(Icons.ios_share, size: 18),
+      trailing: const AppIcon(AppIcons.share, size: 18),
       onTap: () async {
         final service = ref.read(exportServiceProvider);
         try {

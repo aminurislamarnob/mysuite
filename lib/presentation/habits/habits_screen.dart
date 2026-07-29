@@ -29,7 +29,7 @@ class HabitsScreen extends ConsumerWidget {
         actions: [
           IconButton(
             tooltip: 'Add habit',
-            icon: const Icon(Icons.add),
+            icon: const AppIcon(AppIcons.add),
             onPressed: () => HabitEditorSheet.show(context),
           ),
         ],
@@ -38,7 +38,7 @@ class HabitsScreen extends ConsumerWidget {
         data: (habits) {
           if (habits.isEmpty) {
             return EmptyState(
-              icon: Icons.local_cafe_outlined,
+              icon: AppIcons.habits,
               title: 'No habits yet',
               message: 'Track water, coffee, exercise — anything you repeat.',
               actionLabel: 'Add a habit',
@@ -56,7 +56,7 @@ class HabitsScreen extends ConsumerWidget {
                       if (caffeine > 0)
                         Expanded(
                           child: StatTile(
-                            icon: Icons.bolt_outlined,
+                            icon: AppIcons.quick,
                             color: AppColors.warningLight,
                             label: 'Caffeine today',
                             value: '${caffeine.toStringAsFixed(0)} mg',
@@ -67,7 +67,7 @@ class HabitsScreen extends ConsumerWidget {
                       if (cost > 0)
                         Expanded(
                           child: StatTile(
-                            icon: Icons.savings_outlined,
+                            icon: AppIcons.savings,
                             color: AppColors.expenseAccent,
                             label: 'Habit spend today',
                             value: Fmt.money(cost, currency),
@@ -85,7 +85,7 @@ class HabitsScreen extends ConsumerWidget {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) =>
-            EmptyState(icon: Icons.error_outline, title: 'Error', message: '$e'),
+            EmptyState(icon: AppIcons.error, title: 'Error', message: '$e'),
       ),
     );
   }
@@ -127,7 +127,7 @@ class _HabitCard extends ConsumerWidget {
                       color: color.withValues(alpha: 0.14),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(AppIcons.habit(habit.icon),
+                    child: AppIcon(AppIcons.habit(habit.icon),
                         color: color, size: 20),
                   ),
                   const SizedBox(width: 12),
@@ -141,7 +141,7 @@ class _HabitCard extends ConsumerWidget {
                         const SizedBox(height: 2),
                         Row(
                           children: [
-                            Icon(Icons.local_fire_department,
+                            AppIcon(AppIcons.streak,
                                 size: 13,
                                 color: stats.currentStreak > 0
                                     ? AppColors.warningLight
@@ -164,7 +164,7 @@ class _HabitCard extends ConsumerWidget {
                   // 2-tap logging: this button is the second tap.
                   IconButton(
                     tooltip: isReduce ? 'Log one' : 'Add one',
-                    icon: const Icon(Icons.add_circle),
+                    icon: const AppIcon(AppIcons.addCircle),
                     color: over ? AppColors.dangerLight : color,
                     iconSize: 34,
                     onPressed: () async {
@@ -272,7 +272,7 @@ class _HabitDetailSheet extends ConsumerWidget {
       title: habit.name,
       actions: [
         IconButton(
-          icon: const Icon(Icons.edit_outlined),
+          icon: const AppIcon(AppIcons.edit),
           onPressed: () {
             Navigator.pop(context);
             HabitEditorSheet.show(context, habit: habit);
@@ -286,7 +286,7 @@ class _HabitDetailSheet extends ConsumerWidget {
             children: [
               Expanded(
                 child: StatTile(
-                  icon: Icons.local_fire_department,
+                  icon: AppIcons.streak,
                   color: AppColors.warningLight,
                   label: 'Current streak',
                   value: '${stats.currentStreak}',
@@ -296,7 +296,7 @@ class _HabitDetailSheet extends ConsumerWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: StatTile(
-                  icon: Icons.percent,
+                  icon: AppIcons.percent,
                   color: color,
                   label: 'Completion',
                   value: Fmt.percent(stats.completionRate),
@@ -309,7 +309,7 @@ class _HabitDetailSheet extends ConsumerWidget {
             children: [
               Expanded(
                 child: StatTile(
-                  icon: Icons.calendar_view_week,
+                  icon: AppIcons.calendarWeek,
                   color: color,
                   label: 'This week',
                   value: _HabitCard._trim(stats.weekTotal),
@@ -319,7 +319,7 @@ class _HabitDetailSheet extends ConsumerWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: StatTile(
-                  icon: Icons.calendar_month_outlined,
+                  icon: AppIcons.calendarMonth,
                   color: color,
                   label: 'This month',
                   value: _HabitCard._trim(stats.monthTotal),
@@ -331,7 +331,7 @@ class _HabitDetailSheet extends ConsumerWidget {
           if (habit.costPerUnit != null) ...[
             const SizedBox(height: 12),
             StatTile(
-              icon: Icons.savings_outlined,
+              icon: AppIcons.savings,
               color: AppColors.expenseAccent,
               label: 'Cost this month',
               value: Fmt.money(stats.costThisMonth(habit), currency),
@@ -350,7 +350,7 @@ class _HabitDetailSheet extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
           OutlinedButton.icon(
-            icon: const Icon(Icons.delete_outline),
+            icon: const AppIcon(AppIcons.delete),
             label: const Text('Delete habit'),
             style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.dangerLight),
@@ -510,7 +510,7 @@ class _HabitEditorSheetState extends ConsumerState<HabitEditorSheet> {
                     .map((p) => Padding(
                           padding: const EdgeInsets.only(right: 8),
                           child: ActionChip(
-                            avatar: Icon(AppIcons.habit(p.icon),
+                            avatar: AppIcon(AppIcons.habit(p.icon),
                                 size: 16, color: Color(p.color)),
                             label: Text(p.name),
                             onPressed: () => _applyPreset(p),
@@ -535,11 +535,11 @@ class _HabitEditorSheetState extends ConsumerState<HabitEditorSheet> {
               ButtonSegment(
                   value: 0,
                   label: Text('Build'),
-                  icon: Icon(Icons.trending_up, size: 16)),
+                  icon: AppIcon(AppIcons.trendUp, size: 16)),
               ButtonSegment(
                   value: 1,
                   label: Text('Reduce'),
-                  icon: Icon(Icons.trending_down, size: 16)),
+                  icon: AppIcon(AppIcons.trendDown, size: 16)),
             ],
             selected: {_goalType},
             showSelectedIcon: false,
@@ -663,15 +663,15 @@ class _HabitEditorSheetState extends ConsumerState<HabitEditorSheet> {
           const SizedBox(height: 8),
           ListTile(
             contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.notifications_outlined),
+            leading: const AppIcon(AppIcons.notifications),
             title: const Text('Daily reminder'),
             subtitle: Text(_reminderMinutes == null
                 ? 'Off'
                 : Fmt.minutesOfDay(_reminderMinutes!)),
             trailing: _reminderMinutes == null
-                ? const Icon(Icons.chevron_right)
+                ? const AppIcon(AppIcons.chevronRight)
                 : IconButton(
-                    icon: const Icon(Icons.close, size: 18),
+                    icon: const AppIcon(AppIcons.close, size: 18),
                     onPressed: () => setState(() => _reminderMinutes = null),
                   ),
             onTap: () async {

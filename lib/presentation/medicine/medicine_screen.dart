@@ -43,12 +43,12 @@ class _MedicineScreenState extends ConsumerState<MedicineScreen>
         actions: [
           IconButton(
             tooltip: 'Log a symptom',
-            icon: const Icon(Icons.sick_outlined),
+            icon: const AppIcon(AppIcons.symptom),
             onPressed: () => _logSymptom(context),
           ),
           IconButton(
             tooltip: 'Share schedule',
-            icon: const Icon(Icons.ios_share),
+            icon: const AppIcon(AppIcons.share),
             onPressed: _exportSchedule,
           ),
         ],
@@ -80,7 +80,7 @@ class _MedicineScreenState extends ConsumerState<MedicineScreen>
         onPressed: () => MedicineEditorSheet.show(context),
         backgroundColor: AppColors.medicineAccent,
         foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
+        icon: const AppIcon(AppIcons.add),
         label: const Text('Add medicine'),
       ),
     );
@@ -191,7 +191,7 @@ class _TodayTab extends ConsumerWidget {
             children: [
               Expanded(
                 child: StatTile(
-                  icon: Icons.today_outlined,
+                  icon: AppIcons.today,
                   color: AppColors.medicineAccent,
                   label: 'Today',
                   value: Fmt.percent(adherence.daily),
@@ -200,7 +200,7 @@ class _TodayTab extends ConsumerWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: StatTile(
-                  icon: Icons.calendar_view_week,
+                  icon: AppIcons.calendarWeek,
                   color: AppColors.medicineAccent,
                   label: 'This week',
                   value: Fmt.percent(adherence.weekly),
@@ -209,7 +209,7 @@ class _TodayTab extends ConsumerWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: StatTile(
-                  icon: Icons.insights_outlined,
+                  icon: AppIcons.insights,
                   color: AppColors.medicineAccent,
                   label: '30 days',
                   value: Fmt.percent(adherence.monthly),
@@ -222,7 +222,7 @@ class _TodayTab extends ConsumerWidget {
         if (conflicts.isNotEmpty) ...[
           _alert(
             context,
-            icon: Icons.warning_amber_outlined,
+            icon: AppIcons.warning,
             color: AppColors.warningLight,
             title: '${conflicts.length} timing conflict'
                 '${conflicts.length == 1 ? '' : 's'} this month',
@@ -238,7 +238,7 @@ class _TodayTab extends ConsumerWidget {
         for (final f in forecast) ...[
           _alert(
             context,
-            icon: Icons.inventory_2_outlined,
+            icon: AppIcons.inventory,
             color: AppColors.warningLight,
             title: '${f.medicine.name} runs out ${Fmt.relativeDay(f.date!)}',
             body:
@@ -251,7 +251,7 @@ class _TodayTab extends ConsumerWidget {
             !forecast.any((f) => f.medicine.id == m.id))) ...[
           _alert(
             context,
-            icon: Icons.inventory_2_outlined,
+            icon: AppIcons.inventory,
             color: AppColors.warningLight,
             title: '${m.name} is low',
             body: 'Only ${m.inventory} ${m.dosageUnit} left.',
@@ -263,7 +263,7 @@ class _TodayTab extends ConsumerWidget {
         doses.when(
           data: (list) => list.isEmpty
               ? const EmptyState(
-                  icon: Icons.medication_outlined,
+                  icon: AppIcons.medicine,
                   title: 'No doses today',
                   message: 'Add a medicine to generate its schedule.',
                 )
@@ -277,7 +277,7 @@ class _TodayTab extends ConsumerWidget {
 
   Widget _alert(
     BuildContext context, {
-    required IconData icon,
+    required HugeIconData icon,
     required Color color,
     required String title,
     required String body,
@@ -292,7 +292,7 @@ class _TodayTab extends ConsumerWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: color),
+          AppIcon(icon, size: 18, color: color),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -339,7 +339,7 @@ class DoseTile extends ConsumerWidget {
             color: AppColors.medicineAccent.withValues(alpha: 0.12),
             shape: BoxShape.circle,
           ),
-          child: Icon(AppIcons.medicineForm(view.medicine.form),
+          child: AppIcon(AppIcons.medicineForm(view.medicine.form),
               color: AppColors.medicineAccent, size: 20),
         ),
         title: Text(
@@ -369,8 +369,8 @@ class DoseTile extends ConsumerWidget {
             const SizedBox(width: 6),
             IconButton(
               tooltip: taken ? 'Mark not taken' : 'Mark taken',
-              icon: Icon(
-                  taken ? Icons.check_circle : Icons.radio_button_unchecked),
+              icon: AppIcon(
+                  taken ? AppIcons.checkCircle : AppIcons.circle),
               color: taken ? AppColors.successLight : muted,
               iconSize: 28,
               onPressed: () => repo.setDoseStatus(
@@ -496,7 +496,7 @@ class _CalendarTab extends ConsumerWidget {
         Expanded(
           child: selectedDoses.isEmpty
               ? EmptyState(
-                  icon: Icons.event_available_outlined,
+                  icon: AppIcons.calendarDone,
                   title: 'No doses on ${Fmt.relativeDay(selected)}',
                 )
               : ListView(
@@ -519,7 +519,7 @@ class _MonthSwitcher extends ConsumerWidget {
     return Row(
       children: [
         IconButton(
-          icon: const Icon(Icons.chevron_left),
+          icon: const AppIcon(AppIcons.chevronLeft),
           onPressed: () => ref.read(scheduleMonthProvider.notifier).state =
               DateTime(month.year, month.month - 1),
         ),
@@ -529,7 +529,7 @@ class _MonthSwitcher extends ConsumerWidget {
               style: const TextStyle(fontWeight: FontWeight.w700)),
         ),
         IconButton(
-          icon: const Icon(Icons.chevron_right),
+          icon: const AppIcon(AppIcons.chevronRight),
           onPressed: () => ref.read(scheduleMonthProvider.notifier).state =
               DateTime(month.year, month.month + 1),
         ),
@@ -555,7 +555,7 @@ class _TimelineTab extends ConsumerWidget {
         Expanded(
           child: days.isEmpty
               ? const EmptyState(
-                  icon: Icons.timeline_outlined,
+                  icon: AppIcons.timeline,
                   title: 'Nothing scheduled this month')
               : ListView.builder(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
@@ -623,7 +623,7 @@ class _TableTab extends ConsumerWidget {
           _MonthSwitcher(month: month),
           const Expanded(
             child: EmptyState(
-                icon: Icons.table_chart_outlined,
+                icon: AppIcons.spreadsheet,
                 title: 'Nothing scheduled this month'),
           ),
         ],
@@ -693,12 +693,12 @@ class _TableTab extends ConsumerWidget {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(
+                                    AppIcon(
                                       taken
-                                          ? Icons.check
+                                          ? AppIcons.check
                                           : skipped
-                                              ? Icons.close
-                                              : Icons.circle_outlined,
+                                              ? AppIcons.close
+                                              : AppIcons.circle,
                                       size: 11,
                                       color: taken
                                           ? AppColors.successLight
@@ -746,7 +746,7 @@ class _MedicinesTab extends ConsumerWidget {
     return meds.when(
       data: (list) => list.isEmpty
           ? EmptyState(
-              icon: Icons.medication_outlined,
+              icon: AppIcons.medicine,
               title: 'No medicines yet',
               message: 'Add one to generate its full course automatically.',
               actionLabel: 'Add medicine',
@@ -770,7 +770,7 @@ class _MedicinesTab extends ConsumerWidget {
                             AppColors.medicineAccent.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(AppIcons.medicineForm(m.form),
+                      child: AppIcon(AppIcons.medicineForm(m.form),
                           color: AppColors.medicineAccent, size: 20),
                     ),
                     title: Text(m.name,
@@ -875,7 +875,7 @@ class _ProfileDrawer extends ConsumerWidget {
           ),
           ListTile(
             dense: true,
-            leading: const Icon(Icons.groups_outlined, size: 20),
+            leading: const AppIcon(AppIcons.people, size: 20),
             title: const Text('Everyone'),
             selected: active == null,
             selectedTileColor:
@@ -924,7 +924,7 @@ class _ProfileDrawer extends ConsumerWidget {
           const Divider(),
           ListTile(
             dense: true,
-            leading: const Icon(Icons.person_add_outlined, size: 20),
+            leading: const AppIcon(AppIcons.personAdd, size: 20),
             title: const Text('Add profile'),
             onTap: () => _addProfile(context, ref),
           ),

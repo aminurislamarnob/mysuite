@@ -20,7 +20,7 @@ extension ResultKindX on ResultKind {
         ResultKind.focus => 'Focus',
       };
 
-  IconData get icon => switch (this) {
+  HugeIconData get icon => switch (this) {
         ResultKind.note => AppIcons.notes,
         ResultKind.task => AppIcons.tasks,
         ResultKind.habit => AppIcons.habits,

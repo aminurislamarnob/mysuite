@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/brand.dart';
@@ -62,8 +63,8 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
             : state.mode.countsUp
                 ? 'Flow'
                 : 'Focus',
-        leadingIcon: Icons.arrow_back_rounded,
-        trailingIcon: Icons.bar_chart_rounded,
+        leadingIcon: AppIcons.back,
+        trailingIcon: AppIcons.barChart,
         trailingTooltip: 'Stats',
         onTrailing: () => showModalBottomSheet(
           context: context,
@@ -138,19 +139,19 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               MetricColumn(
-                icon: Icons.today_rounded,
+                icon: AppIcons.today,
                 value: Fmt.duration(stats.today),
                 caption: 'Today',
                 color: accent,
               ),
               MetricColumn(
-                icon: Icons.check_circle_rounded,
+                icon: AppIcons.checkCircle,
                 value: '${stats.sessionsToday}',
                 caption: 'Sessions',
                 color: accent,
               ),
               MetricColumn(
-                icon: Icons.local_fire_department_rounded,
+                icon: AppIcons.streak,
                 value: '${stats.streakDays}',
                 caption: 'Day streak',
                 color: AppColors.warningLight,
@@ -168,7 +169,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
             child: ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: Icon(Icons.link_rounded, color: accent),
+              leading: AppIcon(AppIcons.link, color: accent),
               title: Text(linkedTask?.title ?? 'Not linked to a task'),
               subtitle: Text(
                 linkedTask == null
@@ -180,9 +181,9 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
                 style: const TextStyle(fontSize: 12),
               ),
               trailing: linkedTask == null
-                  ? Icon(Icons.chevron_right_rounded, color: context.muted)
+                  ? AppIcon(AppIcons.chevronRight, color: context.muted)
                   : IconButton(
-                      icon: const Icon(Icons.close_rounded, size: 18),
+                      icon: const AppIcon(AppIcons.close, size: 18),
                       onPressed: () => notifier.linkTask(null),
                     ),
             ),
@@ -278,7 +279,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _RoundAction(
-          icon: Icons.replay_rounded,
+          icon: AppIcons.replay,
           tooltip: 'Reset',
           color: accent,
           size: 52,
@@ -294,7 +295,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
         ),
         const SizedBox(width: 28),
         _RoundAction(
-          icon: Icons.stop_rounded,
+          icon: AppIcons.stop,
           tooltip: 'Finish',
           color: accent,
           size: 52,
@@ -321,7 +322,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
         child: Column(
           children: tasks
               .map((t) => ListTile(
-                    leading: const Icon(Icons.check_circle_outline),
+                    leading: const AppIcon(AppIcons.checkCircle),
                     title: Text(t.title),
                     subtitle: t.estimateMinutes == null
                         ? null
@@ -410,8 +411,8 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
                 children: List.generate(5, (i) {
                   final value = i + 1;
                   return IconButton(
-                    icon: Icon(
-                      value <= rating ? Icons.star : Icons.star_outline,
+                    icon: AppIcon(
+                      value <= rating ? AppIcons.star : AppIcons.star,
                       color: AppColors.warningLight,
                     ),
                     onPressed: () => setState(() => rating = value),
@@ -438,7 +439,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
 /// control rather than a solid primary one.
 class _RoundAction extends StatelessWidget {
   final String? label;
-  final IconData? icon;
+  final HugeIconData? icon;
   final String? tooltip;
   final Color color;
   final double size;
@@ -470,7 +471,8 @@ class _RoundAction extends StatelessWidget {
           height: size,
           child: Center(
             child: icon != null
-                ? Icon(icon, color: soft ? color : Colors.white, size: size * 0.42)
+                ? AppIcon(icon!,
+                    color: soft ? color : Colors.white, size: size * 0.42)
                 : Text(
                     label!,
                     style: TextStyle(
@@ -493,13 +495,13 @@ class _AmbientRow extends ConsumerWidget {
     final active = ref.watch(ambientPlayerProvider);
     final notifier = ref.read(ambientPlayerProvider.notifier);
 
-    const labels = <String, (String, IconData)>{
-      'rain': ('Rain', Icons.water_drop_outlined),
-      'cafe': ('Café', Icons.local_cafe_outlined),
-      'forest': ('Forest', Icons.forest_outlined),
-      'white': ('White', Icons.graphic_eq),
-      'brown': ('Brown', Icons.waves),
-      'ocean': ('Ocean', Icons.beach_access_outlined),
+    const labels = <String, (String, HugeIconData)>{
+      'rain': ('Rain', AppIcons.water),
+      'cafe': ('Café', AppIcons.habits),
+      'forest': ('Forest', AppIcons.forest),
+      'white': ('White', AppIcons.whiteNoise),
+      'brown': ('Brown', AppIcons.brownNoise),
+      'ocean': ('Ocean', AppIcons.ocean),
     };
 
     return Wrap(
@@ -509,7 +511,7 @@ class _AmbientRow extends ConsumerWidget {
         final (label, icon) = e.value;
         final selected = active == e.key;
         return FilterChip(
-          avatar: Icon(icon, size: 16),
+          avatar: AppIcon(icon, size: 16),
           label: Text(label),
           selected: selected,
           onSelected: (_) async {
@@ -545,7 +547,7 @@ class _FocusStatsSheet extends ConsumerWidget {
               Expanded(
                 child: StatTile(
                   tintIndex: 0,
-                  icon: Icons.today_outlined,
+                  icon: AppIcons.today,
                   color: AppColors.focusAccent,
                   label: 'Today',
                   value: Fmt.duration(stats.today),
@@ -556,7 +558,7 @@ class _FocusStatsSheet extends ConsumerWidget {
               Expanded(
                 child: StatTile(
                   tintIndex: 1,
-                  icon: Icons.calendar_view_week,
+                  icon: AppIcons.calendarWeek,
                   color: AppColors.focusAccent,
                   label: 'This week',
                   value: Fmt.duration(stats.week),
@@ -567,7 +569,7 @@ class _FocusStatsSheet extends ConsumerWidget {
               Expanded(
                 child: StatTile(
                   tintIndex: 2,
-                  icon: Icons.local_fire_department,
+                  icon: AppIcons.streak,
                   color: AppColors.warningLight,
                   label: 'Streak',
                   value: '${stats.streakDays}',
@@ -582,7 +584,7 @@ class _FocusStatsSheet extends ConsumerWidget {
               Expanded(
                 child: StatTile(
                   tintIndex: 3,
-                  icon: Icons.timelapse,
+                  icon: AppIcons.session,
                   color: AppColors.focusAccent,
                   label: 'All time',
                   value: Fmt.duration(stats.total),
@@ -592,7 +594,7 @@ class _FocusStatsSheet extends ConsumerWidget {
               Expanded(
                 child: StatTile(
                   tintIndex: 4,
-                  icon: Icons.wb_sunny_outlined,
+                  icon: AppIcons.lightMode,
                   color: AppColors.warningLight,
                   label: 'Best hour',
                   value: stats.bestHour == null
@@ -625,8 +627,8 @@ class _FocusStatsSheet extends ConsumerWidget {
             ...sessions.take(12).map((s) => ListTile(
                   contentPadding: EdgeInsets.zero,
                   dense: true,
-                  leading: Icon(
-                    s.isCompleted ? Icons.check_circle : Icons.timelapse,
+                  leading: AppIcon(
+                    s.isCompleted ? AppIcons.checkCircle : AppIcons.session,
                     color: s.isCompleted
                         ? AppColors.successLight
                         : muted,
@@ -644,7 +646,7 @@ class _FocusStatsSheet extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (s.rating != null) ...[
-                        const Icon(Icons.star,
+                        const AppIcon(AppIcons.star,
                             size: 12, color: AppColors.warningLight),
                         Text('${s.rating}',
                             style: const TextStyle(fontSize: 11)),

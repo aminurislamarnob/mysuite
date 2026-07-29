@@ -10,6 +10,7 @@ import '../../core/services/export_service.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/security_service.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_icons.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/common.dart';
 import '../tasks/repository/task_repository.dart';
@@ -236,7 +237,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
       return Scaffold(
         appBar: AppBar(),
         body: EmptyState(
-          icon: Icons.lock_outline,
+          icon: AppIcons.lock,
           title: 'Note locked',
           message: 'Authenticate to view this note.',
           actionLabel: 'Unlock',
@@ -258,18 +259,18 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
           actions: [
             IconButton(
               tooltip: _listening ? 'Stop dictation' : 'Dictate',
-              icon: Icon(_listening ? Icons.mic : Icons.mic_none),
+              icon: AppIcon(_listening ? AppIcons.mic : AppIcons.mic),
               color: _listening ? AppColors.dangerLight : null,
               onPressed: _toggleDictation,
             ),
             IconButton(
               tooltip: 'More',
-              icon: const Icon(Icons.more_vert),
+              icon: const AppIcon(AppIcons.moreVertical),
               onPressed: _showMoreSheet,
             ),
             IconButton(
               tooltip: 'Save',
-              icon: const Icon(Icons.check),
+              icon: const AppIcon(AppIcons.check),
               onPressed: _save,
             ),
           ],
@@ -302,7 +303,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
                   children: [
                     if (_reminderAt != null)
                       Chip(
-                        avatar: const Icon(Icons.alarm, size: 14),
+                        avatar: const AppIcon(AppIcons.alarm, size: 14),
                         label: Text(Fmt.due(_reminderAt!, withTime: true),
                             style: const TextStyle(fontSize: 11)),
                         onDeleted: () => setState(() => _reminderAt = null),
@@ -363,7 +364,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
         child: Column(
           children: [
             ListTile(
-              leading: const Icon(Icons.sell_outlined),
+              leading: const AppIcon(AppIcons.tag),
               title: const Text('Tags'),
               subtitle: Text(_tags.isEmpty ? 'None' : _tags.join(', ')),
               onTap: () {
@@ -372,7 +373,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.folder_outlined),
+              leading: const AppIcon(AppIcons.folder),
               title: const Text('Move to folder'),
               onTap: () {
                 Navigator.pop(sheetContext);
@@ -380,7 +381,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.alarm_add_outlined),
+              leading: const AppIcon(AppIcons.alarmAdd),
               title: const Text('Set reminder'),
               subtitle: _reminderAt == null
                   ? null
@@ -392,7 +393,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
             ),
             const Divider(),
             ListTile(
-              leading: const Icon(Icons.checklist_outlined),
+              leading: const AppIcon(AppIcons.checklist),
               title: const Text('Convert checklist to tasks'),
               onTap: () {
                 Navigator.pop(sheetContext);
@@ -400,7 +401,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.picture_as_pdf_outlined),
+              leading: const AppIcon(AppIcons.pdf),
               title: const Text('Export as PDF'),
               onTap: () async {
                 Navigator.pop(sheetContext);
@@ -412,7 +413,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.share_outlined),
+              leading: const AppIcon(AppIcons.share),
               title: const Text('Share as text'),
               onTap: () async {
                 Navigator.pop(sheetContext);
@@ -474,12 +475,12 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
         child: Column(
           children: [
             ListTile(
-              leading: const Icon(Icons.clear),
+              leading: const AppIcon(AppIcons.clear),
               title: const Text('No folder'),
               onTap: () => Navigator.pop(context, -1),
             ),
             ...folders.map((f) => ListTile(
-                  leading: const Icon(Icons.folder_outlined),
+                  leading: const AppIcon(AppIcons.folder),
                   title: Text(f.name),
                   selected: f.id == _folderId,
                   onTap: () => Navigator.pop(context, f.id),

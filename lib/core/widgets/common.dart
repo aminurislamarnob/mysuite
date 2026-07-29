@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 import 'brand.dart';
 
@@ -56,7 +57,7 @@ class SectionHeader extends StatelessWidget {
 }
 
 class EmptyState extends StatelessWidget {
-  final IconData icon;
+  final HugeIconData icon;
   final String title;
   final String? message;
   final String? actionLabel;
@@ -89,7 +90,7 @@ class EmptyState extends StatelessWidget {
                 color: context.brand.tint(0),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon,
+              child: AppIcon(icon,
                   size: 38, color: Theme.of(context).colorScheme.primary),
             ),
             const SizedBox(height: 20),
@@ -145,7 +146,7 @@ class AsyncSection extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error),
+            AppIcon(AppIcons.error, color: Theme.of(context).colorScheme.error),
             const SizedBox(width: 12),
             Expanded(child: Text('Something went wrong: $error')),
           ],
@@ -161,7 +162,7 @@ class AsyncSection extends StatelessWidget {
 /// The fill rotates through the brand pastels via [tintIndex] so a grid of
 /// these reads like the "My Plans" row rather than a wall of identical boxes.
 class StatTile extends StatelessWidget {
-  final IconData icon;
+  final HugeIconData icon;
   final Color color;
   final String label;
   final String value;
@@ -193,7 +194,7 @@ class StatTile extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 20, color: color),
+              AppIcon(icon, size: 20, color: color),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -457,7 +458,7 @@ class ColorPickerRow extends StatelessWidget {
               ),
             ),
             child: isSel
-                ? const Icon(Icons.check, size: 18, color: Colors.white)
+                ? const AppIcon(AppIcons.check, size: 18, color: Colors.white)
                 : null,
           ),
         );
@@ -468,7 +469,7 @@ class ColorPickerRow extends StatelessWidget {
 
 /// Icon picker backed by one of the token maps in `AppIcons`.
 class IconPickerRow extends StatelessWidget {
-  final Map<String, IconData> options;
+  final Map<String, HugeIconData> options;
   final String selected;
   final Color color;
   final ValueChanged<String> onChanged;
@@ -501,7 +502,7 @@ class IconPickerRow extends StatelessWidget {
                 width: 2,
               ),
             ),
-            child: Icon(e.value,
+            child: AppIcon(e.value,
                 size: 20,
                 color: isSel ? color : Theme.of(context).colorScheme.outline),
           ),

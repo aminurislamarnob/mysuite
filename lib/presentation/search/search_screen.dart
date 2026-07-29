@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/settings/app_settings.dart';
+import '../../core/theme/app_icons.dart';
 import '../../core/widgets/common.dart';
 import 'search_provider.dart';
 
@@ -50,7 +51,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         actions: [
           if (query.isNotEmpty)
             IconButton(
-              icon: const Icon(Icons.close),
+              icon: const AppIcon(AppIcons.close),
               onPressed: () {
                 _controller.clear();
                 ref.read(searchQueryProvider.notifier).state = '';
@@ -78,7 +79,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 ...kinds.map((k) => Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: ChoiceChip(
-                        avatar: Icon(k.icon, size: 15, color: k.color),
+                        avatar: AppIcon(k.icon, size: 15, color: k.color),
                         label: Text(k.label),
                         selected: filter == k,
                         onSelected: (_) => ref
@@ -95,7 +96,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         data: (hits) {
           if (query.trim().length < 2) {
             return const EmptyState(
-              icon: Icons.search,
+              icon: AppIcons.search,
               title: 'Search across every module',
               message: 'Notes, tasks, habits, medicines, expenses and focus '
                   'sessions — all from one bar.',
@@ -103,7 +104,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           }
           if (hits.isEmpty) {
             return EmptyState(
-              icon: Icons.search_off,
+              icon: AppIcons.searchOff,
               title: 'No matches for "$query"',
             );
           }
@@ -118,7 +119,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     color: hit.kind.color.withValues(alpha: 0.13),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(hit.kind.icon, size: 18, color: hit.kind.color),
+                  child: AppIcon(hit.kind.icon, size: 18, color: hit.kind.color),
                 ),
                 title: Text(hit.title,
                     maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -133,7 +134,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) =>
-            EmptyState(icon: Icons.error_outline, title: 'Error', message: '$e'),
+            EmptyState(icon: AppIcons.error, title: 'Error', message: '$e'),
       ),
     );
   }

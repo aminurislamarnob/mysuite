@@ -8,6 +8,7 @@ import 'core/router/app_router.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/security_service.dart';
 import 'core/settings/app_settings.dart';
+import 'core/theme/app_icons.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/notes/repository/note_repository.dart';
 
@@ -166,7 +167,7 @@ class _LockGateState extends ConsumerState<_LockGate>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.lock_outline, size: 56),
+              const AppIcon(AppIcons.lock, size: 56),
               const SizedBox(height: 20),
               const Text('mySuite is locked',
                   style:
@@ -179,7 +180,7 @@ class _LockGateState extends ConsumerState<_LockGate>
               const SizedBox(height: 28),
               FilledButton.icon(
                 onPressed: _evaluate,
-                icon: const Icon(Icons.fingerprint),
+                icon: const AppIcon(AppIcons.biometric),
                 label: const Text('Unlock'),
               ),
               const SizedBox(height: 8),

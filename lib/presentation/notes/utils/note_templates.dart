@@ -1,14 +1,13 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
-
+import '../../../core/theme/app_icons.dart';
 import '../../../core/utils/formatters.dart';
 
 /// A starter document for a new note, expressed directly as a Quill delta.
 class NoteTemplate {
   final String id;
   final String name;
-  final IconData icon;
+  final HugeIconData icon;
   final String Function() titleBuilder;
   final List<Map<String, dynamic>> Function() deltaBuilder;
 
@@ -39,7 +38,7 @@ class NoteTemplate {
     NoteTemplate(
       id: 'blank',
       name: 'Blank',
-      icon: Icons.article_outlined,
+      icon: AppIcons.document,
       titleBuilder: () => 'Untitled',
       deltaBuilder: () => [
         {'insert': '\n'}
@@ -48,7 +47,7 @@ class NoteTemplate {
     NoteTemplate(
       id: 'meeting',
       name: 'Meeting notes',
-      icon: Icons.groups_outlined,
+      icon: AppIcons.people,
       titleBuilder: () => 'Meeting — ${Fmt.dayMonth(DateTime.now())}',
       deltaBuilder: () => [
         _h('Meeting notes', 2),
@@ -65,7 +64,7 @@ class NoteTemplate {
     NoteTemplate(
       id: 'journal',
       name: 'Journal',
-      icon: Icons.auto_stories_outlined,
+      icon: AppIcons.journal,
       titleBuilder: () => Fmt.fullDate(DateTime.now()),
       deltaBuilder: () => [
         _h('How was today?', 3),
@@ -79,7 +78,7 @@ class NoteTemplate {
     NoteTemplate(
       id: 'daily',
       name: 'Daily log',
-      icon: Icons.today_outlined,
+      icon: AppIcons.today,
       titleBuilder: () => 'Daily log — ${Fmt.dayMonth(DateTime.now())}',
       deltaBuilder: () => [
         _h('Priorities', 3),
@@ -91,7 +90,7 @@ class NoteTemplate {
     NoteTemplate(
       id: 'shopping',
       name: 'Shopping list',
-      icon: Icons.shopping_cart_outlined,
+      icon: AppIcons.cart,
       titleBuilder: () => 'Shopping list',
       deltaBuilder: () => [
         _h('Shopping list', 3),
@@ -103,7 +102,7 @@ class NoteTemplate {
     NoteTemplate(
       id: 'idea',
       name: 'Idea',
-      icon: Icons.lightbulb_outline,
+      icon: AppIcons.idea,
       titleBuilder: () => 'Idea',
       deltaBuilder: () => [
         _h('The idea', 3),
@@ -117,7 +116,7 @@ class NoteTemplate {
     NoteTemplate(
       id: 'recipe',
       name: 'Recipe',
-      icon: Icons.restaurant_menu_outlined,
+      icon: AppIcons.dining,
       titleBuilder: () => 'Recipe',
       deltaBuilder: () => [
         _h('Ingredients', 3),

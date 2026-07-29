@@ -6,11 +6,41 @@ import 'package:go_router/go_router.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_icons.dart';
 import '../../../core/utils/formatters.dart';
 import '../providers/tasks_provider.dart';
 import '../repository/task_repository.dart';
 import '../utils/recurrence.dart';
 import 'task_editor_sheet.dart';
+
+/// A swipe action laid out the way [SlidableAction] lays one out.
+///
+/// [SlidableAction] takes an [IconData], which a Hugeicons glyph is not, so the
+/// icon-over-label column is rebuilt here on [CustomSlidableAction].
+Widget _slideAction({
+  required SlidableActionCallback onPressed,
+  required Color background,
+  required HugeIconData icon,
+  required String label,
+}) {
+  return CustomSlidableAction(
+    onPressed: onPressed,
+    backgroundColor: background,
+    foregroundColor: Colors.white,
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AppIcon(icon, color: Colors.white),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(color: Colors.white),
+        ),
+      ],
+    ),
+  );
+}
 
 Color priorityColor(int priority) => switch (priority) {
       1 => AppColors.dangerLight,
@@ -46,11 +76,10 @@ class TaskTile extends ConsumerWidget {
         motion: const ScrollMotion(),
         extentRatio: 0.28,
         children: [
-          SlidableAction(
+          _slideAction(
             onPressed: (_) => context.push('/focus', extra: task.id),
-            backgroundColor: AppColors.focusAccent,
-            foregroundColor: Colors.white,
-            icon: Icons.play_arrow,
+            background: AppColors.focusAccent,
+            icon: AppIcons.play,
             label: 'Focus',
           ),
         ],
@@ -59,23 +88,21 @@ class TaskTile extends ConsumerWidget {
         motion: const ScrollMotion(),
         extentRatio: 0.5,
         children: [
-          SlidableAction(
+          _slideAction(
             onPressed: (_) => TaskEditorSheet.show(context, task: task),
-            backgroundColor: AppColors.primaryLight,
-            foregroundColor: Colors.white,
-            icon: Icons.edit_outlined,
+            background: AppColors.primaryLight,
+            icon: AppIcons.edit,
             label: 'Edit',
           ),
-          SlidableAction(
+          _slideAction(
             onPressed: (_) async {
               await repo.deleteTask(task.id);
               await ref
                   .read(notificationServiceProvider)
                   .cancelTaskReminder(task.id);
             },
-            backgroundColor: AppColors.dangerLight,
-            foregroundColor: Colors.white,
-            icon: Icons.delete_outline,
+            background: AppColors.dangerLight,
+            icon: AppIcons.delete,
             label: 'Delete',
           ),
         ],
@@ -127,27 +154,27 @@ class TaskTile extends ConsumerWidget {
 
     if (showDue && task.dueDate != null) {
       bits.add(_chip(
-        icon: Icons.event_outlined,
+        icon: AppIcons.calendar,
         label: Fmt.due(task.dueDate!, withTime: task.hasDueTime),
         color: overdue ? AppColors.dangerLight : muted,
       ));
     }
     if (task.recurrenceRule != null) {
       bits.add(_chip(
-          icon: Icons.repeat,
+          icon: AppIcons.repeat,
           label: Recurrence.label(task.recurrenceRule),
           color: muted));
     }
     if (subtasks.isNotEmpty) {
       final done = subtasks.where((s) => s.isCompleted).length;
       bits.add(_chip(
-          icon: Icons.checklist,
+          icon: AppIcons.checklist,
           label: '$done/${subtasks.length}',
           color: muted));
     }
     if (task.loggedMinutes > 0) {
       bits.add(_chip(
-        icon: Icons.timer_outlined,
+        icon: AppIcons.focus,
         label: Fmt.durationFromMinutes(task.loggedMinutes),
         color: AppColors.focusAccent,
       ));
@@ -161,14 +188,14 @@ class TaskTile extends ConsumerWidget {
   }
 
   Widget _chip({
-    required IconData icon,
+    required HugeIconData icon,
     required String label,
     required Color color,
   }) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 12, color: color),
+        AppIcon(icon, size: 12, color: color),
         const SizedBox(width: 3),
         Text(label, style: TextStyle(fontSize: 11, color: color)),
       ],

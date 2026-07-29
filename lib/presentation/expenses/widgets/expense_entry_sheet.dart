@@ -171,7 +171,7 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
       actions: [
         IconButton(
           tooltip: 'Voice entry',
-          icon: Icon(_listening ? Icons.mic : Icons.mic_none),
+          icon: AppIcon(_listening ? AppIcons.mic : AppIcons.mic),
           color: _listening ? AppColors.dangerLight : null,
           onPressed: _voiceEntry,
         ),
@@ -217,7 +217,7 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
               runSpacing: 8,
               children: categories
                   .map((c) => ChoiceChip(
-                        avatar: Icon(AppIcons.category(c.icon),
+                        avatar: AppIcon(AppIcons.category(c.icon),
                             size: 16, color: Color(c.color)),
                         label: Text(c.name),
                         selected: _categoryId == c.id,
@@ -236,7 +236,7 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
             runSpacing: 8,
             children: accounts
                 .map((a) => ChoiceChip(
-                      avatar: Icon(AppIcons.account(a.type),
+                      avatar: AppIcon(AppIcons.account(a.type),
                           size: 16, color: Color(a.color)),
                       label: Text(a.name),
                       selected: _accountId == a.id,
@@ -255,7 +255,7 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
               children: accounts
                   .where((a) => a.id != _accountId)
                   .map((a) => ChoiceChip(
-                        avatar: Icon(AppIcons.account(a.type),
+                        avatar: AppIcon(AppIcons.account(a.type),
                             size: 16, color: Color(a.color)),
                         label: Text(a.name),
                         selected: _transferAccountId == a.id,
@@ -272,16 +272,16 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
             textCapitalization: TextCapitalization.sentences,
             decoration: const InputDecoration(
               labelText: 'Note',
-              prefixIcon: Icon(Icons.notes_outlined),
+              prefixIcon: AppIcon(AppIcons.note),
             ),
           ),
           const SizedBox(height: 8),
           ListTile(
             contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.event_outlined),
+            leading: const AppIcon(AppIcons.calendar),
             title: const Text('Date'),
             subtitle: Text(Fmt.dayMonthYear(_date)),
-            trailing: const Icon(Icons.chevron_right),
+            trailing: const AppIcon(AppIcons.chevronRight),
             onTap: () async {
               final picked = await showDatePicker(
                 context: context,
@@ -295,7 +295,7 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
           if (widget.receiptPath != null)
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.receipt_long_outlined),
+              leading: const AppIcon(AppIcons.bills),
               title: const Text('Receipt attached'),
               subtitle: Text(widget.receiptPath!.split('/').last),
             ),

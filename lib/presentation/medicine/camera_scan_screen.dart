@@ -5,6 +5,7 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_icons.dart';
 
 enum ScanMode { receipt, prescription }
 
@@ -133,10 +134,10 @@ class _CameraScanScreenState extends State<CameraScanScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
+          AppIcon(
             isReceipt
-                ? Icons.receipt_long_outlined
-                : Icons.medical_information_outlined,
+                ? AppIcons.bills
+                : AppIcons.prescription,
             size: 64,
             color: Theme.of(context).colorScheme.outline,
           ),
@@ -157,13 +158,13 @@ class _CameraScanScreenState extends State<CameraScanScreen> {
           const SizedBox(height: 28),
           FilledButton.icon(
             onPressed: () => _scan(ImageSource.camera),
-            icon: const Icon(Icons.camera_alt_outlined),
+            icon: const AppIcon(AppIcons.camera),
             label: const Text('Take a photo'),
           ),
           const SizedBox(height: 10),
           TextButton.icon(
             onPressed: () => _scan(ImageSource.gallery),
-            icon: const Icon(Icons.photo_library_outlined),
+            icon: const AppIcon(AppIcons.gallery),
             label: const Text('Choose from gallery'),
           ),
         ],

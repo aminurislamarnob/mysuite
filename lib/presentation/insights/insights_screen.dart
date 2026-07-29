@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/settings/app_settings.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_icons.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/common.dart';
 import '../expenses/providers/expenses_provider.dart';
@@ -55,7 +56,7 @@ class InsightsScreen extends ConsumerWidget {
                 Expanded(
                   child: StatTile(
                     tintIndex: 0,
-                    icon: Icons.check_circle_outline,
+                    icon: AppIcons.checkCircle,
                     color: AppColors.taskAccent,
                     label: 'Completed (7d)',
                     value: '${taskStats.completed}',
@@ -65,7 +66,7 @@ class InsightsScreen extends ConsumerWidget {
                 Expanded(
                   child: StatTile(
                     tintIndex: 1,
-                    icon: Icons.pending_actions_outlined,
+                    icon: AppIcons.pending,
                     color: AppColors.warningLight,
                     label: 'Still open',
                     value: '${taskStats.open}',
@@ -75,7 +76,7 @@ class InsightsScreen extends ConsumerWidget {
                 Expanded(
                   child: StatTile(
                     tintIndex: 2,
-                    icon: Icons.error_outline,
+                    icon: AppIcons.error,
                     color: AppColors.dangerLight,
                     label: 'Overdue',
                     value: '${taskStats.overdue}',
@@ -130,7 +131,7 @@ class InsightsScreen extends ConsumerWidget {
                 Expanded(
                   child: StatTile(
                     tintIndex: 3,
-                    icon: Icons.timer_outlined,
+                    icon: AppIcons.focus,
                     color: AppColors.focusAccent,
                     label: 'This week',
                     value: Fmt.duration(focusStats.week),
@@ -141,7 +142,7 @@ class InsightsScreen extends ConsumerWidget {
                 Expanded(
                   child: StatTile(
                     tintIndex: 4,
-                    icon: Icons.wb_sunny_outlined,
+                    icon: AppIcons.lightMode,
                     color: AppColors.warningLight,
                     label: 'Peak hour',
                     value: focusStats.bestHour == null
@@ -161,7 +162,7 @@ class InsightsScreen extends ConsumerWidget {
                 Expanded(
                   child: StatTile(
                     tintIndex: 5,
-                    icon: Icons.arrow_upward,
+                    icon: AppIcons.arrowUp,
                     color: AppColors.dangerLight,
                     label: 'Spent',
                     value: Fmt.compactMoney(report.expense, currency),
@@ -175,7 +176,7 @@ class InsightsScreen extends ConsumerWidget {
                 Expanded(
                   child: StatTile(
                     tintIndex: 6,
-                    icon: Icons.savings_outlined,
+                    icon: AppIcons.savings,
                     color: report.net >= 0
                         ? AppColors.successLight
                         : AppColors.dangerLight,
@@ -293,7 +294,7 @@ class _DigestCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.auto_awesome,
+                const AppIcon(AppIcons.sparkle,
                     size: 18, color: AppColors.primaryLight),
                 const SizedBox(width: 8),
                 Text('This week',

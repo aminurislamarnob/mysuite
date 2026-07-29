@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/settings/app_settings.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_icons.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/common.dart';
 import '../expenses/providers/expenses_provider.dart';
@@ -17,7 +18,7 @@ class ReminderItem {
   final String title;
   final String subtitle;
   final DateTime at;
-  final IconData icon;
+  final HugeIconData icon;
   final Color color;
   final String route;
 
@@ -51,7 +52,7 @@ final remindersProvider = FutureProvider<List<ReminderItem>>((ref) async {
         title: med.name,
         subtitle: '${med.dosage.toStringAsFixed(0)} ${med.dosageUnit}',
         at: d.scheduledTime,
-        icon: Icons.medication_outlined,
+        icon: AppIcons.medicine,
         color: AppColors.medicineAccent,
         route: '/medicine',
       ));
@@ -66,7 +67,7 @@ final remindersProvider = FutureProvider<List<ReminderItem>>((ref) async {
         title: t.title,
         subtitle: 'Task reminder',
         at: t.reminderTime!,
-        icon: Icons.check_circle_outline,
+        icon: AppIcons.checkCircle,
         color: AppColors.taskAccent,
         route: '/tasks',
       ));
@@ -81,7 +82,7 @@ final remindersProvider = FutureProvider<List<ReminderItem>>((ref) async {
         title: n.title,
         subtitle: 'Note reminder',
         at: n.reminderAt!,
-        icon: Icons.description_outlined,
+        icon: AppIcons.notes,
         color: AppColors.noteAccent,
         route: '/notes',
       ));
@@ -101,7 +102,7 @@ final remindersProvider = FutureProvider<List<ReminderItem>>((ref) async {
         title: h.name,
         subtitle: 'Daily habit nudge',
         at: when,
-        icon: Icons.local_cafe_outlined,
+        icon: AppIcons.habits,
         color: Color(h.color),
         route: '/habits',
       ));
@@ -116,7 +117,7 @@ final remindersProvider = FutureProvider<List<ReminderItem>>((ref) async {
         subtitle:
             '${settings.currencySymbol}${b.amount.toStringAsFixed(0)} due',
         at: b.nextDueDate,
-        icon: Icons.receipt_long_outlined,
+        icon: AppIcons.bills,
         color: AppColors.expenseAccent,
         route: '/expenses',
       ));
@@ -140,7 +141,7 @@ class RemindersScreen extends ConsumerWidget {
         data: (items) {
           if (items.isEmpty) {
             return const EmptyState(
-              icon: Icons.notifications_none,
+              icon: AppIcons.notifications,
               title: 'Nothing scheduled',
               message:
                   'Dose times, task reminders, habit nudges and bill due dates '
@@ -177,7 +178,7 @@ class RemindersScreen extends ConsumerWidget {
                               color: r.color.withValues(alpha: 0.13),
                               shape: BoxShape.circle,
                             ),
-                            child: Icon(r.icon, size: 18, color: r.color),
+                            child: AppIcon(r.icon, size: 18, color: r.color),
                           ),
                           title: Text(r.title,
                               style:
@@ -197,7 +198,7 @@ class RemindersScreen extends ConsumerWidget {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) =>
-            EmptyState(icon: Icons.error_outline, title: 'Error', message: '$e'),
+            EmptyState(icon: AppIcons.error, title: 'Error', message: '$e'),
       ),
     );
   }
