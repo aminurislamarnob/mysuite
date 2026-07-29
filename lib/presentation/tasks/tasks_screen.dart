@@ -1,0 +1,874 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+
+import '../../core/database/app_database.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_icons.dart';
+import '../../core/utils/formatters.dart';
+import '../../core/widgets/common.dart';
+import 'providers/tasks_provider.dart';
+import 'repository/task_repository.dart';
+import 'utils/nlp_parser.dart';
+import 'widgets/task_editor_sheet.dart';
+import 'widgets/task_tile.dart';
+
+/// Filters the list views to a single project when set from the drawer.
+final taskProjectFilterProvider = StateProvider<int?>((ref) => null);
+
+class TasksScreen extends ConsumerStatefulWidget {
+  const TasksScreen({super.key});
+
+  @override
+  ConsumerState<TasksScreen> createState() => _TasksScreenState();
+}
+
+class _TasksScreenState extends ConsumerState<TasksScreen>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabs;
+  final _quickAdd = TextEditingController();
+  final _speech = stt.SpeechToText();
+  bool _listening = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabs = TabController(length: 6, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabs.dispose();
+    _quickAdd.dispose();
+    _speech.stop();
+    super.dispose();
+  }
+
+  Future<void> _submitQuickAdd() async {
+    final raw = _quickAdd.text.trim();
+    if (raw.isEmpty) return;
+
+    final parsed = NlpParser.parse(raw);
+    final repo = ref.read(taskRepositoryProvider);
+    final id = await repo.createTask(
+      title: parsed.title,
+      dueDate: parsed.dueDate,
+      hasDueTime: parsed.hasTime,
+      priority: parsed.priority,
+      projectId: ref.read(taskProjectFilterProvider),
+      recurrenceRule: parsed.recurrenceRule,
+      estimateMinutes: parsed.estimateMinutes,
+    );
+    if (parsed.tags.isNotEmpty) await repo.setTaskTags(id, parsed.tags);
+
+    _quickAdd.clear();
+    if (mounted) FocusScope.of(context).unfocus();
+  }
+
+  Future<void> _dictate() async {
+    if (_listening) {
+      await _speech.stop();
+      setState(() => _listening = false);
+      return;
+    }
+    if (!await _speech.initialize()) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Speech recognition unavailable on this device.')));
+      }
+      return;
+    }
+    setState(() => _listening = true);
+    await _speech.listen(onResult: (r) {
+      _quickAdd.text = r.recognizedWords;
+      if (r.finalResult) setState(() => _listening = false);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final projectId = ref.watch(taskProjectFilterProvider);
+    final projects = ref.watch(projectsProvider).valueOrNull ?? const [];
+    final projectName = projectId == null
+        ? 'Tasks'
+        : projects.where((p) => p.id == projectId).firstOrNull?.name ?? 'Tasks';
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(projectName),
+        actions: [
+          IconButton(
+            tooltip: 'Search',
+            icon: const Icon(Icons.search),
+            onPressed: () => context.push('/search'),
+          ),
+          if (projectId != null)
+            IconButton(
+              tooltip: 'Clear project filter',
+              icon: const Icon(Icons.filter_alt_off_outlined),
+              onPressed: () =>
+                  ref.read(taskProjectFilterProvider.notifier).state = null,
+            ),
+        ],
+        bottom: TabBar(
+          controller: _tabs,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
+          tabs: const [
+            Tab(text: 'Today'),
+            Tab(text: 'Upcoming'),
+            Tab(text: 'Inbox'),
+            Tab(text: 'Calendar'),
+            Tab(text: 'Kanban'),
+            Tab(text: 'Matrix'),
+          ],
+        ),
+      ),
+      drawer: const _ProjectDrawer(),
+      body: Column(
+        children: [
+          _buildQuickAdd(),
+          Expanded(
+            child: TabBarView(
+              controller: _tabs,
+              children: [
+                _TaskListView(
+                  provider: todayTasksProvider,
+                  emptyTitle: 'Nothing due today',
+                  emptyMessage: 'Enjoy the clear runway.',
+                ),
+                _TaskListView(
+                  provider: upcomingTasksProvider,
+                  emptyTitle: 'Nothing in the next 7 days',
+                  groupByDay: true,
+                ),
+                _TaskListView(
+                  provider: inboxTasksProvider,
+                  emptyTitle: 'Inbox zero',
+                  emptyMessage: 'Quick captures without a date land here.',
+                ),
+                const _CalendarView(),
+                const _KanbanView(),
+                const _MatrixView(),
+              ],
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => TaskEditorSheet.show(context,
+            projectId: ref.read(taskProjectFilterProvider)),
+        backgroundColor: AppColors.taskAccent,
+        foregroundColor: Colors.white,
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildQuickAdd() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: TextField(
+        controller: _quickAdd,
+        onSubmitted: (_) => _submitQuickAdd(),
+        textInputAction: TextInputAction.done,
+        decoration: InputDecoration(
+          isDense: true,
+          hintText: 'Buy milk tomorrow 5pm #shopping !high',
+          prefixIcon: const Icon(Icons.add, size: 20),
+          suffixIcon: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                tooltip: 'Dictate',
+                icon: Icon(_listening ? Icons.mic : Icons.mic_none, size: 20),
+                color: _listening ? AppColors.dangerLight : null,
+                onPressed: _dictate,
+              ),
+              IconButton(
+                tooltip: 'Add',
+                icon: const Icon(Icons.arrow_upward, size: 20),
+                color: AppColors.taskAccent,
+                onPressed: _submitQuickAdd,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Applies the active project filter to any task list.
+List<Task> _applyFilter(List<Task> tasks, int? projectId) =>
+    projectId == null
+        ? tasks
+        : tasks.where((t) => t.projectId == projectId).toList();
+
+class _TaskListView extends ConsumerWidget {
+  final StreamProvider<List<Task>> provider;
+  final String emptyTitle;
+  final String? emptyMessage;
+  final bool groupByDay;
+
+  const _TaskListView({
+    required this.provider,
+    required this.emptyTitle,
+    this.emptyMessage,
+    this.groupByDay = false,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(provider);
+    final projectId = ref.watch(taskProjectFilterProvider);
+
+    return async.when(
+      data: (all) {
+        final tasks = _applyFilter(all, projectId);
+        if (tasks.isEmpty) {
+          return EmptyState(
+            icon: Icons.check_circle_outline,
+            title: emptyTitle,
+            message: emptyMessage,
+          );
+        }
+        if (!groupByDay) {
+          return ListView.builder(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+            itemCount: tasks.length,
+            itemBuilder: (_, i) => TaskTile(task: tasks[i]),
+          );
+        }
+
+        final groups = <DateTime, List<Task>>{};
+        for (final t in tasks) {
+          if (t.dueDate == null) continue;
+          groups.putIfAbsent(Fmt.dateOnly(t.dueDate!), () => []).add(t);
+        }
+        final days = groups.keys.toList()..sort();
+
+        return ListView.builder(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+          itemCount: days.length,
+          itemBuilder: (_, i) {
+            final day = days[i];
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 8, bottom: 8),
+                  child: Text(Fmt.relativeDay(day),
+                      style: const TextStyle(fontWeight: FontWeight.w700)),
+                ),
+                ...groups[day]!.map((t) => TaskTile(task: t, showDue: false)),
+              ],
+            );
+          },
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) =>
+          EmptyState(icon: Icons.error_outline, title: 'Error', message: '$e'),
+    );
+  }
+}
+
+// --- Calendar ---------------------------------------------------------------
+
+final _calendarMonthProvider = StateProvider<DateTime>(
+    (ref) => DateTime(DateTime.now().year, DateTime.now().month));
+
+final _calendarSelectedProvider =
+    StateProvider<DateTime>((ref) => Fmt.dateOnly(DateTime.now()));
+
+class _CalendarView extends ConsumerWidget {
+  const _CalendarView();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final month = ref.watch(_calendarMonthProvider);
+    final selected = ref.watch(_calendarSelectedProvider);
+    final grouped =
+        ref.watch(monthTasksProvider(month)).valueOrNull ?? const {};
+    final muted = Theme.of(context).colorScheme.outline;
+
+    final firstOfMonth = DateTime(month.year, month.month, 1);
+    final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
+    final leadingBlanks = firstOfMonth.weekday - 1;
+    final selectedTasks = grouped[selected] ?? const <Task>[];
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.chevron_left),
+                onPressed: () => ref
+                    .read(_calendarMonthProvider.notifier)
+                    .state = DateTime(month.year, month.month - 1),
+              ),
+              Expanded(
+                child: Text(
+                  Fmt.monthYear(month),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.chevron_right),
+                onPressed: () => ref
+                    .read(_calendarMonthProvider.notifier)
+                    .state = DateTime(month.year, month.month + 1),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+                .map((d) => Expanded(
+                      child: Center(
+                        child: Text(d,
+                            style: TextStyle(fontSize: 11, color: muted)),
+                      ),
+                    ))
+                .toList(),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              childAspectRatio: 1,
+            ),
+            itemCount: leadingBlanks + daysInMonth,
+            itemBuilder: (_, i) {
+              if (i < leadingBlanks) return const SizedBox.shrink();
+              final day = DateTime(month.year, month.month, i - leadingBlanks + 1);
+              final count = (grouped[day] ?? const []).length;
+              final isSelected = Fmt.isSameDay(day, selected);
+              final isToday = Fmt.isSameDay(day, DateTime.now());
+
+              return GestureDetector(
+                onTap: () =>
+                    ref.read(_calendarSelectedProvider.notifier).state = day,
+                child: Container(
+                  margin: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.taskAccent
+                        : isToday
+                            ? AppColors.taskAccent.withValues(alpha: 0.12)
+                            : null,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '${day.day}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight:
+                              isToday ? FontWeight.w700 : FontWeight.w400,
+                          color: isSelected ? Colors.white : null,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      if (count > 0)
+                        Container(
+                          width: 5,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? Colors.white
+                                : AppColors.taskAccent,
+                            shape: BoxShape.circle,
+                          ),
+                        )
+                      else
+                        const SizedBox(height: 5),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const Divider(height: 24),
+        Expanded(
+          child: selectedTasks.isEmpty
+              ? EmptyState(
+                  icon: Icons.event_available_outlined,
+                  title: 'Nothing on ${Fmt.relativeDay(selected)}',
+                )
+              : ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+                  children: selectedTasks
+                      .map((t) => TaskTile(task: t, showDue: false))
+                      .toList(),
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+// --- Kanban -----------------------------------------------------------------
+
+class _KanbanView extends ConsumerWidget {
+  const _KanbanView();
+
+  static const _columns = [
+    (0, 'To Do', AppColors.mutedLight),
+    (1, 'Doing', AppColors.warningLight),
+    (2, 'Done', AppColors.successLight),
+  ];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(allTasksProvider);
+    final projectId = ref.watch(taskProjectFilterProvider);
+
+    return async.when(
+      data: (all) {
+        final tasks = _applyFilter(all, projectId);
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 96),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: _columns.map((col) {
+              final (status, label, color) = col;
+              // "Done" is driven by completion, not just the board column, so
+              // completing a task anywhere moves it here.
+              final items = tasks
+                  .where((t) => status == 2
+                      ? t.isCompleted
+                      : !t.isCompleted && t.boardStatus == status)
+                  .toList();
+
+              return Container(
+                width: 280,
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                child: DragTarget<Task>(
+                  onAcceptWithDetails: (details) async {
+                    final repo = ref.read(taskRepositoryProvider);
+                    final task = details.data;
+                    if (status == 2) {
+                      await repo.setCompleted(task.id, true);
+                    } else {
+                      if (task.isCompleted) {
+                        await repo.setCompleted(task.id, false);
+                      }
+                      await repo.updateTask(task.id, boardStatus: status);
+                    }
+                  },
+                  builder: (context, candidate, _) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: candidate.isNotEmpty
+                            ? color.withValues(alpha: 0.12)
+                            : Theme.of(context)
+                                .colorScheme
+                                .outline
+                                .withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      padding: const EdgeInsets.all(10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                    color: color, shape: BoxShape.circle),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(label,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w700)),
+                              const Spacer(),
+                              Text('${items.length}',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .outline)),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          if (items.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 24),
+                              child: Center(
+                                child: Text('Drop tasks here',
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .outline)),
+                              ),
+                            ),
+                          ...items.map((t) => Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: LongPressDraggable<Task>(
+                                  data: t,
+                                  feedback: Material(
+                                    color: Colors.transparent,
+                                    child: SizedBox(
+                                      width: 260,
+                                      child: _KanbanCard(task: t, dragging: true),
+                                    ),
+                                  ),
+                                  childWhenDragging: Opacity(
+                                    opacity: 0.3,
+                                    child: _KanbanCard(task: t),
+                                  ),
+                                  child: _KanbanCard(task: t),
+                                ),
+                              )),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) =>
+          EmptyState(icon: Icons.error_outline, title: 'Error', message: '$e'),
+    );
+  }
+}
+
+class _KanbanCard extends StatelessWidget {
+  final Task task;
+  final bool dragging;
+
+  const _KanbanCard({required this.task, this.dragging = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = Theme.of(context).colorScheme.outline;
+    return Card(
+      elevation: dragging ? 6 : 0,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => TaskEditorSheet.show(context, task: task),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Container(
+                width: 4,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: priorityColor(task.priority),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      task.title,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        decoration: task.isCompleted
+                            ? TextDecoration.lineThrough
+                            : null,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (task.dueDate != null)
+                      Text(
+                        Fmt.relativeDay(task.dueDate!),
+                        style: TextStyle(fontSize: 11, color: muted),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// --- Eisenhower matrix ------------------------------------------------------
+
+class _MatrixView extends ConsumerWidget {
+  const _MatrixView();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(openTasksProvider);
+    final projectId = ref.watch(taskProjectFilterProvider);
+
+    return async.when(
+      data: (all) {
+        final tasks = _applyFilter(all, projectId);
+        final soon = DateTime.now().add(const Duration(days: 2));
+
+        // Urgency comes from the due date, importance from the priority level.
+        bool urgent(Task t) => t.dueDate != null && t.dueDate!.isBefore(soon);
+        bool important(Task t) => t.priority <= 2;
+
+        final quadrants = [
+          (
+            'Do first',
+            'Urgent & important',
+            AppColors.dangerLight,
+            tasks.where((t) => urgent(t) && important(t)).toList()
+          ),
+          (
+            'Schedule',
+            'Important, not urgent',
+            AppColors.taskAccent,
+            tasks.where((t) => !urgent(t) && important(t)).toList()
+          ),
+          (
+            'Delegate',
+            'Urgent, not important',
+            AppColors.warningLight,
+            tasks.where((t) => urgent(t) && !important(t)).toList()
+          ),
+          (
+            'Eliminate',
+            'Neither',
+            AppColors.mutedLight,
+            tasks.where((t) => !urgent(t) && !important(t)).toList()
+          ),
+        ];
+
+        return GridView.count(
+          crossAxisCount: 2,
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 96),
+          childAspectRatio: 0.78,
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
+          children: quadrants.map((q) {
+            final (title, subtitle, color, items) = q;
+            return Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: TextStyle(
+                            fontWeight: FontWeight.w700, color: color)),
+                    Text(subtitle,
+                        style: TextStyle(
+                            fontSize: 10,
+                            color: Theme.of(context).colorScheme.outline)),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: items.isEmpty
+                          ? Center(
+                              child: Text('Empty',
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .outline)),
+                            )
+                          : ListView(
+                              padding: EdgeInsets.zero,
+                              children: items
+                                  .map((t) => InkWell(
+                                        onTap: () => TaskEditorSheet.show(
+                                            context,
+                                            task: t),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 5),
+                                          child: Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text('• ',
+                                                  style:
+                                                      TextStyle(color: color)),
+                                              Expanded(
+                                                child: Text(
+                                                  t.title,
+                                                  style: const TextStyle(
+                                                      fontSize: 12),
+                                                  maxLines: 2,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ))
+                                  .toList(),
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) =>
+          EmptyState(icon: Icons.error_outline, title: 'Error', message: '$e'),
+    );
+  }
+}
+
+// --- Project drawer ---------------------------------------------------------
+
+class _ProjectDrawer extends ConsumerWidget {
+  const _ProjectDrawer();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final projects = ref.watch(projectsProvider);
+    final selected = ref.watch(taskProjectFilterProvider);
+    final counts = ref.watch(openTasksProvider).valueOrNull ?? const [];
+
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          const DrawerHeader(
+            decoration: BoxDecoration(color: AppColors.taskAccent),
+            child: Align(
+              alignment: Alignment.bottomLeft,
+              child: Text('Projects',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700)),
+            ),
+          ),
+          ListTile(
+            dense: true,
+            leading: const Icon(Icons.all_inbox_outlined, size: 20),
+            title: const Text('All tasks'),
+            selected: selected == null,
+            selectedTileColor: AppColors.taskAccent.withValues(alpha: 0.12),
+            onTap: () {
+              ref.read(taskProjectFilterProvider.notifier).state = null;
+              Navigator.pop(context);
+            },
+          ),
+          const Divider(),
+          projects.maybeWhen(
+            data: (list) => Column(
+              children: list.map((p) {
+                final open =
+                    counts.where((t) => t.projectId == p.id).length;
+                return ListTile(
+                  dense: true,
+                  leading: Icon(AppIcons.project(p.icon),
+                      size: 20, color: Color(p.color)),
+                  title: Text(p.name),
+                  trailing: open == 0
+                      ? null
+                      : Text('$open', style: const TextStyle(fontSize: 12)),
+                  selected: selected == p.id,
+                  selectedTileColor:
+                      AppColors.taskAccent.withValues(alpha: 0.12),
+                  onTap: () {
+                    ref.read(taskProjectFilterProvider.notifier).state = p.id;
+                    Navigator.pop(context);
+                  },
+                  onLongPress: () async {
+                    Navigator.pop(context);
+                    await ref.read(taskRepositoryProvider).deleteProject(p.id);
+                  },
+                );
+              }).toList(),
+            ),
+            orElse: () => const SizedBox.shrink(),
+          ),
+          const Divider(),
+          ListTile(
+            dense: true,
+            leading: const Icon(Icons.add, size: 20),
+            title: const Text('New project'),
+            onTap: () => _createProject(context, ref),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _createProject(BuildContext context, WidgetRef ref) async {
+    final controller = TextEditingController();
+    var color = ColorPickerRow.palette.first;
+    var icon = 'folder';
+
+    final created = await showDialog<bool>(
+      context: context,
+      builder: (_) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('New project'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: controller,
+                autofocus: true,
+                decoration: const InputDecoration(hintText: 'Project name'),
+              ),
+              const SizedBox(height: 16),
+              ColorPickerRow(
+                  selected: color, onChanged: (c) => setState(() => color = c)),
+              const SizedBox(height: 12),
+              IconPickerRow(
+                options: AppIcons.projectIcons,
+                selected: icon,
+                color: Color(color),
+                onChanged: (i) => setState(() => icon = i),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel')),
+            FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Create')),
+          ],
+        ),
+      ),
+    );
+
+    if (created == true && controller.text.trim().isNotEmpty) {
+      await ref
+          .read(taskRepositoryProvider)
+          .createProject(controller.text.trim(), color, icon);
+    }
+    if (context.mounted) Navigator.of(context).maybePop();
+  }
+}
