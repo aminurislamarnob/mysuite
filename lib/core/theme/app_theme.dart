@@ -105,12 +105,12 @@ extension BrandTheme on BuildContext {
 class AppTheme {
   const AppTheme._();
 
-  /// Bangla glyphs are absent from Inter, so the Bengali locale swaps in
-  /// Hind Siliguri. Both are served through google_fonts.
+  /// Bangla glyphs are absent from Bricolage Grotesque, so the Bengali locale
+  /// swaps in Hind Siliguri. Both are served through google_fonts.
   static TextTheme _textTheme(TextTheme base, Color body, String locale) {
     final themed = locale == 'bn'
         ? GoogleFonts.hindSiliguriTextTheme(base)
-        : GoogleFonts.interTextTheme(base);
+        : GoogleFonts.bricolageGrotesqueTextTheme(base);
     return themed.apply(bodyColor: body, displayColor: body).copyWith(
           // The design sets headings in heavy, tight-tracked weights and lets
           // the muted grey carry the supporting copy.
