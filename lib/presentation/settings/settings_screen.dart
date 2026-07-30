@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../core/services/export_service.dart';
 import '../../core/services/notification_service.dart';
@@ -8,6 +9,7 @@ import '../../core/settings/app_settings.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/widgets/brand.dart';
 import '../../core/widgets/common.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -19,19 +21,19 @@ class SettingsScreen extends ConsumerWidget {
     final notifier = ref.read(settingsProvider.notifier);
     final security = ref.read(securityServiceProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
-      body: ListView(
+    return BrandScaffold(
+      header: const BrandTopBar(title: 'Settings', leadingIcon: null),
+      child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 140),
         children: [
           const SectionHeader('Modules'),
-          Card(
+          TintCard(
+            padding: EdgeInsets.zero,
             child: Column(
               children: AppModule.values
-                  .map((m) => SwitchListTile(
-                        title: Text(m.label),
-                        subtitle: Text(m.blurb,
-                            style: const TextStyle(fontSize: 11)),
+                  .map((m) => BrandSwitchTile(
+                        title: m.label,
+                        subtitle: m.blurb,
                         value: settings.isEnabled(m),
                         onChanged: (v) => notifier.toggleModule(m, v),
                       ))
@@ -41,57 +43,54 @@ class SettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: 24),
           const SectionHeader('Appearance'),
-          Card(
+          TintCard(
+            padding: EdgeInsets.zero,
             child: Column(
               children: [
-                ListTile(
+                BrandTile(
                   leading: const AppIcon(AppIcons.themeMode),
                   title: const Text('Theme'),
-                  trailing: SegmentedButton<ThemeMode>(
-                    segments: const [
-                      ButtonSegment(
-                          value: ThemeMode.light,
-                          icon: AppIcon(AppIcons.lightMode, size: 16)),
-                      ButtonSegment(
-                          value: ThemeMode.system,
-                          icon: AppIcon(AppIcons.themeSystem, size: 16)),
-                      ButtonSegment(
-                          value: ThemeMode.dark,
-                          icon: AppIcon(AppIcons.darkMode, size: 16)),
-                    ],
-                    selected: {settings.themeMode},
-                    showSelectedIcon: false,
-                    onSelectionChanged: (s) => notifier.setThemeMode(s.first),
+                  trailing: BrandSegmented<ThemeMode>(
+                    options: const {
+                      ThemeMode.light: 'Light',
+                      ThemeMode.system: 'Auto',
+                      ThemeMode.dark: 'Dark',
+                    },
+                    selected: settings.themeMode,
+                    onSelected: notifier.setThemeMode,
                   ),
                 ),
-                SwitchListTile(
-                  secondary: const AppIcon(AppIcons.highContrast),
-                  title: const Text('High contrast'),
+                BrandSwitchTile(
+                  leading: const AppIcon(AppIcons.highContrast),
+                  title: 'High contrast',
                   value: settings.highContrast,
                   onChanged: notifier.setHighContrast,
                 ),
-                SwitchListTile(
-                  secondary: const AppIcon(AppIcons.compact),
-                  title: const Text('Compact density'),
+                BrandSwitchTile(
+                  leading: const AppIcon(AppIcons.compact),
+                  title: 'Compact density',
                   value: settings.compactDensity,
                   onChanged: notifier.setCompactDensity,
                 ),
-                SwitchListTile(
-                  secondary: const AppIcon(AppIcons.reduceMotion),
-                  title: const Text('Reduce motion'),
+                BrandSwitchTile(
+                  leading: const AppIcon(AppIcons.reduceMotion),
+                  title: 'Reduce motion',
                   value: settings.reduceMotion,
                   onChanged: notifier.setReduceMotion,
                 ),
-                ListTile(
+                BrandTile(
                   leading: const AppIcon(AppIcons.textSize),
                   title: const Text('Text size'),
-                  subtitle: Slider(
-                    value: settings.textScale,
-                    min: 0.85,
-                    max: 1.6,
-                    divisions: 15,
-                    label: '${(settings.textScale * 100).round()}%',
-                    onChanged: notifier.setTextScale,
+                  subtitle: Text('${(settings.textScale * 100).round()}%'),
+                  trailing: SizedBox(
+                    width: 150,
+                    child: BrandSlider(
+                      value: settings.textScale,
+                      min: 0.85,
+                      max: 1.6,
+                      divisions: 15,
+                      onChanged: notifier.setTextScale,
+                    ),
                   ),
                 ),
               ],
@@ -100,25 +99,22 @@ class SettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: 24),
           const SectionHeader('Language & region'),
-          Card(
+          TintCard(
+            padding: EdgeInsets.zero,
             child: Column(
               children: [
-                ListTile(
+                BrandTile(
                   leading: const AppIcon(AppIcons.language),
                   title: const Text('Language'),
                   subtitle:
                       Text(settings.locale == 'bn' ? 'বাংলা' : 'English'),
-                  trailing: SegmentedButton<String>(
-                    segments: const [
-                      ButtonSegment(value: 'en', label: Text('EN')),
-                      ButtonSegment(value: 'bn', label: Text('বাং')),
-                    ],
-                    selected: {settings.locale},
-                    showSelectedIcon: false,
-                    onSelectionChanged: (s) => notifier.setLocale(s.first),
+                  trailing: BrandSegmented<String>(
+                    options: const {'en': 'EN', 'bn': 'বাং'},
+                    selected: settings.locale,
+                    onSelected: notifier.setLocale,
                   ),
                 ),
-                ListTile(
+                BrandTile(
                   leading: const AppIcon(AppIcons.cash),
                   title: const Text('Currency symbol'),
                   subtitle: Text(settings.currencySymbol),
@@ -130,10 +126,11 @@ class SettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: 24),
           const SectionHeader('Notifications'),
-          Card(
+          TintCard(
+            padding: EdgeInsets.zero,
             child: Column(
               children: [
-                ListTile(
+                BrandTile(
                   leading: const AppIcon(AppIcons.notificationsActive),
                   title: const Text('Allow notifications'),
                   subtitle: const Text(
@@ -145,22 +142,20 @@ class SettingsScreen extends ConsumerWidget {
                         .read(notificationServiceProvider)
                         .requestPermissions();
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text(granted
+                      brandToast(
+                        context,
+                        granted
                             ? 'Notifications enabled.'
-                            : 'Permission denied — enable it in system settings.'),
-                      ));
+                            : 'Permission denied — enable it in system settings.',
+                      );
                     }
                   },
                 ),
-                SwitchListTile(
-                  secondary: const AppIcon(AppIcons.sleep),
-                  title: const Text('Quiet hours'),
-                  subtitle: Text(
-                    '${Fmt.minutesOfDay(settings.dndStartMinutes)} — '
-                    '${Fmt.minutesOfDay(settings.dndEndMinutes)}',
-                    style: const TextStyle(fontSize: 11),
-                  ),
+                BrandSwitchTile(
+                  leading: const AppIcon(AppIcons.sleep),
+                  title: 'Quiet hours',
+                  subtitle: '${Fmt.minutesOfDay(settings.dndStartMinutes)} — '
+                      '${Fmt.minutesOfDay(settings.dndEndMinutes)}',
                   value: settings.dndEnabled,
                   onChanged: (v) => notifier.setDnd(v),
                 ),
@@ -168,7 +163,7 @@ class SettingsScreen extends ConsumerWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: ListTile(
+                        child: BrandTile(
                           title: const Text('From',
                               style: TextStyle(fontSize: 12)),
                           subtitle:
@@ -184,7 +179,7 @@ class SettingsScreen extends ConsumerWidget {
                         ),
                       ),
                       Expanded(
-                        child: ListTile(
+                        child: BrandTile(
                           title:
                               const Text('To', style: TextStyle(fontSize: 12)),
                           subtitle:
@@ -207,14 +202,14 @@ class SettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: 24),
           const SectionHeader('Security'),
-          Card(
+          TintCard(
+            padding: EdgeInsets.zero,
             child: Column(
               children: [
-                SwitchListTile(
-                  secondary: const AppIcon(AppIcons.lock),
-                  title: const Text('Lock the app'),
-                  subtitle: const Text('Biometric or PIN on launch',
-                      style: TextStyle(fontSize: 11)),
+                BrandSwitchTile(
+                  leading: const AppIcon(AppIcons.lock),
+                  title: 'Lock the app',
+                  subtitle: 'Biometric or PIN on launch',
                   value: settings.appLockEnabled,
                   onChanged: (v) async {
                     if (v && !await security.canUseBiometrics() &&
@@ -227,40 +222,43 @@ class SettingsScreen extends ConsumerWidget {
                     notifier.setAppLock(v);
                   },
                 ),
-                ListTile(
+                BrandTile(
                   leading: const AppIcon(AppIcons.pin),
                   title: Text(security.hasPin ? 'Change PIN' : 'Set a PIN'),
                   trailing: security.hasPin
-                      ? IconButton(
-                          icon: const AppIcon(AppIcons.delete),
+                      ? CircleIconButton(
+                          icon: AppIcons.delete,
+                          tooltip: 'Remove PIN',
+                          size: 36,
                           onPressed: () async {
                             await security.clearPin();
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('PIN removed.')),
-                              );
+                              brandToast(context, 'PIN removed.');
                             }
                           },
                         )
                       : const AppIcon(AppIcons.chevronRight),
                   onTap: () => _setPin(context, security),
                 ),
-                ListTile(
+                BrandTile(
                   leading: const AppIcon(AppIcons.focus),
                   title: const Text('Auto-lock after'),
                   subtitle: Text('${settings.autoLockMinutes} minutes'),
                   onTap: () => _pickAutoLock(context, notifier),
                 ),
-                ExpansionTile(
-                  leading: const AppIcon(AppIcons.folderSpecial),
-                  title: const Text('Lock individual modules'),
-                  children: AppModule.values
-                      .map((m) => SwitchListTile(
-                            title: Text(m.label),
+                FAccordion(
+                  children: [
+                    FAccordionItem(
+                      title: const Text('Lock individual modules'),
+                      child: Column(children: AppModule.values
+                      .map((m) => BrandSwitchTile(
+                            title: m.label,
                             value: settings.lockedModules.contains(m),
                             onChanged: (v) => notifier.toggleModuleLock(m, v),
                           ))
-                      .toList(),
+                          .toList()),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -268,7 +266,8 @@ class SettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: 24),
           const SectionHeader('Data'),
-          Card(
+          TintCard(
+            padding: EdgeInsets.zero,
             child: Column(
               children: [
                 _exportTile(
@@ -313,23 +312,22 @@ class SettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: 24),
           const SectionHeader('About'),
-          Card(
+          TintCard(
+            padding: EdgeInsets.zero,
             child: Column(
               children: [
-                const ListTile(
+                const BrandTile(
                   leading: AppIcon(AppIcons.info),
                   title: Text('mySuite'),
                   subtitle: Text('Version 1.0.0 · offline-first'),
                 ),
-                ListTile(
+                BrandTile(
                   leading: const AppIcon(AppIcons.notificationsOff),
                   title: const Text('Clear all scheduled reminders'),
                   onTap: () async {
                     await ref.read(notificationServiceProvider).cancelAll();
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Reminders cleared.')),
-                      );
+                      brandToast(context, 'Reminders cleared.');
                     }
                   },
                 ),
@@ -349,7 +347,7 @@ class SettingsScreen extends ConsumerWidget {
     String? subtitle,
     required Future Function(ExportService) build,
   }) {
-    return ListTile(
+    return BrandTile(
       leading: AppIcon(icon),
       title: Text(title),
       subtitle: subtitle == null
@@ -363,26 +361,20 @@ class SettingsScreen extends ConsumerWidget {
           await service.shareFile(file);
         } on Exception catch (e) {
           if (context.mounted) {
-            ScaffoldMessenger.of(context)
-                .showSnackBar(SnackBar(content: Text('Export failed: $e')));
+            brandToast(context, 'Export failed: $e');
           }
         }
       },
     );
   }
 
-  Future<int?> _pickTime(BuildContext context, int current) async {
-    final t = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay(hour: current ~/ 60, minute: current % 60),
-    );
-    return t == null ? null : t.hour * 60 + t.minute;
-  }
+  Future<int?> _pickTime(BuildContext context, int current) =>
+      brandTimePicker(context, initialMinutes: current, title: 'Quiet hours');
 
   Future<void> _pickCurrency(
       BuildContext context, SettingsNotifier notifier) async {
     const options = ['৳', '\$', '€', '₹', '£', '¥'];
-    final picked = await showModalBottomSheet<String>(
+    final picked = await brandSheet<String>(
       context: context,
       builder: (_) => SheetScaffold(
         title: 'Currency symbol',
@@ -390,9 +382,10 @@ class SettingsScreen extends ConsumerWidget {
           spacing: 12,
           runSpacing: 12,
           children: options
-              .map((s) => ActionChip(
-                    label: Text(s, style: const TextStyle(fontSize: 18)),
-                    onPressed: () => Navigator.pop(context, s),
+              .map((s) => Pill(
+                    label: s,
+                    color: Theme.of(context).colorScheme.primary,
+                    onTap: () => Navigator.pop(context, s),
                   ))
               .toList(),
         ),
@@ -403,13 +396,13 @@ class SettingsScreen extends ConsumerWidget {
 
   Future<void> _pickAutoLock(
       BuildContext context, SettingsNotifier notifier) async {
-    final picked = await showModalBottomSheet<int>(
+    final picked = await brandSheet<int>(
       context: context,
       builder: (_) => SheetScaffold(
         title: 'Auto-lock after',
         child: Column(
           children: [0, 1, 5, 15, 30]
-              .map((m) => ListTile(
+              .map((m) => BrandTile(
                     title: Text(m == 0 ? 'Immediately' : '$m minutes'),
                     onTap: () => Navigator.pop(context, m),
                   ))
@@ -425,51 +418,57 @@ class SettingsScreen extends ConsumerWidget {
     final confirm = TextEditingController();
     String? error;
 
-    final result = await showDialog<bool>(
+    final result = await showFDialog<bool>(
       context: context,
-      builder: (_) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Set a PIN'),
-          content: Column(
+      builder: (_, style, animation) => StatefulBuilder(
+        builder: (context, setState) => FDialog(
+          animation: animation,
+          style: style,
+          builder: (context, _) => Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TextField(
+              Text('Set a PIN',
+                  style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 16),
+              BrandField(
                 controller: controller,
+                label: 'New PIN',
                 autofocus: true,
-                obscureText: true,
+                obscure: true,
                 keyboardType: TextInputType.number,
-                maxLength: 6,
-                decoration: const InputDecoration(labelText: 'New PIN'),
               ),
-              TextField(
+              const SizedBox(height: 12),
+              BrandField(
                 controller: confirm,
-                obscureText: true,
+                label: 'Confirm PIN',
+                helper: error,
+                obscure: true,
                 keyboardType: TextInputType.number,
-                maxLength: 6,
-                decoration: InputDecoration(
-                    labelText: 'Confirm PIN', errorText: error),
+              ),
+              const SizedBox(height: 20),
+              BrandButton(
+                label: 'Save',
+                onPressed: () {
+                  if (controller.text.length < 4) {
+                    setState(() => error = 'Use at least 4 digits');
+                    return;
+                  }
+                  if (controller.text != confirm.text) {
+                    setState(() => error = 'PINs do not match');
+                    return;
+                  }
+                  Navigator.pop(context, true);
+                },
+              ),
+              const SizedBox(height: 8),
+              BrandButton(
+                label: 'Cancel',
+                kind: BrandButtonKind.ghost,
+                onPressed: () => Navigator.pop(context, false),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel')),
-            FilledButton(
-              onPressed: () {
-                if (controller.text.length < 4) {
-                  setState(() => error = 'Use at least 4 digits');
-                  return;
-                }
-                if (controller.text != confirm.text) {
-                  setState(() => error = 'PINs do not match');
-                  return;
-                }
-                Navigator.pop(context, true);
-              },
-              child: const Text('Save'),
-            ),
-          ],
         ),
       ),
     );
@@ -477,9 +476,7 @@ class SettingsScreen extends ConsumerWidget {
     if (result == true) {
       await security.setPin(controller.text);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('PIN saved.')),
-        );
+        brandToast(context, 'PIN saved.');
       }
       return true;
     }

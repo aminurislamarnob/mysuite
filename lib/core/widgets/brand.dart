@@ -157,7 +157,10 @@ class CircleIconButton extends StatelessWidget {
 /// bold centred title and an optional trailing circle.
 class BrandTopBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
-  final HugeIconData leadingIcon;
+
+  /// Pass null on a root page, which has nothing to pop back to.
+  final HugeIconData? leadingIcon;
+
   final VoidCallback? onLeading;
   final HugeIconData? trailingIcon;
   final VoidCallback? onTrailing;
@@ -194,8 +197,9 @@ class BrandTopBar extends StatelessWidget implements PreferredSizeWidget {
         titleTextStyle: .value(titleStyle ?? const TextStyle()),
       ),
       prefixes: [
-        CircleIconButton(
-            icon: leadingIcon, onPressed: pop, tooltip: 'Back', size: 40),
+        if (leadingIcon != null)
+          CircleIconButton(
+              icon: leadingIcon!, onPressed: pop, tooltip: 'Back', size: 40),
       ],
       suffixes: [
         if (trailingIcon != null)
@@ -205,7 +209,7 @@ class BrandTopBar extends StatelessWidget implements PreferredSizeWidget {
             tooltip: trailingTooltip,
             size: 40,
           )
-        else
+        else if (leadingIcon != null)
           // Balances the leading circle so the title stays optically centred.
           const SizedBox(width: 40),
       ],

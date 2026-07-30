@@ -626,6 +626,15 @@ class BrandTile extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.field),
         ),
+        contentStyle: .delta(
+          // forui tints a row's leading glyph with the primary colour. The brand
+          // keeps them muted — the Material listTileTheme used `iconColor: muted`
+          // — so a row of settings does not read as a column of coral. An
+          // explicit colour on the glyph still wins over this.
+          prefixIconStyle: .delta([
+            .all(IconThemeDataDelta.delta(color: context.muted, size: 24)),
+          ]),
+        ),
       ),
     );
   }
@@ -748,6 +757,15 @@ class BrandSwitchTile extends StatelessWidget {
         value: value,
         onChange: onChanged,
         semanticsLabel: title,
+        // forui's off-track is `colors.border`, which is the brand hairline —
+        // invisible against the peach card these rows sit on. Material's switch
+        // theme compensated with a muted track outline; forui's style has no
+        // outline, so the off-track itself carries the contrast.
+        style: .delta(
+          trackColor: .delta([
+            .base(context.muted.withValues(alpha: 0.28)),
+          ]),
+        ),
       ),
       onTap: onChanged == null ? null : () => onChanged!(!value),
     );
@@ -834,6 +852,128 @@ class BrandFab extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A value slider built on [FSlider].
+///
+/// [FSlider] works in track percentages; the screens think in real ranges
+/// (0.85–1.6 for text scale, 5–120 for a dose count), so the conversion lives
+/// here rather than at each call site.
+class BrandSlider extends StatefulWidget {
+  final double value;
+  final double min;
+  final double max;
+
+  /// Number of steps between [min] and [max]. Null for a continuous slider.
+  final int? divisions;
+
+  final ValueChanged<double> onChanged;
+
+  const BrandSlider({
+    super.key,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.onChanged,
+    this.divisions,
+  });
+
+  @override
+  State<BrandSlider> createState() => _BrandSliderState();
+}
+
+class _BrandSliderState extends State<BrandSlider> {
+  late FContinuousSliderController _controller;
+
+  double get _fraction =>
+      ((widget.value - widget.min) / (widget.max - widget.min)).clamp(0.0, 1.0);
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = _build();
+  }
+
+  FContinuousSliderController _build() => FContinuousSliderController(
+        value: FSliderValue(max: _fraction),
+        stepPercentage:
+            widget.divisions == null ? 0.05 : 1 / widget.divisions!,
+      );
+
+  @override
+  void didUpdateWidget(BrandSlider old) {
+    super.didUpdateWidget(old);
+    // Rebuild the controller only when the value moved from outside, otherwise
+    // dragging would fight its own state.
+    if (old.value != widget.value &&
+        (_controller.value.max - _fraction).abs() > 0.001) {
+      _controller.dispose();
+      _controller = _build();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FSlider(
+      control: .managedContinuous(
+        controller: _controller,
+        onChange: (v) => widget.onChanged(
+          widget.min + v.max * (widget.max - widget.min),
+        ),
+      ),
+    );
+  }
+}
+
+/// Picks a time of day, returning minutes past midnight.
+///
+/// forui's time picker is a wheel widget rather than a modal, so it is hosted in
+/// the brand's own sheet with a confirm action.
+Future<int?> brandTimePicker(
+  BuildContext context, {
+  required int initialMinutes,
+  String title = 'Pick a time',
+}) async {
+  final controller = FTimePickerController(
+    time: FTime(initialMinutes ~/ 60, initialMinutes % 60),
+  );
+
+  final result = await brandSheet<int>(
+    context: context,
+    builder: (sheetContext) => SheetScaffold(
+      title: title,
+      actions: [
+        FButton(
+          variant: .ghost,
+          size: .sm,
+          mainAxisSize: .min,
+          onPress: () => Navigator.of(sheetContext).pop(
+            controller.value.hour * 60 + controller.value.minute,
+          ),
+          child: Text(
+            'Done',
+            style: TextStyle(
+              color: Theme.of(sheetContext).colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+      child: SizedBox(
+        height: 220,
+        child: FTimePicker(control: .managed(controller: controller)),
+      ),
+    ),
+  );
+
+  controller.dispose();
+  return result;
 }
 
 /// Shows a bottom sheet with the brand's chrome.
