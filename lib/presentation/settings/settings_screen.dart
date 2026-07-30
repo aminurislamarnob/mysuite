@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:forui/forui.dart';
 
 import '../../core/services/export_service.dart';
 import '../../core/services/notification_service.dart';
@@ -445,58 +444,58 @@ class SettingsScreen extends ConsumerWidget {
   Future<bool> _setPin(BuildContext context, SecurityService security) async {
     final controller = TextEditingController();
     final confirm = TextEditingController();
-    String? error;
+    String? lengthError;
+    String? matchError;
 
-    final result = await showFDialog<bool>(
-      context: context,
-      builder: (_, style, animation) => StatefulBuilder(
-        builder: (context, setState) => FDialog(
-          animation: animation,
-          style: style,
-          builder: (context, _) => Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text('Set a PIN', style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 16),
-              BrandField(
-                controller: controller,
-                label: 'New PIN',
-                autofocus: true,
-                obscure: true,
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 12),
-              BrandField(
-                controller: confirm,
-                label: 'Confirm PIN',
-                helper: error,
-                obscure: true,
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 20),
-              BrandButton(
-                label: 'Save',
-                onPressed: () {
-                  if (controller.text.length < 4) {
-                    setState(() => error = 'Use at least 4 digits');
-                    return;
-                  }
-                  if (controller.text != confirm.text) {
-                    setState(() => error = 'PINs do not match');
-                    return;
-                  }
-                  Navigator.pop(context, true);
-                },
-              ),
-              const SizedBox(height: 8),
-              BrandButton(
-                label: 'Cancel',
-                kind: BrandButtonKind.ghost,
-                onPressed: () => Navigator.pop(context, false),
-              ),
-            ],
-          ),
+    // The buttons live in the body rather than in `actions` because they need
+    // the StatefulBuilder's setState to put the validation message on a field.
+    final result = await brandDialog<bool>(
+      context,
+      title: 'Set a PIN',
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            BrandField(
+              controller: controller,
+              label: 'New PIN',
+              error: lengthError,
+              autofocus: true,
+              obscure: true,
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 12),
+            BrandField(
+              controller: confirm,
+              label: 'Confirm PIN',
+              error: matchError,
+              obscure: true,
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 20),
+            BrandButton(
+              label: 'Save',
+              onPressed: () {
+                final short = controller.text.length < 4;
+                final mismatch = !short && controller.text != confirm.text;
+                if (short || mismatch) {
+                  setState(() {
+                    lengthError = short ? 'Use at least 4 digits' : null;
+                    matchError = mismatch ? 'PINs do not match' : null;
+                  });
+                  return;
+                }
+                Navigator.pop(context, true);
+              },
+            ),
+            const SizedBox(height: 8),
+            BrandButton(
+              label: 'Cancel',
+              kind: BrandButtonKind.ghost,
+              onPressed: () => Navigator.pop(context, false),
+            ),
+          ],
         ),
       ),
     );

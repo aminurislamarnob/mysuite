@@ -83,8 +83,42 @@ FThemeData brandForuiThemeFrom(BrandTokens t) {
     // The same instance the Material theme registers, so `context.brand` and
     // forui-side lookups can never disagree.
     extensions: [t.brand],
+    dialogStyle: _dialogStyle(colors, typography, style),
   );
 }
+
+/// The dialog surface.
+///
+/// forui puts a dialog on `card` — the peach tint — which is also what a
+/// `BrandField` fills with, so the inputs of a form dialog disappear into their
+/// own surface. The `dialogTheme` this replaces used the page background and the
+/// card radius; both come back here. Sheets already agree, through
+/// `SheetScaffold`'s own `scaffoldBackgroundColor` surface.
+///
+/// Built by hand rather than through `FThemeData.copyWith`: that method does not
+/// forward `icons`, so routing the theme through it silently resets every glyph
+/// to Lucide.
+FDialogStyle _dialogStyle(
+  FColors colors,
+  FTypography typography,
+  FStyle style,
+) => FDialogStyleDelta.delta(
+  decoration: DecorationDelta.shapeDelta(
+    color: colors.background,
+    shape: RoundedSuperellipseBorder(
+      side: BorderSide(color: colors.border, width: style.borderWidth),
+      borderRadius: BorderRadius.circular(AppRadii.card),
+    ),
+  ),
+)(
+  FDialogStyle.inherit(
+    style: style,
+    colors: colors,
+    typography: typography,
+    hapticFeedback: const FHapticFeedback(),
+    touch: true,
+  ),
+);
 
 /// The tab strip, restyled as a row of [Pill]s.
 ///

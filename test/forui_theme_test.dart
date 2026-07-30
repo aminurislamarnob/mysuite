@@ -58,6 +58,51 @@ void main() {
     });
   });
 
+  group('brandForuiTheme dialogs', () {
+    testWidgets('sit on the page background, not the card tint', (tester) async {
+      // A BrandField fills with the same tint forui's dialogs default to, so on
+      // `card` the inputs of a form dialog vanish into their own surface.
+      for (final brightness in Brightness.values) {
+        final theme = brandForuiTheme(brightness: brightness);
+        final decoration = theme.dialogStyle.decoration as ShapeDecoration;
+
+        expect(decoration.color, theme.colors.background);
+        expect(decoration.color, isNot(theme.colors.card));
+      }
+    });
+
+    testWidgets('keep the brand card radius', (tester) async {
+      final theme = brandForuiTheme(brightness: Brightness.light);
+      final shape =
+          (theme.dialogStyle.decoration as ShapeDecoration).shape
+              as RoundedSuperellipseBorder;
+
+      expect(
+        shape.borderRadius.resolve(TextDirection.ltr).topLeft.x,
+        AppRadii.card,
+      );
+    });
+
+    testWidgets('styling a dialog does not revert the icons to Lucide',
+        (tester) async {
+      // `FThemeData.copyWith` drops `icons`, so reaching the dialog style
+      // through it would silently undo the Hugeicons override. Guarded here
+      // because the only symptom is a wrong glyph deep inside forui's chrome.
+      final theme = brandForuiTheme(brightness: Brightness.light);
+
+      await tester.pumpWidget(MaterialApp(
+        home: FTheme(
+          data: theme,
+          child: Builder(
+            builder: (context) => theme.icons.chevronDown(context),
+          ),
+        ),
+      ));
+
+      expect(find.byType(HugeIcon), findsOneWidget);
+    });
+  });
+
   group('brandForuiTheme shape and density', () {
     testWidgets('the radius ramp is pinned to the brand tokens', (tester) async {
       final radii = brandForuiTheme(brightness: Brightness.light).style.borderRadius;
