@@ -21,27 +21,29 @@ class MedicineScreen extends ConsumerStatefulWidget {
   ConsumerState<MedicineScreen> createState() => _MedicineScreenState();
 }
 
-class _MedicineScreenState extends ConsumerState<MedicineScreen>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabs;
-
+class _MedicineScreenState extends ConsumerState<MedicineScreen> {
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 5, vsync: this);
   }
 
   @override
   void dispose() {
-    _tabs.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Medicine'),
+    return BrandScaffold(
+      header: BrandTopBar(
+        title: 'Medicine',
+        // The profile switcher was a Scaffold drawer opened by the AppBar
+        // hamburger; FScaffold has neither, so it is a left-hand sheet now.
+        leadingIcon: AppIcons.person,
+        onLeading: () => brandSideSheet(
+          context: context,
+          builder: (_) => const _ProfileDrawer(),
+        ),
         actions: [
           CircleIconButton(
             icon: AppIcons.symptom,
@@ -56,36 +58,24 @@ class _MedicineScreenState extends ConsumerState<MedicineScreen>
             onPressed: _exportSchedule,
           ),
         ],
-        bottom: TabBar(
-          controller: _tabs,
-          isScrollable: true,
-          tabAlignment: TabAlignment.start,
-          tabs: const [
-            Tab(text: 'Today'),
-            Tab(text: 'Calendar'),
-            Tab(text: 'Timeline'),
-            Tab(text: 'Table'),
-            Tab(text: 'Medicines'),
-          ],
-        ),
       ),
-      drawer: const _ProfileDrawer(),
-      body: TabBarView(
-        controller: _tabs,
-        children: const [
-          _TodayTab(),
-          _CalendarTab(),
-          _TimelineTab(),
-          _TableTab(),
-          _MedicinesTab(),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingAction: BrandFab(
+        icon: AppIcons.add,
+        tooltip: 'Add medicine',
         onPressed: () => MedicineEditorSheet.show(context),
-        backgroundColor: AppColors.medicineAccent,
-        foregroundColor: Colors.white,
-        icon: const AppIcon(AppIcons.add),
-        label: const Text('Add medicine'),
+      ),
+      // FTabs owns the strip and the views together, so the strip moves out of
+      // the header into the body.
+      child: FTabs(
+        scrollable: true,
+        expands: true,
+        children: [
+          const FTabEntry(label: Text('Today'), child: _TodayTab()),
+          const FTabEntry(label: Text('Calendar'), child: _CalendarTab()),
+          const FTabEntry(label: Text('Timeline'), child: _TimelineTab()),
+          const FTabEntry(label: Text('Table'), child: _TableTab()),
+          const FTabEntry(label: Text('Medicines'), child: _MedicinesTab()),
+        ],
       ),
     );
   }
@@ -350,61 +340,68 @@ class DoseTile extends ConsumerWidget {
         !skipped &&
         view.at.isBefore(DateTime.now().subtract(const Duration(hours: 1)));
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: BrandTile(
-        onLongPress: () => repo.setDoseStatus(view.dose.id, DoseStatus.skipped),
-        leading: Container(
-          padding: const EdgeInsets.all(9),
-          decoration: BoxDecoration(
-            color: AppColors.medicineAccent.withValues(alpha: 0.12),
-            shape: BoxShape.circle,
-          ),
-          child: AppIcon(
-            AppIcons.medicineForm(view.medicine.form),
-            color: AppColors.medicineAccent,
-            size: 20,
-          ),
-        ),
-        title: Text(
-          view.medicine.name,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            decoration: skipped ? TextDecoration.lineThrough : null,
-            color: skipped ? muted : null,
-          ),
-        ),
-        subtitle: Text(
-          [
-            view.dosageLabel,
-            if (view.mealLabel.isNotEmpty) view.mealLabel,
-            if (showDate) Fmt.dayMonth(view.at),
-            if (missed) 'Missed',
-          ].join(' · '),
-          style: TextStyle(
-            fontSize: 11,
-            color: missed ? AppColors.dangerLight : muted,
-          ),
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              Fmt.time(view.at),
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: TintCard(
+        padding: EdgeInsets.zero,
+        child: BrandTile(
+          onLongPress: () =>
+              repo.setDoseStatus(view.dose.id, DoseStatus.skipped),
+          leading: Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              color: AppColors.medicineAccent.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
             ),
-            const SizedBox(width: 6),
-            CircleIconButton(
-              icon: taken ? AppIcons.checkCircle : AppIcons.circle,
-              tooltip: taken ? 'Mark not taken' : 'Mark taken',
-              color: taken ? AppColors.successLight : muted,
-              size: 40,
-              onPressed: () => repo.setDoseStatus(
-                view.dose.id,
-                taken ? DoseStatus.pending : DoseStatus.taken,
+            child: AppIcon(
+              AppIcons.medicineForm(view.medicine.form),
+              color: AppColors.medicineAccent,
+              size: 20,
+            ),
+          ),
+          title: Text(
+            view.medicine.name,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              decoration: skipped ? TextDecoration.lineThrough : null,
+              color: skipped ? muted : null,
+            ),
+          ),
+          subtitle: Text(
+            [
+              view.dosageLabel,
+              if (view.mealLabel.isNotEmpty) view.mealLabel,
+              if (showDate) Fmt.dayMonth(view.at),
+              if (missed) 'Missed',
+            ].join(' · '),
+            style: TextStyle(
+              fontSize: 11,
+              color: missed ? AppColors.dangerLight : muted,
+            ),
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                Fmt.time(view.at),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(width: 6),
+              CircleIconButton(
+                icon: taken ? AppIcons.checkCircle : AppIcons.circle,
+                tooltip: taken ? 'Mark not taken' : 'Mark taken',
+                color: taken ? AppColors.successLight : muted,
+                size: 40,
+                onPressed: () => repo.setDoseStatus(
+                  view.dose.id,
+                  taken ? DoseStatus.pending : DoseStatus.taken,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -830,60 +827,66 @@ class _MedicinesTab extends ConsumerWidget {
                 final spec = MedicineRepository.specOf(m);
                 final total = ScheduleGenerator.totalDoses(spec);
                 final low = m.inventory <= m.lowStockThreshold;
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: BrandTile(
-                    onTap: () => MedicineEditorSheet.show(context, medicine: m),
-                    leading: Container(
-                      padding: const EdgeInsets.all(9),
-                      decoration: BoxDecoration(
-                        color: AppColors.medicineAccent.withValues(alpha: 0.12),
-                        shape: BoxShape.circle,
-                      ),
-                      child: AppIcon(
-                        AppIcons.medicineForm(m.form),
-                        color: AppColors.medicineAccent,
-                        size: 20,
-                      ),
-                    ),
-                    title: Text(
-                      m.name,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${DoseView.trimAmount(m.dosage)} ${m.dosageUnit} · '
-                          '$total doses · until ${Fmt.dayMonth(m.endDate)}',
-                          style: TextStyle(fontSize: 11, color: muted),
-                        ),
-                        Text(
-                          '${m.inventory} ${m.dosageUnit} in stock',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: low ? AppColors.warningLight : muted,
-                            fontWeight: low ? FontWeight.w600 : null,
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: TintCard(
+                    padding: EdgeInsets.zero,
+                    child: BrandTile(
+                      onTap: () =>
+                          MedicineEditorSheet.show(context, medicine: m),
+                      leading: Container(
+                        padding: const EdgeInsets.all(9),
+                        decoration: BoxDecoration(
+                          color: AppColors.medicineAccent.withValues(
+                            alpha: 0.12,
                           ),
+                          shape: BoxShape.circle,
                         ),
-                      ],
-                    ),
-                    trailing: PopupMenuButton<String>(
-                      onSelected: (value) async {
-                        switch (value) {
-                          case 'refill':
-                            await _refill(context, ref, m);
-                          case 'delete':
-                            await repo.deleteMedicine(m.id);
-                        }
-                      },
-                      itemBuilder: (_) => const [
-                        PopupMenuItem(
-                          value: 'refill',
-                          child: Text('Add stock'),
+                        child: AppIcon(
+                          AppIcons.medicineForm(m.form),
+                          color: AppColors.medicineAccent,
+                          size: 20,
                         ),
-                        PopupMenuItem(value: 'delete', child: Text('Delete')),
-                      ],
+                      ),
+                      title: Text(
+                        m.name,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${DoseView.trimAmount(m.dosage)} ${m.dosageUnit} · '
+                            '$total doses · until ${Fmt.dayMonth(m.endDate)}',
+                            style: TextStyle(fontSize: 11, color: muted),
+                          ),
+                          Text(
+                            '${m.inventory} ${m.dosageUnit} in stock',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: low ? AppColors.warningLight : muted,
+                              fontWeight: low ? FontWeight.w600 : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                      trailing: PopupMenuButton<String>(
+                        onSelected: (value) async {
+                          switch (value) {
+                            case 'refill':
+                              await _refill(context, ref, m);
+                            case 'delete':
+                              await repo.deleteMedicine(m.id);
+                          }
+                        },
+                        itemBuilder: (_) => const [
+                          PopupMenuItem(
+                            value: 'refill',
+                            child: Text('Add stock'),
+                          ),
+                          PopupMenuItem(value: 'delete', child: Text('Delete')),
+                        ],
+                      ),
                     ),
                   ),
                 );

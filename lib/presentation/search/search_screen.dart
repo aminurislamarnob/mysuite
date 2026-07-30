@@ -36,70 +36,85 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         .where((k) => settings.isEnabled(k.module))
         .toList();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: TextField(
-          controller: _controller,
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'Search everything…',
-            border: InputBorder.none,
-            enabledBorder: InputBorder.none,
-            focusedBorder: InputBorder.none,
-            filled: false,
-          ),
-          onChanged: (v) => ref.read(searchQueryProvider.notifier).state = v,
-        ),
-        actions: [
-          if (query.isNotEmpty)
-            CircleIconButton(
-              icon: AppIcons.close,
-              size: 40,
-              onPressed: () {
-                _controller.clear();
-                ref.read(searchQueryProvider.notifier).state = '';
-              },
-            ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(50),
-          child: SizedBox(
-            height: 50,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: Pill(
-                    label: 'All',
-                    selected: filter == null,
-                    color: Theme.of(context).colorScheme.primary,
-                    onTap: () =>
-                        ref.read(searchKindFilterProvider.notifier).state =
-                            null,
+    // The search field and its kind filters are the header, so they are built
+    // here rather than through BrandTopBar, which centres a title.
+    return BrandScaffold(
+      header: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+              child: Row(
+                children: [
+                  CircleIconButton(
+                    icon: AppIcons.back,
+                    tooltip: 'Back',
+                    size: 40,
+                    onPressed: () => Navigator.maybePop(context),
                   ),
-                ),
-                ...kinds.map(
-                  (k) => Padding(
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: BrandField(
+                      controller: _controller,
+                      hint: 'Search everything…',
+                      autofocus: true,
+                      textInputAction: TextInputAction.search,
+                      onChanged: (v) =>
+                          ref.read(searchQueryProvider.notifier).state = v,
+                    ),
+                  ),
+                  if (query.isNotEmpty)
+                    CircleIconButton(
+                      icon: AppIcons.close,
+                      tooltip: 'Clear',
+                      size: 40,
+                      onPressed: () {
+                        _controller.clear();
+                        ref.read(searchQueryProvider.notifier).state = '';
+                      },
+                    ),
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 50,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                children: [
+                  Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: Pill(
-                      label: k.label,
-                      icon: k.icon,
-                      selected: filter == k,
+                      label: 'All',
+                      selected: filter == null,
                       color: Theme.of(context).colorScheme.primary,
                       onTap: () =>
                           ref.read(searchKindFilterProvider.notifier).state =
-                              filter == k ? null : k,
+                              null,
                     ),
                   ),
-                ),
-              ],
+                  ...kinds.map(
+                    (k) => Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Pill(
+                        label: k.label,
+                        icon: k.icon,
+                        selected: filter == k,
+                        color: Theme.of(context).colorScheme.primary,
+                        onTap: () =>
+                            ref.read(searchKindFilterProvider.notifier).state =
+                                filter == k ? null : k,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
-      body: results.when(
+      child: results.when(
         data: (hits) {
           if (query.trim().length < 2) {
             return const EmptyState(

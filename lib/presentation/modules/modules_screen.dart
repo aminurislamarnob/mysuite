@@ -32,9 +32,9 @@ class ModulesScreen extends ConsumerWidget {
         .where((m) => !settings.isEnabled(m))
         .toList();
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Modules')),
-      body: enabled.isEmpty
+    return BrandScaffold(
+      header: BrandTopBar(title: 'Modules', leadingIcon: AppIcons.back),
+      child: enabled.isEmpty
           ? const EmptyState(
               icon: AppIcons.modules,
               title: 'Everything is switched off',

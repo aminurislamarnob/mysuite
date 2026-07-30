@@ -24,27 +24,23 @@ class ExpensesScreen extends ConsumerStatefulWidget {
   ConsumerState<ExpensesScreen> createState() => _ExpensesScreenState();
 }
 
-class _ExpensesScreenState extends ConsumerState<ExpensesScreen>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabs;
-
+class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 4, vsync: this);
   }
 
   @override
   void dispose() {
-    _tabs.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Expenses'),
+    return BrandScaffold(
+      header: BrandTopBar(
+        title: 'Expenses',
+        leadingIcon: AppIcons.back,
         actions: [
           CircleIconButton(
             icon: AppIcons.scan,
@@ -59,31 +55,22 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen>
             onPressed: _showExportSheet,
           ),
         ],
-        bottom: TabBar(
-          controller: _tabs,
-          tabs: const [
-            Tab(text: 'Overview'),
-            Tab(text: 'Reports'),
-            Tab(text: 'Budgets'),
-            Tab(text: 'Bills'),
-          ],
-        ),
       ),
-      body: TabBarView(
-        controller: _tabs,
-        children: const [
-          _OverviewTab(),
-          _ReportsTab(),
-          _BudgetsTab(),
-          _BillsTab(),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingAction: BrandFab(
+        icon: AppIcons.add,
+        tooltip: 'Add transaction',
         onPressed: () => ExpenseEntrySheet.show(context),
-        backgroundColor: AppColors.expenseAccent,
-        foregroundColor: Colors.white,
-        icon: const AppIcon(AppIcons.add),
-        label: const Text('Add'),
+      ),
+      // FTabs owns the strip and the views together, so the strip moves out of
+      // the header into the body.
+      child: FTabs(
+        expands: true,
+        children: [
+          const FTabEntry(label: Text('Overview'), child: _OverviewTab()),
+          const FTabEntry(label: Text('Reports'), child: _ReportsTab()),
+          const FTabEntry(label: Text('Budgets'), child: _BudgetsTab()),
+          const FTabEntry(label: Text('Bills'), child: _BillsTab()),
+        ],
       ),
     );
   }
@@ -190,7 +177,8 @@ class _OverviewTab extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
       children: [
-        Card(
+        TintCard(
+          padding: EdgeInsets.zero,
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -831,44 +819,49 @@ class _BillsTab extends ConsumerWidget {
                         b.nextDueDate,
                       ).difference(Fmt.dateOnly(DateTime.now())).inDays;
                       final overdue = dueInDays < 0;
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        child: BrandTile(
-                          leading: AppIcon(
-                            b.isSubscription
-                                ? AppIcons.subscription
-                                : AppIcons.bills,
-                            color: overdue
-                                ? AppColors.dangerLight
-                                : AppColors.expenseAccent,
-                          ),
-                          title: Text(
-                            b.name,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          subtitle: Text(
-                            '${Fmt.money(b.amount, currency)} · ${b.period} · '
-                            'due ${Fmt.relativeDay(b.nextDueDate)}',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: overdue ? AppColors.dangerLight : null,
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: TintCard(
+                          padding: EdgeInsets.zero,
+                          child: BrandTile(
+                            leading: AppIcon(
+                              b.isSubscription
+                                  ? AppIcons.subscription
+                                  : AppIcons.bills,
+                              color: overdue
+                                  ? AppColors.dangerLight
+                                  : AppColors.expenseAccent,
                             ),
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              BrandButton(
-                                label: 'Pay',
-                                kind: BrandButtonKind.ghost,
-                                expand: false,
-                                onPressed: () => repo.payRecurring(b),
+                            title: Text(
+                              b.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
                               ),
-                              CircleIconButton(
-                                icon: AppIcons.delete,
-                                size: 40,
-                                onPressed: () => repo.deleteRecurring(b.id),
+                            ),
+                            subtitle: Text(
+                              '${Fmt.money(b.amount, currency)} · ${b.period} · '
+                              'due ${Fmt.relativeDay(b.nextDueDate)}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: overdue ? AppColors.dangerLight : null,
                               ),
-                            ],
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                BrandButton(
+                                  label: 'Pay',
+                                  kind: BrandButtonKind.ghost,
+                                  expand: false,
+                                  onPressed: () => repo.payRecurring(b),
+                                ),
+                                CircleIconButton(
+                                  icon: AppIcons.delete,
+                                  size: 40,
+                                  onPressed: () => repo.deleteRecurring(b.id),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       );

@@ -46,8 +46,8 @@ class DashboardScreen extends ConsumerWidget {
         .where((key) => settings.enabledModules.any((m) => m.name == key))
         .toList();
 
-    return Scaffold(
-      body: SafeArea(
+    return BrandScaffold(
+      child: SafeArea(
         bottom: false,
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 140),

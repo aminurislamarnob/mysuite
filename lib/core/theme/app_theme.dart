@@ -388,16 +388,7 @@ class AppTheme {
         prefixIconColor: muted,
         suffixIconColor: muted,
       ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primary,
-          foregroundColor: onPrimary,
-          shape: const StadiumBorder(),
-          elevation: 0,
-          textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-        ),
-      ),
+      // No `elevatedButtonTheme`: zero call sites.
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: primary,
@@ -431,19 +422,8 @@ class AppTheme {
         elevation: 6,
         shape: const CircleBorder(),
       ),
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: background,
-        indicatorColor: Colors.transparent,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
-        iconTheme: WidgetStateProperty.resolveWith(
-          (states) => IconThemeData(
-            size: 24,
-            color: states.contains(WidgetState.selected) ? primary : muted,
-          ),
-        ),
-      ),
+      // No `navigationBarTheme`: the shell uses `CurvedNavBar`, not
+      // `NavigationBar`.
       listTileTheme: ListTileThemeData(
         iconColor: muted,
         textColor: text,
@@ -485,19 +465,10 @@ class AppTheme {
         overlayColor: primary.withValues(alpha: 0.12),
         trackHeight: 4,
       ),
-      tabBarTheme: TabBarThemeData(
-        labelColor: primary,
-        unselectedLabelColor: muted,
-        indicatorSize: TabBarIndicatorSize.label,
-        dividerColor: Colors.transparent,
-        labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-        unselectedLabelStyle:
-            const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-        indicator: UnderlineTabIndicator(
-          borderSide: BorderSide(color: primary, width: 3),
-          borderRadius: BorderRadius.circular(3),
-        ),
-      ),
+      // No `tabBarTheme`: every tab strip is `FTabs` now, and this theme was
+      // actively harmful — `TabBarThemeData.labelColor` takes precedence over
+      // `labelStyle.color` inside Material's `TabBar`, which is what FTabs builds
+      // on, so it silently overrode the branded forui tab colours.
       dialogTheme: DialogThemeData(
         backgroundColor: background,
         surfaceTintColor: Colors.transparent,

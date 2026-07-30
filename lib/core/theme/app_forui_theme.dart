@@ -78,12 +78,56 @@ FThemeData brandForuiThemeFrom(BrandTokens t) {
     typography: typography,
     style: style,
     icons: _icons,
+    tabsStyle: _tabsStyle(colors, typography, style, t),
     touch: true,
     // The same instance the Material theme registers, so `context.brand` and
     // forui-side lookups can never disagree.
     extensions: [t.brand],
   );
 }
+
+/// The tab strip, restyled as a row of [Pill]s.
+///
+/// forui's default is shadcn's segmented control: a filled track with a raised
+/// white thumb. The app already has a selection-chip language — `Pill`, used for
+/// the search filters and the module chips — so tabs borrow it instead of
+/// introducing a second one: no track, a solid coral stadium behind the selected
+/// label, muted labels elsewhere. The strip is full-bleed, which only works
+/// because the track is gone.
+FTabsStyle _tabsStyle(
+  FColors colors,
+  FTypography typography,
+  FStyle style,
+  BrandTokens t,
+) => FTabsStyle(
+  decoration: const BoxDecoration(),
+  padding: const EdgeInsets.symmetric(horizontal: 12),
+  // `.label` would shrink-wrap the text — forui's `_Tab` centres the label with
+  // `widthFactor: 1`, so there is no padding hook to widen it. `.tab` fills the
+  // tab's equal share of the strip instead, and only one is ever selected so
+  // pills never abut.
+  indicatorSize: FTabBarIndicatorSize.tab,
+  indicatorDecoration: ShapeDecoration(
+    color: t.primary,
+    shape: StadiumBorder(
+      // At high contrast the fill alone is not enough separation, matching how
+      // cards grow an outline there.
+      side: t.highContrast
+          ? BorderSide(color: t.text, width: style.borderWidth)
+          : BorderSide.none,
+    ),
+  ),
+  labelTextStyle: FVariants.from(
+    typography.body.sm.copyWith(
+      fontWeight: FontWeight.w600,
+      color: colors.mutedForeground,
+    ),
+    variants: {
+      const [FTabVariant.selected]: TextStyleDelta.delta(color: t.onPrimary),
+    },
+  ),
+  focusedOutlineStyle: style.focusedOutlineStyle,
+);
 
 /// The brand radius ramp.
 ///

@@ -166,6 +166,10 @@ class BrandTopBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onTrailing;
   final String? trailingTooltip;
 
+  /// Extra trailing widgets, for the pages that carried several `AppBar.actions`.
+  /// Rendered after [trailingIcon].
+  final List<Widget> actions;
+
   const BrandTopBar({
     super.key,
     required this.title,
@@ -174,6 +178,7 @@ class BrandTopBar extends StatelessWidget implements PreferredSizeWidget {
     this.trailingIcon,
     this.onTrailing,
     this.trailingTooltip,
+    this.actions = const [],
   });
 
   @override
@@ -208,8 +213,9 @@ class BrandTopBar extends StatelessWidget implements PreferredSizeWidget {
             onPressed: onTrailing,
             tooltip: trailingTooltip,
             size: 40,
-          )
-        else if (leadingIcon != null)
+          ),
+        ...actions,
+        if (trailingIcon == null && actions.isEmpty && leadingIcon != null)
           // Balances the leading circle so the title stays optically centred.
           const SizedBox(width: 40),
       ],

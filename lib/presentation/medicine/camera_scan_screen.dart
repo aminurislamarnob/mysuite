@@ -7,6 +7,7 @@ import 'package:forui/forui.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/widgets/brand.dart';
 import '../../core/widgets/common.dart';
 
 enum ScanMode { receipt, prescription }
@@ -108,11 +109,12 @@ class _CameraScanScreenState extends State<CameraScanScreen> {
   Widget build(BuildContext context) {
     final isReceipt = widget.mode == ScanMode.receipt;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(isReceipt ? 'Scan receipt' : 'Scan prescription'),
+    return BrandScaffold(
+      header: BrandTopBar(
+        title: isReceipt ? 'Scan receipt' : 'Scan prescription',
+        leadingIcon: AppIcons.back,
       ),
-      body: Padding(
+      child: Padding(
         padding: const EdgeInsets.all(24),
         child: _busy
             ? const Center(

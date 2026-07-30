@@ -25,9 +25,10 @@ class HabitsScreen extends ConsumerWidget {
     final cost = ref.watch(habitCostTodayProvider).valueOrNull ?? 0;
     final currency = ref.watch(settingsProvider).currencySymbol;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Habits'),
+    return BrandScaffold(
+      header: BrandTopBar(
+        title: 'Habits',
+        leadingIcon: AppIcons.back,
         actions: [
           CircleIconButton(
             icon: AppIcons.add,
@@ -37,7 +38,7 @@ class HabitsScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: habitsAsync.when(
+      child: habitsAsync.when(
         data: (habits) {
           if (habits.isEmpty) {
             return EmptyState(
@@ -116,7 +117,8 @@ class _HabitCard extends ConsumerWidget {
         ? (stats.todayAmount > 0 ? 1.0 : 0.0)
         : stats.todayAmount / habit.targetAmount;
 
-    return Card(
+    return TintCard(
+      padding: EdgeInsets.zero,
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: () => _openDetail(context),

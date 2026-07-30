@@ -5,6 +5,7 @@ import '../../core/settings/app_settings.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/widgets/brand.dart';
 import '../../core/widgets/common.dart';
 import '../expenses/providers/expenses_provider.dart';
 import '../focus/providers/focus_provider.dart';
@@ -31,9 +32,9 @@ class InsightsScreen extends ConsumerWidget {
     final habits = ref.watch(habitsListProvider).valueOrNull ?? const [];
     final caffeine = ref.watch(caffeineTodayProvider).valueOrNull ?? 0;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Insights')),
-      body: ListView(
+    return BrandScaffold(
+      header: BrandTopBar(title: 'Insights', leadingIcon: AppIcons.back),
+      child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 140),
         children: [
           _DigestCard(
@@ -292,7 +293,8 @@ class _DigestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return TintCard(
+      padding: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(18),
         child: Column(

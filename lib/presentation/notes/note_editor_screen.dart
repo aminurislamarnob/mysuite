@@ -238,12 +238,12 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading || _controller == null) {
-      return const Scaffold(body: Center(child: FCircularProgress()));
+      return BrandScaffold(child: Center(child: FCircularProgress()));
     }
     if (_note?.isLocked == true && !_unlocked) {
-      return Scaffold(
-        appBar: AppBar(),
-        body: EmptyState(
+      return BrandScaffold(
+        header: BrandTopBar(title: '', leadingIcon: AppIcons.back),
+        child: EmptyState(
           icon: AppIcons.lock,
           title: 'Note locked',
           message: 'Authenticate to view this note.',
@@ -259,12 +259,10 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
         if (didPop) return;
         await _save();
       },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(
-            _note == null ? 'New note' : 'Edit note',
-            style: const TextStyle(fontSize: 16),
-          ),
+      child: BrandScaffold(
+        header: BrandTopBar(
+          title: _note == null ? 'New note' : 'Edit note',
+          leadingIcon: AppIcons.back,
           actions: [
             CircleIconButton(
               icon: _listening ? AppIcons.mic : AppIcons.mic,
@@ -287,7 +285,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
             ),
           ],
         ),
-        body: Column(
+        child: Column(
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),

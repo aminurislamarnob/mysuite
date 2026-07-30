@@ -26,22 +26,13 @@ class TasksScreen extends ConsumerStatefulWidget {
   ConsumerState<TasksScreen> createState() => _TasksScreenState();
 }
 
-class _TasksScreenState extends ConsumerState<TasksScreen>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabs;
+class _TasksScreenState extends ConsumerState<TasksScreen> {
   final _quickAdd = TextEditingController();
   final _speech = stt.SpeechToText();
   bool _listening = false;
 
   @override
-  void initState() {
-    super.initState();
-    _tabs = TabController(length: 6, vsync: this);
-  }
-
-  @override
   void dispose() {
-    _tabs.dispose();
     _quickAdd.dispose();
     _speech.stop();
     super.dispose();
@@ -97,9 +88,17 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
         ? 'Tasks'
         : projects.where((p) => p.id == projectId).firstOrNull?.name ?? 'Tasks';
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(projectName),
+    return BrandScaffold(
+      header: BrandTopBar(
+        title: projectName,
+        // The project list used to be a Scaffold drawer, opened by the AppBar's
+        // implicit hamburger. FScaffold has no drawer slot and no app bar to
+        // host one, so it is now an explicit button onto a left-hand sheet.
+        leadingIcon: AppIcons.modules,
+        onLeading: () => brandSideSheet(
+          context: context,
+          builder: (_) => const _ProjectDrawer(),
+        ),
         actions: [
           CircleIconButton(
             icon: AppIcons.search,
@@ -116,59 +115,59 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
                   ref.read(taskProjectFilterProvider.notifier).state = null,
             ),
         ],
-        bottom: TabBar(
-          controller: _tabs,
-          isScrollable: true,
-          tabAlignment: TabAlignment.start,
-          tabs: const [
-            Tab(text: 'Today'),
-            Tab(text: 'Upcoming'),
-            Tab(text: 'Inbox'),
-            Tab(text: 'Calendar'),
-            Tab(text: 'Kanban'),
-            Tab(text: 'Matrix'),
-          ],
-        ),
       ),
-      drawer: const _ProjectDrawer(),
-      body: Column(
-        children: [
-          _buildQuickAdd(),
-          Expanded(
-            child: TabBarView(
-              controller: _tabs,
-              children: [
-                _TaskListView(
-                  provider: todayTasksProvider,
-                  emptyTitle: 'Nothing due today',
-                  emptyMessage: 'Enjoy the clear runway.',
-                ),
-                _TaskListView(
-                  provider: upcomingTasksProvider,
-                  emptyTitle: 'Nothing in the next 7 days',
-                  groupByDay: true,
-                ),
-                _TaskListView(
-                  provider: inboxTasksProvider,
-                  emptyTitle: 'Inbox zero',
-                  emptyMessage: 'Quick captures without a date land here.',
-                ),
-                const _CalendarView(),
-                const _KanbanView(),
-                const _MatrixView(),
-              ],
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
+      floatingAction: BrandFab(
+        icon: AppIcons.add,
+        tooltip: 'New task',
         onPressed: () => TaskEditorSheet.show(
           context,
           projectId: ref.read(taskProjectFilterProvider),
         ),
-        backgroundColor: AppColors.taskAccent,
-        foregroundColor: Colors.white,
-        child: const AppIcon(AppIcons.add),
+      ),
+      child: Column(
+        children: [
+          _buildQuickAdd(),
+          // FTabs owns both the tab strip and the views, so the strip moves out
+          // of the header and into the body.
+          Expanded(
+            child: FTabs(
+              scrollable: true,
+              expands: true,
+              children: [
+                FTabEntry(
+                  label: const Text('Today'),
+                  child: _TaskListView(
+                    provider: todayTasksProvider,
+                    emptyTitle: 'Nothing due today',
+                    emptyMessage: 'Enjoy the clear runway.',
+                  ),
+                ),
+                FTabEntry(
+                  label: const Text('Upcoming'),
+                  child: _TaskListView(
+                    provider: upcomingTasksProvider,
+                    emptyTitle: 'Nothing in the next 7 days',
+                    groupByDay: true,
+                  ),
+                ),
+                FTabEntry(
+                  label: const Text('Inbox'),
+                  child: _TaskListView(
+                    provider: inboxTasksProvider,
+                    emptyTitle: 'Inbox zero',
+                    emptyMessage: 'Quick captures without a date land here.',
+                  ),
+                ),
+                const FTabEntry(
+                  label: Text('Calendar'),
+                  child: _CalendarView(),
+                ),
+                const FTabEntry(label: Text('Kanban'), child: _KanbanView()),
+                const FTabEntry(label: Text('Matrix'), child: _MatrixView()),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -606,8 +605,8 @@ class _KanbanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final muted = Theme.of(context).colorScheme.outline;
-    return Card(
-      elevation: dragging ? 6 : 0,
+    return TintCard(
+      padding: EdgeInsets.zero,
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: () => TaskEditorSheet.show(context, task: task),
@@ -710,7 +709,8 @@ class _MatrixView extends ConsumerWidget {
           crossAxisSpacing: 8,
           children: quadrants.map((q) {
             final (title, subtitle, color, items) = q;
-            return Card(
+            return TintCard(
+              padding: EdgeInsets.zero,
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(

@@ -7,6 +7,7 @@ import '../../core/settings/app_settings.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/widgets/brand.dart';
 import '../../core/widgets/common.dart';
 import '../expenses/providers/expenses_provider.dart';
 import '../habits/repository/habit_repository.dart';
@@ -146,9 +147,9 @@ class RemindersScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final reminders = ref.watch(remindersProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Reminders')),
-      body: reminders.when(
+    return BrandScaffold(
+      header: BrandTopBar(title: 'Reminders', leadingIcon: AppIcons.back),
+      child: reminders.when(
         data: (items) {
           if (items.isEmpty) {
             return const EmptyState(
@@ -183,33 +184,36 @@ class RemindersScreen extends ConsumerWidget {
                     ),
                   ),
                   ...groups[day]!.map(
-                    (r) => Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: BrandTile(
-                        leading: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: r.color.withValues(alpha: 0.13),
-                            shape: BoxShape.circle,
+                    (r) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: TintCard(
+                        padding: EdgeInsets.zero,
+                        child: BrandTile(
+                          leading: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: r.color.withValues(alpha: 0.13),
+                              shape: BoxShape.circle,
+                            ),
+                            child: AppIcon(r.icon, size: 18, color: r.color),
                           ),
-                          child: AppIcon(r.icon, size: 18, color: r.color),
-                        ),
-                        title: Text(
-                          r.title,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        subtitle: Text(
-                          r.subtitle,
-                          style: const TextStyle(fontSize: 11),
-                        ),
-                        trailing: Text(
-                          Fmt.time(r.at),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
+                          title: Text(
+                            r.title,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
+                          subtitle: Text(
+                            r.subtitle,
+                            style: const TextStyle(fontSize: 11),
+                          ),
+                          trailing: Text(
+                            Fmt.time(r.at),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                          ),
+                          onTap: () => context.push(r.route),
                         ),
-                        onTap: () => context.push(r.route),
                       ),
                     ),
                   ),

@@ -56,8 +56,8 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
         ? AppColors.successLight
         : AppColors.focusAccent;
 
-    return Scaffold(
-      appBar: BrandTopBar(
+    return BrandScaffold(
+      header: BrandTopBar(
         title: state.isBreak
             ? 'Break'
             : state.mode.countsUp
@@ -71,7 +71,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
           builder: (_) => const _FocusStatsSheet(),
         ),
       ),
-      body: ListView(
+      child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 48),
         children: [
           if (state.phase == TimerPhase.idle)

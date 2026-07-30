@@ -188,8 +188,8 @@ class _LockGateState extends ConsumerState<_LockGate>
     final locked = ref.watch(settingsProvider).appLockEnabled && !_unlocked;
     if (!locked) return widget.child;
 
-    return Scaffold(
-      body: Center(
+    return BrandScaffold(
+      child: Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: Column(

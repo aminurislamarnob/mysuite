@@ -23,9 +23,16 @@ class NotesScreen extends ConsumerWidget {
     final filter = ref.watch(noteFilterProvider);
     final repo = ref.read(noteRepositoryProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(filter.title),
+    return BrandScaffold(
+      header: BrandTopBar(
+        title: filter.title,
+        // The folder list was a Scaffold drawer opened by the AppBar hamburger;
+        // FScaffold has neither, so it is now an explicit left-hand sheet.
+        leadingIcon: AppIcons.folder,
+        onLeading: () => brandSideSheet(
+          context: context,
+          builder: (_) => const _NotesDrawer(),
+        ),
         actions: [
           CircleIconButton(
             icon: AppIcons.search,
@@ -58,8 +65,14 @@ class NotesScreen extends ConsumerWidget {
             ),
         ],
       ),
-      drawer: const _NotesDrawer(),
-      body: notesAsync.when(
+      floatingAction: filter.scope == NoteScope.trash
+          ? null
+          : BrandFab(
+              icon: AppIcons.add,
+              tooltip: 'New note',
+              onPressed: () => newNoteFlow(context, ref),
+            ),
+      child: notesAsync.when(
         data: (notes) {
           if (notes.isEmpty) {
             return EmptyState(
@@ -94,14 +107,6 @@ class NotesScreen extends ConsumerWidget {
           message: '$e',
         ),
       ),
-      floatingActionButton: filter.scope == NoteScope.trash
-          ? null
-          : FloatingActionButton(
-              onPressed: () => newNoteFlow(context, ref),
-              backgroundColor: AppColors.noteAccent,
-              foregroundColor: Colors.white,
-              child: const AppIcon(AppIcons.add),
-            ),
     );
   }
 }
@@ -184,7 +189,8 @@ class _NoteCard extends ConsumerWidget {
         : NoteRepository.previewOf(note.content);
     final tagsAsync = ref.watch(tagsForNoteProvider(note.id));
 
-    return Card(
+    return TintCard(
+      padding: EdgeInsets.zero,
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: () {

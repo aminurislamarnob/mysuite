@@ -161,4 +161,45 @@ void main() {
     expect(theme.extension<BrandColors>().tints.first, AppColors.tintPeach);
     expect(theme.colors.extension<BrandColors>().hairline, AppColors.hairlineLight);
   });
+
+  group('tabs', () {
+    test('the selected tab is a coral pill with a contrasting label', () {
+      // The tab strip borrows Pill's language: a solid coral stadium behind the
+      // selected label, muted labels elsewhere, and no track.
+      final style = brandForuiTheme(brightness: Brightness.light).tabsStyle;
+
+      final indicator = style.indicatorDecoration as ShapeDecoration;
+      expect(indicator.color, AppColors.coral);
+      expect(indicator.shape, isA<StadiumBorder>());
+
+      final selected =
+          style.labelTextStyle.resolve({FTabVariant.selected}).color;
+      final unselected = style.labelTextStyle.resolve(const {}).color;
+
+      // The bug this guards: TabBarThemeData.labelColor takes precedence over
+      // labelStyle.color inside Material's TabBar, which FTabs builds on. A
+      // stray Material tabBarTheme painted the label coral on the coral pill,
+      // making the selected tab's text invisible.
+      expect(selected, isNot(indicator.color));
+      expect(unselected, isNot(indicator.color));
+      expect(selected, Colors.white);
+    });
+
+    test('the strip has no track of its own', () {
+      // Full-bleed only works because the track is gone; a filled track would
+      // show its clipped corners at the screen edges.
+      final decoration = brandForuiTheme(brightness: Brightness.light)
+          .tabsStyle
+          .decoration as BoxDecoration;
+
+      expect(decoration.color, isNull);
+      expect(decoration.border, isNull);
+    });
+
+    test('no Material tabBarTheme can override the forui tab colours', () {
+      // FTabs builds on Material's TabBar, so any tabBarTheme leaks into it.
+      expect(AppTheme.light().tabBarTheme, const TabBarThemeData());
+      expect(AppTheme.dark().tabBarTheme, const TabBarThemeData());
+    });
+  });
 }

@@ -670,6 +670,10 @@ class BrandField extends StatelessWidget {
   final TextCapitalization textCapitalization;
   final List<TextInputFormatter>? inputFormatters;
   final ValueChanged<String>? onSubmit;
+
+  /// Called on every keystroke, like [TextField.onChanged].
+  final ValueChanged<String>? onChanged;
+
   final Widget? suffix;
   final FocusNode? focusNode;
 
@@ -689,6 +693,7 @@ class BrandField extends StatelessWidget {
     this.textCapitalization = TextCapitalization.none,
     this.inputFormatters,
     this.onSubmit,
+    this.onChanged,
     this.suffix,
     this.focusNode,
   });
@@ -699,7 +704,10 @@ class BrandField extends StatelessWidget {
     final flattened = brand.tints.toSet().length == 1;
 
     return FTextField(
-      control: .managed(controller: controller),
+      control: .managed(
+        controller: controller,
+        onChange: onChanged == null ? null : (v) => onChanged!(v.text),
+      ),
       label: label == null ? null : Text(label!),
       hint: hint,
       description: helper == null ? null : Text(helper!),
@@ -1032,6 +1040,24 @@ Future<T?> brandSheet<T>({
     side: .btt,
     mainAxisMaxRatio: null,
     barrierDismissible: dismissible,
+    builder: builder,
+  );
+}
+
+/// Slides a panel in from the leading edge, replacing Material's `Drawer`.
+///
+/// `Drawer` needs a `Scaffold` to host it and an app bar to offer the hamburger,
+/// neither of which [BrandScaffold] provides. forui's `FSidebar` is a persistent
+/// panel rather than a modal, so the drawer screens present their filter panel as
+/// a left-hand sheet instead, opened from an explicit header button.
+Future<T?> brandSideSheet<T>({
+  required BuildContext context,
+  required WidgetBuilder builder,
+}) {
+  return showFSheet<T>(
+    context: context,
+    side: .ltr,
+    mainAxisMaxRatio: null,
     builder: builder,
   );
 }
