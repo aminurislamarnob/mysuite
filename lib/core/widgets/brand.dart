@@ -31,6 +31,7 @@ class TintCard extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final double radius;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
   const TintCard({
     super.key,
@@ -41,6 +42,7 @@ class TintCard extends StatelessWidget {
     this.padding = const EdgeInsets.all(20),
     this.radius = AppRadii.tile,
     this.onTap,
+    this.onLongPress,
   });
 
   @override
@@ -76,10 +78,11 @@ class TintCard extends StatelessWidget {
         padding: .value(EdgeInsets.zero),
       ),
       clipBehavior: Clip.antiAlias,
-      child: onTap == null
+      child: onTap == null && onLongPress == null
           ? body
           : FTappable(
               onPress: onTap,
+              onLongPress: onLongPress,
               // A card is a surface, not a control; only the inner content
               // should announce itself.
               semanticsButton: false,

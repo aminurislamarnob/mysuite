@@ -133,22 +133,19 @@ class _MedicineScreenState extends ConsumerState<MedicineScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextField(
+              BrandField(
                 controller: controller,
+                label: 'Symptom',
+                hint: 'Headache, nausea…',
                 autofocus: true,
-                decoration: const InputDecoration(
-                  labelText: 'Symptom',
-                  hintText: 'Headache, nausea…',
-                ),
               ),
               const SizedBox(height: 20),
               const Text('Severity'),
-              Slider(
+              BrandSlider(
                 value: severity.toDouble(),
                 min: 1,
                 max: 5,
                 divisions: 4,
-                label: '$severity',
                 onChanged: (v) => setState(() => severity = v.round()),
               ),
             ],
@@ -738,8 +735,8 @@ class _TableTab extends ConsumerWidget {
                             children: atSlot.map((v) {
                               final taken = v.status == DoseStatus.taken;
                               final skipped = v.status == DoseStatus.skipped;
-                              return InkWell(
-                                onTap: () => repo.setDoseStatus(
+                              return FTappable(
+                                onPress: () => repo.setDoseStatus(
                                   v.dose.id,
                                   taken ? DoseStatus.pending : DoseStatus.taken,
                                 ),
@@ -899,30 +896,30 @@ class _MedicinesTab extends ConsumerWidget {
 
   Future<void> _refill(BuildContext context, WidgetRef ref, Medicine m) async {
     final controller = TextEditingController(text: '30');
-    final result = await showDialog<String>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text('Add stock — ${m.name}'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            labelText: 'Units to add',
-            suffixText: m.dosageUnit,
+    final result = await brandDialog<String>(
+      context,
+      title: 'Add stock — ${m.name}',
+      builder: (dialogContext) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          BrandField(
+            controller: controller,
+            label: 'Units to add',
+            autofocus: true,
+            keyboardType: TextInputType.number,
+            suffix: Text(m.dosageUnit),
           ),
-        ),
-        actions: [
+          const SizedBox(height: 20),
+          BrandButton(
+            label: 'Add',
+            onPressed: () => Navigator.pop(dialogContext, controller.text),
+          ),
+          const SizedBox(height: 8),
           BrandButton(
             label: 'Cancel',
             kind: BrandButtonKind.ghost,
-            expand: false,
-            onPressed: () => Navigator.pop(context),
-          ),
-          BrandButton(
-            label: 'Add',
-            expand: false,
-            onPressed: () => Navigator.pop(context, controller.text),
+            onPressed: () => Navigator.pop(dialogContext),
           ),
         ],
       ),
@@ -1026,45 +1023,40 @@ class _ProfileDrawer extends ConsumerWidget {
     final relation = TextEditingController(text: 'Family');
     var color = 0xFFFF6547;
 
-    final saved = await showDialog<bool>(
-      context: context,
-      builder: (_) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('New profile'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: name,
-                autofocus: true,
-                decoration: const InputDecoration(labelText: 'Name'),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: relation,
-                decoration: const InputDecoration(
-                  labelText: 'Relation',
-                  hintText: 'Mum, son, partner',
-                ),
-              ),
-              const SizedBox(height: 16),
-              ColorPickerRow(
-                selected: color,
-                onChanged: (c) => setState(() => color = c),
-              ),
-            ],
-          ),
-          actions: [
+    final saved = await brandDialog<bool>(
+      context,
+      title: 'New profile',
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (_, setState) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            BrandField(
+              controller: name,
+              label: 'Name',
+              autofocus: true,
+            ),
+            const SizedBox(height: 12),
+            BrandField(
+              controller: relation,
+              label: 'Relation',
+              hint: 'Mum, son, partner',
+            ),
+            const SizedBox(height: 16),
+            ColorPickerRow(
+              selected: color,
+              onChanged: (c) => setState(() => color = c),
+            ),
+            const SizedBox(height: 20),
+            BrandButton(
+              label: 'Create',
+              onPressed: () => Navigator.pop(dialogContext, true),
+            ),
+            const SizedBox(height: 8),
             BrandButton(
               label: 'Cancel',
               kind: BrandButtonKind.ghost,
-              expand: false,
-              onPressed: () => Navigator.pop(context, false),
-            ),
-            BrandButton(
-              label: 'Create',
-              expand: false,
-              onPressed: () => Navigator.pop(context, true),
+              onPressed: () => Navigator.pop(dialogContext, false),
             ),
           ],
         ),

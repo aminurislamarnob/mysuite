@@ -119,11 +119,9 @@ class _HabitCard extends ConsumerWidget {
 
     return TintCard(
       padding: EdgeInsets.zero,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: () => _openDetail(context),
-        onLongPress: () => HabitEditorSheet.show(context, habit: habit),
-        child: Padding(
+      onTap: () => _openDetail(context),
+      onLongPress: () => HabitEditorSheet.show(context, habit: habit),
+      child: Padding(
           padding: const EdgeInsets.all(14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,7 +220,6 @@ class _HabitCard extends ConsumerWidget {
               ),
             ],
           ),
-        ),
       ),
     );
   }
@@ -247,30 +244,30 @@ class _HabitCard extends ConsumerWidget {
     final controller = TextEditingController(
       text: _trim(stats.byDay[Fmt.dateOnly(day)] ?? 0),
     );
-    final result = await showDialog<String>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(Fmt.dayMonthYear(day)),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: InputDecoration(
-            labelText: 'Amount',
-            suffixText: habit.unit,
+    final result = await brandDialog<String>(
+      context,
+      title: Fmt.dayMonthYear(day),
+      builder: (dialogContext) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          BrandField(
+            controller: controller,
+            label: 'Amount',
+            autofocus: true,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            suffix: habit.unit == null ? null : Text(habit.unit!),
           ),
-        ),
-        actions: [
+          const SizedBox(height: 20),
+          BrandButton(
+            label: 'Save',
+            onPressed: () => Navigator.pop(dialogContext, controller.text),
+          ),
+          const SizedBox(height: 8),
           BrandButton(
             label: 'Cancel',
             kind: BrandButtonKind.ghost,
-            expand: false,
-            onPressed: () => Navigator.pop(context),
-          ),
-          BrandButton(
-            label: 'Save',
-            expand: false,
-            onPressed: () => Navigator.pop(context, controller.text),
+            onPressed: () => Navigator.pop(dialogContext),
           ),
         ],
       ),
@@ -571,54 +568,39 @@ class _HabitEditorSheetState extends ConsumerState<HabitEditorSheet> {
             ),
             const SizedBox(height: 20),
           ],
-          TextField(
+          BrandField(
             controller: _name,
+            label: 'Habit name',
             autofocus: !_isEditing,
             textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(labelText: 'Habit name'),
           ),
           const SizedBox(height: 16),
           Text('Goal', style: TextStyle(color: muted, fontSize: 12)),
           const SizedBox(height: 8),
-          SegmentedButton<int>(
-            segments: const [
-              ButtonSegment(
-                value: 0,
-                label: Text('Build'),
-                icon: AppIcon(AppIcons.trendUp, size: 16),
-              ),
-              ButtonSegment(
-                value: 1,
-                label: Text('Reduce'),
-                icon: AppIcon(AppIcons.trendDown, size: 16),
-              ),
-            ],
-            selected: {_goalType},
-            showSelectedIcon: false,
-            onSelectionChanged: (s) => setState(() => _goalType = s.first),
+          BrandSegmented<int>(
+            options: const {0: 'Build', 1: 'Reduce'},
+            icons: const {0: AppIcons.trendUp, 1: AppIcons.trendDown},
+            selected: _goalType,
+            onSelected: (v) => setState(() => _goalType = v),
           ),
           const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
-                child: TextField(
+                child: BrandField(
                   controller: _target,
+                  label: _goalType == 0 ? 'Daily goal' : 'Daily limit',
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
-                  ),
-                  decoration: InputDecoration(
-                    labelText: _goalType == 0 ? 'Daily goal' : 'Daily limit',
                   ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: TextField(
+                child: BrandField(
                   controller: _unit,
-                  decoration: const InputDecoration(
-                    labelText: 'Unit',
-                    hintText: 'cups',
-                  ),
+                  label: 'Unit',
+                  hint: 'cups',
                 ),
               ),
             ],
@@ -626,15 +608,10 @@ class _HabitEditorSheetState extends ConsumerState<HabitEditorSheet> {
           const SizedBox(height: 20),
           Text('Frequency', style: TextStyle(color: muted, fontSize: 12)),
           const SizedBox(height: 8),
-          SegmentedButton<int>(
-            segments: const [
-              ButtonSegment(value: 0, label: Text('Daily')),
-              ButtonSegment(value: 1, label: Text('Weekdays')),
-              ButtonSegment(value: 2, label: Text('X / week')),
-            ],
-            selected: {_frequencyType},
-            showSelectedIcon: false,
-            onSelectionChanged: (s) => setState(() => _frequencyType = s.first),
+          BrandSegmented<int>(
+            options: const {0: 'Daily', 1: 'Weekdays', 2: 'X / week'},
+            selected: _frequencyType,
+            onSelected: (v) => setState(() => _frequencyType = v),
           ),
           if (_frequencyType == 1) ...[
             const SizedBox(height: 12),
@@ -668,12 +645,11 @@ class _HabitEditorSheetState extends ConsumerState<HabitEditorSheet> {
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
                 Expanded(
-                  child: Slider(
+                  child: BrandSlider(
                     value: _timesPerWeek.toDouble(),
                     min: 1,
                     max: 7,
                     divisions: 6,
-                    label: '$_timesPerWeek',
                     onChanged: (v) => setState(() => _timesPerWeek = v.round()),
                   ),
                 ),
@@ -703,28 +679,24 @@ class _HabitEditorSheetState extends ConsumerState<HabitEditorSheet> {
           Row(
             children: [
               Expanded(
-                child: TextField(
+                child: BrandField(
                   controller: _cost,
+                  label: 'Cost per unit',
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
-                  decoration: InputDecoration(
-                    labelText: 'Cost per unit',
-                    prefixText: '$currency ',
-                  ),
+                  prefix: Text(currency),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: TextField(
+                child: BrandField(
                   controller: _caffeine,
+                  label: 'Caffeine',
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
-                  decoration: const InputDecoration(
-                    labelText: 'Caffeine',
-                    suffixText: 'mg',
-                  ),
+                  suffix: const Text('mg'),
                 ),
               ),
             ],
@@ -746,17 +718,13 @@ class _HabitEditorSheetState extends ConsumerState<HabitEditorSheet> {
                     onPressed: () => setState(() => _reminderMinutes = null),
                   ),
             onTap: () async {
-              final time = await showTimePicker(
-                context: context,
-                initialTime: _reminderMinutes == null
-                    ? const TimeOfDay(hour: 9, minute: 0)
-                    : TimeOfDay(
-                        hour: _reminderMinutes! ~/ 60,
-                        minute: _reminderMinutes! % 60,
-                      ),
+              final minutes = await brandTimePicker(
+                context,
+                initialMinutes: _reminderMinutes ?? 9 * 60,
+                title: 'Daily reminder',
               );
-              if (time != null) {
-                setState(() => _reminderMinutes = time.hour * 60 + time.minute);
+              if (minutes != null) {
+                setState(() => _reminderMinutes = minutes);
               }
             },
           ),

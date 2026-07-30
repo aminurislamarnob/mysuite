@@ -175,33 +175,30 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
   Widget _buildQuickAdd() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      child: TextField(
+      child: BrandField(
         controller: _quickAdd,
-        onSubmitted: (_) => _submitQuickAdd(),
+        onSubmit: (_) => _submitQuickAdd(),
         textInputAction: TextInputAction.done,
-        decoration: InputDecoration(
-          isDense: true,
-          hintText: 'Buy milk tomorrow 5pm #shopping !high',
-          prefixIcon: const AppIcon(AppIcons.add, size: 20),
-          suffixIcon: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircleIconButton(
-                icon: _listening ? AppIcons.mic : AppIcons.mic,
-                tooltip: 'Dictate',
-                color: _listening ? AppColors.dangerLight : null,
-                size: 40,
-                onPressed: _dictate,
-              ),
-              CircleIconButton(
-                icon: AppIcons.arrowUp,
-                tooltip: 'Add',
-                color: AppColors.taskAccent,
-                size: 40,
-                onPressed: _submitQuickAdd,
-              ),
-            ],
-          ),
+        hint: 'Buy milk tomorrow 5pm #shopping !high',
+        prefix: const AppIcon(AppIcons.add, size: 20),
+        suffix: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleIconButton(
+              icon: AppIcons.mic,
+              tooltip: 'Dictate',
+              color: _listening ? AppColors.dangerLight : null,
+              size: 40,
+              onPressed: _dictate,
+            ),
+            CircleIconButton(
+              icon: AppIcons.arrowUp,
+              tooltip: 'Add',
+              color: AppColors.taskAccent,
+              size: 40,
+              onPressed: _submitQuickAdd,
+            ),
+          ],
         ),
       ),
     );
@@ -607,10 +604,8 @@ class _KanbanCard extends StatelessWidget {
     final muted = Theme.of(context).colorScheme.outline;
     return TintCard(
       padding: EdgeInsets.zero,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: () => TaskEditorSheet.show(context, task: task),
-        child: Padding(
+      onTap: () => TaskEditorSheet.show(context, task: task),
+      child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
@@ -649,7 +644,6 @@ class _KanbanCard extends StatelessWidget {
               ),
             ],
           ),
-        ),
       ),
     );
   }
@@ -746,11 +740,12 @@ class _MatrixView extends ConsumerWidget {
                               padding: EdgeInsets.zero,
                               children: items
                                   .map(
-                                    (t) => InkWell(
-                                      onTap: () => TaskEditorSheet.show(
+                                    (t) => FTappable(
+                                      onPress: () => TaskEditorSheet.show(
                                         context,
                                         task: t,
                                       ),
+                                      semanticsLabel: t.title,
                                       child: Padding(
                                         padding: const EdgeInsets.symmetric(
                                           vertical: 5,
@@ -878,44 +873,41 @@ class _ProjectDrawer extends ConsumerWidget {
     var color = ColorPickerRow.palette.first;
     var icon = 'folder';
 
-    final created = await showDialog<bool>(
-      context: context,
-      builder: (_) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('New project'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: controller,
-                autofocus: true,
-                decoration: const InputDecoration(hintText: 'Project name'),
-              ),
-              const SizedBox(height: 16),
-              ColorPickerRow(
-                selected: color,
-                onChanged: (c) => setState(() => color = c),
-              ),
-              const SizedBox(height: 12),
-              IconPickerRow(
-                options: AppIcons.projectIcons,
-                selected: icon,
-                color: Color(color),
-                onChanged: (i) => setState(() => icon = i),
-              ),
-            ],
-          ),
-          actions: [
+    final created = await brandDialog<bool>(
+      context,
+      title: 'New project',
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (_, setState) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            BrandField(
+              controller: controller,
+              autofocus: true,
+              hint: 'Project name',
+            ),
+            const SizedBox(height: 16),
+            ColorPickerRow(
+              selected: color,
+              onChanged: (c) => setState(() => color = c),
+            ),
+            const SizedBox(height: 12),
+            IconPickerRow(
+              options: AppIcons.projectIcons,
+              selected: icon,
+              color: Color(color),
+              onChanged: (i) => setState(() => icon = i),
+            ),
+            const SizedBox(height: 20),
+            BrandButton(
+              label: 'Create',
+              onPressed: () => Navigator.pop(dialogContext, true),
+            ),
+            const SizedBox(height: 8),
             BrandButton(
               label: 'Cancel',
               kind: BrandButtonKind.ghost,
-              expand: false,
-              onPressed: () => Navigator.pop(context, false),
-            ),
-            BrandButton(
-              label: 'Create',
-              expand: false,
-              onPressed: () => Navigator.pop(context, true),
+              onPressed: () => Navigator.pop(dialogContext, false),
             ),
           ],
         ),

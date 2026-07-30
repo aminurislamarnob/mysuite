@@ -171,38 +171,29 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TextField(
+          BrandField(
             controller: _title,
+            label: 'Title',
             autofocus: !_isEditing,
             textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(labelText: 'Title'),
-            onSubmitted: (_) => _save(),
+            onSubmit: (_) => _save(),
           ),
           const SizedBox(height: 12),
-          TextField(
+          BrandField(
             controller: _description,
+            label: 'Description',
             maxLines: 3,
             minLines: 1,
             textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              labelText: 'Description',
-              alignLabelWithHint: true,
-            ),
           ),
           const SizedBox(height: 20),
 
           Text('Priority', style: TextStyle(color: muted, fontSize: 12)),
           const SizedBox(height: 8),
-          SegmentedButton<int>(
-            segments: const [
-              ButtonSegment(value: 1, label: Text('P1')),
-              ButtonSegment(value: 2, label: Text('P2')),
-              ButtonSegment(value: 3, label: Text('P3')),
-              ButtonSegment(value: 4, label: Text('P4')),
-            ],
-            selected: {_priority},
-            showSelectedIcon: false,
-            onSelectionChanged: (s) => setState(() => _priority = s.first),
+          BrandSegmented<int>(
+            options: const {1: 'P1', 2: 'P2', 3: 'P3', 4: 'P4'},
+            selected: _priority,
+            onSelected: (v) => setState(() => _priority = v),
           ),
           const SizedBox(height: 20),
 
@@ -278,13 +269,11 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
           ),
           const SizedBox(height: 16),
 
-          TextField(
+          BrandField(
             controller: _tags,
-            decoration: const InputDecoration(
-              labelText: 'Tags',
-              hintText: 'work, errands',
-              prefixIcon: AppIcon(AppIcons.tag),
-            ),
+            label: 'Tags',
+            hint: 'work, errands',
+            prefix: const AppIcon(AppIcons.tag),
           ),
 
           if (_isEditing) ...[
@@ -296,13 +285,10 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
             Row(
               children: [
                 Expanded(
-                  child: TextField(
+                  child: BrandField(
                     controller: _newSubtask,
-                    decoration: const InputDecoration(
-                      hintText: 'Add a subtask',
-                      isDense: true,
-                    ),
-                    onSubmitted: (_) => _addSubtask(),
+                    hint: 'Add a subtask',
+                    onSubmit: (_) => _addSubtask(),
                   ),
                 ),
                 CircleIconButton(
@@ -350,48 +336,37 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
   }
 
   Future<void> _pickDueDate() async {
-    final date = await showDatePicker(
-      context: context,
-      initialDate: _dueDate ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
+    final date = await brandDatePicker(
+      context,
+      initial: _dueDate,
+      first: DateTime(2000),
+      last: DateTime(2100),
+      title: 'Due date',
     );
     if (date == null || !mounted) return;
 
-    final wantsTime = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Add a time?'),
-        actions: [
-          BrandButton(
-            label: 'All day',
-            kind: BrandButtonKind.ghost,
-            expand: false,
-            onPressed: () => Navigator.pop(context, false),
-          ),
-          BrandButton(
-            label: 'Pick time',
-            expand: false,
-            onPressed: () => Navigator.pop(context, true),
-          ),
-        ],
-      ),
+    final wantsTime = await brandConfirm(
+      context,
+      title: 'Add a time?',
+      cancelLabel: 'All day',
+      confirmLabel: 'Pick time',
     );
     if (!mounted) return;
 
-    if (wantsTime == true) {
-      final time = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.fromDateTime(_dueDate ?? DateTime.now()),
+    if (wantsTime) {
+      final minutes = await brandTimePicker(
+        context,
+        initialMinutes: _minutesOf(_dueDate ?? DateTime.now()),
+        title: 'Due time',
       );
-      if (time != null) {
+      if (minutes != null) {
         setState(() {
           _dueDate = DateTime(
             date.year,
             date.month,
             date.day,
-            time.hour,
-            time.minute,
+            minutes ~/ 60,
+            minutes % 60,
           );
           _hasTime = true;
         });
@@ -404,28 +379,32 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
     });
   }
 
+  static int _minutesOf(DateTime d) => d.hour * 60 + d.minute;
+
   Future<void> _pickReminder() async {
-    final date = await showDatePicker(
-      context: context,
-      initialDate: _reminder ?? _dueDate ?? DateTime.now(),
-      firstDate: DateTime.now().subtract(const Duration(days: 1)),
-      lastDate: DateTime(2100),
+    final date = await brandDatePicker(
+      context,
+      initial: _reminder ?? _dueDate,
+      first: DateTime.now().subtract(const Duration(days: 1)),
+      last: DateTime(2100),
+      title: 'Reminder date',
     );
     if (date == null || !mounted) return;
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(
+    final minutes = await brandTimePicker(
+      context,
+      initialMinutes: _minutesOf(
         _reminder ?? DateTime.now().add(const Duration(hours: 1)),
       ),
+      title: 'Reminder time',
     );
-    if (time == null) return;
+    if (minutes == null) return;
     setState(() {
       _reminder = DateTime(
         date.year,
         date.month,
         date.day,
-        time.hour,
-        time.minute,
+        minutes ~/ 60,
+        minutes % 60,
       );
     });
   }
@@ -491,12 +470,13 @@ class _SubtaskList extends ConsumerWidget {
         children: list
             .map(
               (s) => BrandTile(
-                leading: Checkbox(
+                leading: BrandCheckbox(
                   value: s.isCompleted,
-                  activeColor: AppColors.taskAccent,
+                  color: AppColors.taskAccent,
+                  semanticsLabel: s.title,
                   onChanged: (v) => ref
                       .read(taskRepositoryProvider)
-                      .setCompleted(s.id, v ?? false),
+                      .setCompleted(s.id, v),
                 ),
                 title: Text(
                   s.title,

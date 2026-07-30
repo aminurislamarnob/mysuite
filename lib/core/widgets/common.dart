@@ -45,10 +45,10 @@ class BrandButton extends StatelessWidget {
     // colour at high contrast where the hairline is too faint to read.
     final side = switch (kind) {
       BrandButtonKind.outline => BorderSide(
-          color: context.brand.tints.toSet().length == 1
-              ? Theme.of(context).colorScheme.onSurface
-              : context.brand.hairline,
-        ),
+        color: context.brand.tints.toSet().length == 1
+            ? Theme.of(context).colorScheme.onSurface
+            : context.brand.hairline,
+      ),
       _ => BorderSide.none,
     };
 
@@ -64,7 +64,11 @@ class BrandButton extends StatelessWidget {
       mainAxisSize: expand ? .max : .min,
       // Applied to the base and every interaction variant, so hover and pressed
       // stay pills too.
-      style: .delta(decoration: .delta([.all(.shapeDelta(shape: StadiumBorder(side: side)))])),
+      style: .delta(
+        decoration: .delta([
+          .all(.shapeDelta(shape: StadiumBorder(side: side))),
+        ]),
+      ),
       prefix: icon == null ? null : AppIcon(icon!, size: 18),
       child: Text(label),
     );
@@ -97,9 +101,9 @@ class SectionHeader extends StatelessWidget {
             child: Text(
               title,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontSize: 20,
-                    letterSpacing: -0.4,
-                  ),
+                fontSize: 20,
+                letterSpacing: -0.4,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -160,8 +164,11 @@ class EmptyState extends StatelessWidget {
                 color: context.brand.tint(0),
                 shape: BoxShape.circle,
               ),
-              child: AppIcon(icon,
-                  size: 38, color: Theme.of(context).colorScheme.primary),
+              child: AppIcon(
+                icon,
+                size: 38,
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
             const SizedBox(height: 20),
             Text(
@@ -174,8 +181,9 @@ class EmptyState extends StatelessWidget {
               Text(
                 message!,
                 textAlign: TextAlign.center,
-                style:
-                    Theme.of(context).textTheme.bodyMedium?.copyWith(color: muted),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: muted),
               ),
             ],
             if (actionLabel != null) ...[
@@ -289,10 +297,11 @@ class StatTile extends StatelessWidget {
             child: Text(
               value,
               style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  height: 1.1,
-                  letterSpacing: -0.5),
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                height: 1.1,
+                letterSpacing: -0.5,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -332,8 +341,11 @@ class ContributionHeatmap extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final today = DateTime.now();
-    final start = DateTime(today.year, today.month, today.day)
-        .subtract(Duration(days: days - 1));
+    final start = DateTime(
+      today.year,
+      today.month,
+      today.day,
+    ).subtract(Duration(days: days - 1));
     // Pad to the start of that week so columns line up as Mon–Sun.
     final leading = start.weekday - 1;
     final total = leading + days;
@@ -412,10 +424,14 @@ class LabeledProgress extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
-              child: Text(label,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w600, fontSize: 15),
-                  overflow: TextOverflow.ellipsis),
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
             Text(trailing, style: TextStyle(color: muted, fontSize: 13)),
           ],
@@ -492,10 +508,10 @@ class SheetScaffold extends StatelessWidget {
                     Expanded(
                       child: Text(
                         title,
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleLarge
-                            ?.copyWith(fontSize: 20, letterSpacing: -0.4),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontSize: 20,
+                          letterSpacing: -0.4,
+                        ),
                       ),
                     ),
                     ...actions,
@@ -584,10 +600,7 @@ class BrandScaffold extends StatelessWidget {
           size: 24,
           color: Theme.of(context).colorScheme.onSurface,
         ),
-        child: Material(
-          type: MaterialType.transparency,
-          child: body,
-        ),
+        child: Material(type: MaterialType.transparency, child: body),
       ),
     );
   }
@@ -674,6 +687,7 @@ class BrandField extends StatelessWidget {
   /// Called on every keystroke, like [TextField.onChanged].
   final ValueChanged<String>? onChanged;
 
+  final Widget? prefix;
   final Widget? suffix;
   final FocusNode? focusNode;
 
@@ -694,6 +708,7 @@ class BrandField extends StatelessWidget {
     this.inputFormatters,
     this.onSubmit,
     this.onChanged,
+    this.prefix,
     this.suffix,
     this.focusNode,
   });
@@ -721,29 +736,74 @@ class BrandField extends StatelessWidget {
       textCapitalization: textCapitalization,
       inputFormatters: inputFormatters,
       onSubmit: onSubmit,
+      prefixBuilder: prefix == null ? null : (_, _, _) => prefix!,
       suffixBuilder: suffix == null ? null : (_, _, _) => suffix!,
       focusNode: focusNode,
       style: .delta(
         // At high contrast the tint flattens, so the field falls back to the
         // page surface and leans on its border instead.
         color: .delta([
-          .all(flattened
-              ? Theme.of(context).colorScheme.surface
-              : brand.tint(0)),
+          .all(
+            flattened ? Theme.of(context).colorScheme.surface : brand.tint(0),
+          ),
         ]),
         // Only the resting border is replaced. forui derives the focused and
         // error borders from FColors, which are already the brand's coral and
         // danger — the same treatment the Material inputDecorationTheme gave.
         border: .delta([
-          .base(OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadii.field),
-            borderSide: flattened
-                ? BorderSide(
-                    color: Theme.of(context).colorScheme.onSurface, width: 1.2)
-                : BorderSide.none,
-          )),
+          .base(
+            OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadii.field),
+              borderSide: flattened
+                  ? BorderSide(
+                      color: Theme.of(context).colorScheme.onSurface,
+                      width: 1.2,
+                    )
+                  : BorderSide.none,
+            ),
+          ),
         ]),
       ),
+    );
+  }
+}
+
+/// A checkbox, replacing Material's [Checkbox].
+///
+/// [color] overrides the checked fill for callers that tick in a module accent
+/// rather than the brand coral — the task subtask list is the one that does.
+class BrandCheckbox extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+  final Color? color;
+  final String? semanticsLabel;
+
+  const BrandCheckbox({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    this.color,
+    this.semanticsLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return FCheckbox(
+      value: value,
+      onChange: onChanged,
+      semanticsLabel: semanticsLabel,
+      style: color == null
+          ? const .context()
+          : .delta(
+              // `.match` rewrites only the constraints satisfied by {selected},
+              // so the checked fill changes and the disabled and error boxes
+              // keep forui's derivations.
+              decoration: .delta([
+                .match({
+                  FCheckboxVariant.selected,
+                }, DecorationDelta.shapeDelta(color: color)),
+              ]),
+            ),
     );
   }
 }
@@ -781,9 +841,7 @@ class BrandSwitchTile extends StatelessWidget {
         // theme compensated with a muted track outline; forui's style has no
         // outline, so the off-track itself carries the contrast.
         style: .delta(
-          trackColor: .delta([
-            .base(context.muted.withValues(alpha: 0.28)),
-          ]),
+          trackColor: .delta([.base(context.muted.withValues(alpha: 0.28))]),
         ),
       ),
       onTap: onChanged == null ? null : () => onChanged!(!value),
@@ -800,11 +858,15 @@ class BrandSegmented<T extends Object> extends StatelessWidget {
   final T selected;
   final ValueChanged<T> onSelected;
 
+  /// Optional leading glyph per option, keyed the same way as [options].
+  final Map<T, HugeIconData> icons;
+
   const BrandSegmented({
     super.key,
     required this.options,
     required this.selected,
     required this.onSelected,
+    this.icons = const {},
   });
 
   @override
@@ -817,6 +879,7 @@ class BrandSegmented<T extends Object> extends StatelessWidget {
         for (final entry in options.entries)
           Pill(
             label: entry.value,
+            icon: icons[entry.key],
             color: theme.colorScheme.primary,
             selected: entry.key == selected,
             onTap: () => onSelected(entry.key),
@@ -914,10 +977,9 @@ class _BrandSliderState extends State<BrandSlider> {
   }
 
   FContinuousSliderController _build() => FContinuousSliderController(
-        value: FSliderValue(max: _fraction),
-        stepPercentage:
-            widget.divisions == null ? 0.05 : 1 / widget.divisions!,
-      );
+    value: FSliderValue(max: _fraction),
+    stepPercentage: widget.divisions == null ? 0.05 : 1 / widget.divisions!,
+  );
 
   @override
   void didUpdateWidget(BrandSlider old) {
@@ -942,9 +1004,8 @@ class _BrandSliderState extends State<BrandSlider> {
     return FSlider(
       control: .managedContinuous(
         controller: _controller,
-        onChange: (v) => widget.onChanged(
-          widget.min + v.max * (widget.max - widget.min),
-        ),
+        onChange: (v) =>
+            widget.onChanged(widget.min + v.max * (widget.max - widget.min)),
       ),
     );
   }
@@ -980,6 +1041,48 @@ Future<DateTime?> brandDatePicker(
   );
 }
 
+/// Picks an inclusive date range, replacing `showDateRangePicker`.
+///
+/// Unlike [brandDatePicker] this cannot close on tap — a range needs two taps —
+/// so it carries an explicit confirm, disabled until both ends are chosen.
+Future<(DateTime, DateTime)?> brandDateRangePicker(
+  BuildContext context, {
+  required DateTime first,
+  required DateTime last,
+  (DateTime, DateTime)? initial,
+  String title = 'Pick a range',
+}) {
+  var range = initial;
+  return brandSheet<(DateTime, DateTime)>(
+    context: context,
+    builder: (sheetContext) => StatefulBuilder(
+      builder: (_, setState) => SheetScaffold(
+        title: title,
+        actions: [
+          BrandButton(
+            label: 'Done',
+            expand: false,
+            onPressed: range == null
+                ? null
+                : () => Navigator.of(sheetContext).pop(range),
+          ),
+        ],
+        child: FCalendar.grid(
+          selectionControl: FDateSelectionControl.managedRange(
+            initial: initial,
+            onChange: (v) => setState(() => range = v),
+          ),
+          control: FGridCalendarControl(
+            start: first,
+            end: last,
+            initial: initial?.$1 ?? first,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 /// Picks a time of day, returning minutes past midnight.
 ///
 /// forui's time picker is a wheel widget rather than a modal, so it is hosted in
@@ -1002,9 +1105,9 @@ Future<int?> brandTimePicker(
           variant: .ghost,
           size: .sm,
           mainAxisSize: .min,
-          onPress: () => Navigator.of(sheetContext).pop(
-            controller.value.hour * 60 + controller.value.minute,
-          ),
+          onPress: () => Navigator.of(
+            sheetContext,
+          ).pop(controller.value.hour * 60 + controller.value.minute),
           child: Text(
             'Done',
             style: TextStyle(
@@ -1082,23 +1185,64 @@ void brandToast(
     suffixBuilder: (actionLabel == null || onAction == null)
         ? null
         : (_, entry) => FButton(
-              variant: .ghost,
-              size: .sm,
-              mainAxisSize: .min,
-              onPress: () {
-                entry.dismiss();
-                onAction();
-              },
-              child: Text(
-                actionLabel,
-                style: const TextStyle(
-                  color: AppColors.coralSoft,
-                  fontWeight: FontWeight.w600,
-                ),
+            variant: .ghost,
+            size: .sm,
+            mainAxisSize: .min,
+            onPress: () {
+              entry.dismiss();
+              onAction();
+            },
+            child: Text(
+              actionLabel,
+              style: const TextStyle(
+                color: AppColors.coralSoft,
+                fontWeight: FontWeight.w600,
               ),
             ),
+          ),
   );
 }
+
+/// A dialog with arbitrary content. Replaces `showDialog` + `AlertDialog` for
+/// the cases [brandConfirm] cannot cover — the ones whose body is a form.
+///
+/// [builder] gets the dialog's own context, so `Navigator.pop(context, value)`
+/// inside it returns from this future.
+Future<T?> brandDialog<T>(
+  BuildContext context, {
+  required String title,
+  required WidgetBuilder builder,
+  List<Widget> actions = const [],
+}) => showFDialog<T>(
+  context: context,
+  builder: (context, style, animation) => FDialog(
+    animation: animation,
+    style: style,
+    // FDialog hands over the bare surface — the content inset is the caller's
+    // job, and forui's own `insetPadding` is the margin from the screen edge.
+    builder: (context, _) => Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(title, style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 16),
+          builder(context),
+          if (actions.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            // Stacked rather than in a trailing row: the brand's buttons are
+            // full-width pills, and a form dialog is narrow.
+            for (final action in actions) ...[
+              action,
+              if (action != actions.last) const SizedBox(height: 8),
+            ],
+          ],
+        ],
+      ),
+    ),
+  ),
+);
 
 /// A confirm/cancel dialog. Replaces `showDialog` + `AlertDialog`.
 ///
@@ -1116,34 +1260,38 @@ Future<bool> brandConfirm(
     builder: (context, style, animation) => FDialog(
       animation: animation,
       style: style,
-      builder: (context, style) => Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(title, style: Theme.of(context).textTheme.titleLarge),
-          if (message != null) ...[
+      builder: (context, style) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(title, style: Theme.of(context).textTheme.titleLarge),
+            if (message != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                message,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: context.muted),
+              ),
+            ],
+            const SizedBox(height: 20),
+            BrandButton(
+              label: confirmLabel,
+              kind: destructive
+                  ? BrandButtonKind.danger
+                  : BrandButtonKind.primary,
+              onPressed: () => Navigator.of(context).pop(true),
+            ),
             const SizedBox(height: 8),
-            Text(
-              message,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: context.muted),
+            BrandButton(
+              label: cancelLabel,
+              kind: BrandButtonKind.ghost,
+              onPressed: () => Navigator.of(context).pop(false),
             ),
           ],
-          const SizedBox(height: 20),
-          BrandButton(
-            label: confirmLabel,
-            kind: destructive ? BrandButtonKind.danger : BrandButtonKind.primary,
-            onPressed: () => Navigator.of(context).pop(true),
-          ),
-          const SizedBox(height: 8),
-          BrandButton(
-            label: cancelLabel,
-            kind: BrandButtonKind.ghost,
-            onPressed: () => Navigator.of(context).pop(false),
-          ),
-        ],
+        ),
       ),
     ),
   );
@@ -1154,15 +1302,25 @@ Future<bool> brandConfirm(
 class ColorPickerRow extends StatelessWidget {
   final int selected;
   final ValueChanged<int> onChanged;
+
   /// The warm brand family. Existing rows may still hold a colour from the old
   /// indigo palette; those render fine, they just show as unselected here.
   static const palette = <int>[
-    0xFFFF6547, 0xFF3BB273, 0xFFF2A03D, 0xFFE5484D,
-    0xFF9A6DD7, 0xFF3AAFB9, 0xFFE86FA0, 0xFF6C6C6C,
+    0xFFFF6547,
+    0xFF3BB273,
+    0xFFF2A03D,
+    0xFFE5484D,
+    0xFF9A6DD7,
+    0xFF3AAFB9,
+    0xFFE86FA0,
+    0xFF6C6C6C,
   ];
 
-  const ColorPickerRow(
-      {super.key, required this.selected, required this.onChanged});
+  const ColorPickerRow({
+    super.key,
+    required this.selected,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1224,16 +1382,20 @@ class IconPickerRow extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: isSel ? color.withValues(alpha: 0.18) : context.brand.tint(0),
+              color: isSel
+                  ? color.withValues(alpha: 0.18)
+                  : context.brand.tint(0),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: isSel ? color : Colors.transparent,
                 width: 2,
               ),
             ),
-            child: AppIcon(e.value,
-                size: 20,
-                color: isSel ? color : Theme.of(context).colorScheme.outline),
+            child: AppIcon(
+              e.value,
+              size: 20,
+              color: isSel ? color : Theme.of(context).colorScheme.outline,
+            ),
           ),
         );
       }).toList(),

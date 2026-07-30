@@ -270,14 +270,12 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TextField(
+          BrandField(
             controller: _name,
+            label: 'Medicine name',
+            hint: 'Amoxicillin',
             autofocus: !_isEditing,
             textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(
-              labelText: 'Medicine name',
-              hintText: 'Amoxicillin',
-            ),
           ),
           const SizedBox(height: 16),
 
@@ -306,28 +304,28 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
           Row(
             children: [
               Expanded(
-                child: TextField(
+                child: BrandField(
                   controller: _dosage,
+                  label: 'Dose',
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
-                  decoration: const InputDecoration(labelText: 'Dose'),
                   onChanged: (_) => setState(() {}),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: TextField(
+                child: BrandField(
                   controller: _dosageUnit,
-                  decoration: const InputDecoration(labelText: 'Unit'),
+                  label: 'Unit',
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: TextField(
+                child: BrandField(
                   controller: _inventory,
+                  label: 'In stock',
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'In stock'),
                   onChanged: (_) => setState(() {}),
                 ),
               ),
@@ -376,12 +374,11 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
                 Expanded(
-                  child: Slider(
+                  child: BrandSlider(
                     value: _intervalHours.toDouble(),
                     min: 1,
                     max: 24,
                     divisions: 23,
-                    label: '$_intervalHours h',
                     onChanged: (v) =>
                         setState(() => _intervalHours = v.round()),
                   ),
@@ -535,19 +532,17 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
           ),
 
           const SizedBox(height: 12),
-          TextField(
+          BrandField(
             controller: _doctor,
-            decoration: const InputDecoration(
-              labelText: 'Doctor',
-              prefixIcon: AppIcon(AppIcons.person),
-            ),
+            label: 'Doctor',
+            prefix: const AppIcon(AppIcons.person),
           ),
           const SizedBox(height: 12),
-          TextField(
+          BrandField(
             controller: _notes,
+            label: 'Notes',
             maxLines: 2,
             minLines: 1,
-            decoration: const InputDecoration(labelText: 'Notes'),
           ),
 
           const SizedBox(height: 24),
@@ -643,60 +638,60 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
     DateTime value,
     ValueChanged<DateTime> onSet,
   ) {
-    return InkWell(
+    // A row rather than a decorated field: it reads as tappable, and it matches
+    // the course/skip-date rows directly above it.
+    return BrandTile(
+      leading: const AppIcon(AppIcons.calendar),
+      title: Text(label),
+      subtitle: Text(Fmt.dayMonthYear(value)),
+      trailing: const AppIcon(AppIcons.chevronRight),
       onTap: () async {
-        final picked = await showDatePicker(
-          context: context,
-          initialDate: value,
-          firstDate: DateTime.now().subtract(const Duration(days: 365)),
-          lastDate: DateTime.now().add(const Duration(days: 3650)),
+        final picked = await brandDatePicker(
+          context,
+          initial: value,
+          first: DateTime.now().subtract(const Duration(days: 365)),
+          last: DateTime.now().add(const Duration(days: 3650)),
+          title: label,
         );
         if (picked != null) onSet(picked);
       },
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: const AppIcon(AppIcons.calendar),
-        ),
-        child: Text(Fmt.dayMonthYear(value)),
-      ),
     );
   }
 
   Future<void> _addTime() async {
-    final time = await showTimePicker(
-      context: context,
-      initialTime: const TimeOfDay(hour: 8, minute: 0),
+    final minutes = await brandTimePicker(
+      context,
+      initialMinutes: 8 * 60,
+      title: 'Add a dose time',
     );
-    if (time == null) return;
-    final minutes = time.hour * 60 + time.minute;
+    if (minutes == null) return;
     if (_times.contains(minutes)) return;
     setState(() => _times = [..._times, minutes]..sort());
   }
 
   Future<void> _editTime(int existing) async {
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay(hour: existing ~/ 60, minute: existing % 60),
+    final minutes = await brandTimePicker(
+      context,
+      initialMinutes: existing,
+      title: 'Dose time',
     );
-    if (time == null) return;
-    final minutes = time.hour * 60 + time.minute;
+    if (minutes == null) return;
     setState(() {
       _times = [..._times.where((t) => t != existing), minutes]..sort();
     });
   }
 
   Future<void> _pickSkipDates() async {
-    final range = await showDateRangePicker(
-      context: context,
-      firstDate: _start,
-      lastDate: _end,
-      helpText: 'Select days to skip',
+    final range = await brandDateRangePicker(
+      context,
+      first: _start,
+      last: _end,
+      title: 'Days to skip',
     );
     if (range == null) return;
     setState(() {
-      var day = Fmt.dateOnly(range.start);
-      final last = Fmt.dateOnly(range.end);
+      var day = Fmt.dateOnly(range.$1);
+      final last = Fmt.dateOnly(range.$2);
       while (!day.isAfter(last)) {
         _skip.add(day);
         day = day.add(const Duration(days: 1));

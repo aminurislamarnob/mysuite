@@ -168,10 +168,12 @@ class _CameraScanScreenState extends State<CameraScanScreen> {
             onPressed: () => _scan(ImageSource.camera),
           ),
           const SizedBox(height: 10),
-          TextButton.icon(
+          BrandButton(
+            label: 'Choose from gallery',
+            icon: AppIcons.gallery,
+            kind: BrandButtonKind.ghost,
+            expand: false,
             onPressed: () => _scan(ImageSource.gallery),
-            icon: const AppIcon(AppIcons.gallery),
-            label: const Text('Choose from gallery'),
           ),
         ],
       ),
@@ -228,10 +230,13 @@ class _CameraScanScreenState extends State<CameraScanScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        ExpansionTile(
-          tilePadding: EdgeInsets.zero,
-          title: const Text('Raw text', style: TextStyle(fontSize: 13)),
-          children: [Text(r.rawText, style: const TextStyle(fontSize: 12))],
+        FAccordion(
+          children: [
+            FAccordionItem(
+              title: const Text('Raw text', style: TextStyle(fontSize: 13)),
+              child: Text(r.rawText, style: const TextStyle(fontSize: 12)),
+            ),
+          ],
         ),
         const Spacer(),
         Row(
