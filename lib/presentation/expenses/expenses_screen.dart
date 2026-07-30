@@ -960,6 +960,7 @@ class _BillsTab extends ConsumerWidget {
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
+                runSpacing: 8,
                 children: accounts
                     .map(
                       (a) => Pill(

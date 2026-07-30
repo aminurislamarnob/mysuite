@@ -617,6 +617,7 @@ class _HabitEditorSheetState extends ConsumerState<HabitEditorSheet> {
             const SizedBox(height: 12),
             Wrap(
               spacing: 6,
+              runSpacing: 6,
               children: List.generate(7, (i) {
                 const labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
                 final on = (_weekdayMask & (1 << i)) != 0;

@@ -730,6 +730,7 @@ class _TableTab extends ConsumerWidget {
                         return DataCell(
                           Wrap(
                             spacing: 4,
+                            runSpacing: 4,
                             children: atSlot.map((v) {
                               final taken = v.status == DoseStatus.taken;
                               final skipped = v.status == DoseStatus.skipped;

@@ -338,6 +338,7 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
+              runSpacing: 8,
               children: profiles
                   .map(
                     (p) => Pill(
@@ -416,6 +417,7 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
+              runSpacing: 8,
               children: [1, 2, 3, 4]
                   .map(
                     (n) => Pill(
@@ -434,6 +436,7 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
             const SizedBox(height: 8),
             Wrap(
               spacing: 6,
+              runSpacing: 6,
               children: List.generate(7, (i) {
                 const labels = [
                   'Mon',
@@ -467,6 +470,7 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
+            runSpacing: 8,
             children: MealRelation.values
                 .map(
                   (m) => Pill(
@@ -505,6 +509,7 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
+            runSpacing: 8,
             children: [3, 5, 7, 10, 14, 30]
                 .map(
                   (d) => Pill(
