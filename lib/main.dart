@@ -234,48 +234,7 @@ class _LockGateState extends ConsumerState<_LockGate>
       return;
     }
 
-    final controller = TextEditingController();
-    String? error;
-
-    final ok = await brandDialog<bool>(
-      context,
-      title: 'Enter PIN',
-      // The lock screen is the point; tapping outside must not dismiss it.
-      barrierDismissible: false,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (_, setState) => Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            BrandField(
-              controller: controller,
-              autofocus: true,
-              obscure: true,
-              keyboardType: TextInputType.number,
-              error: error,
-            ),
-            const SizedBox(height: 20),
-            BrandButton(
-              label: 'Unlock',
-              onPressed: () {
-                if (security.verifyPin(controller.text)) {
-                  Navigator.pop(dialogContext, true);
-                } else {
-                  setState(() => error = 'Incorrect PIN');
-                }
-              },
-            ),
-            const SizedBox(height: 8),
-            BrandButton(
-              label: 'Cancel',
-              kind: BrandButtonKind.ghost,
-              onPressed: () => Navigator.pop(dialogContext, false),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (ok == true && mounted) setState(() => _unlocked = true);
+    final ok = await promptForPin(context, security.verifyPin);
+    if (ok && mounted) setState(() => _unlocked = true);
   }
 }

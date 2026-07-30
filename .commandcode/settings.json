@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Shell(flutter:*)"
+    ],
+    "deny": [],
+    "defaultMode": "default"
+  }
+}

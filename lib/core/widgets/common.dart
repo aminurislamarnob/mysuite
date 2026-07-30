@@ -1472,6 +1472,58 @@ Future<T?> brandDialog<T>(
   ),
 );
 
+/// Blocking PIN prompt shared by the app lock gate and locked notes. Returns
+/// true only when [verify] accepts the entered PIN.
+Future<bool> promptForPin(
+  BuildContext context,
+  bool Function(String pin) verify, {
+  String title = 'Enter PIN',
+}) async {
+  final controller = TextEditingController();
+  String? error;
+
+  final ok = await brandDialog<bool>(
+    context,
+    title: title,
+    // Tapping outside must not dismiss a lock prompt.
+    barrierDismissible: false,
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (_, setState) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          BrandField(
+            controller: controller,
+            autofocus: true,
+            obscure: true,
+            keyboardType: TextInputType.number,
+            error: error,
+          ),
+          const SizedBox(height: 20),
+          BrandButton(
+            label: 'Unlock',
+            onPressed: () {
+              if (verify(controller.text)) {
+                Navigator.pop(dialogContext, true);
+              } else {
+                setState(() => error = 'Incorrect PIN');
+              }
+            },
+          ),
+          const SizedBox(height: 8),
+          BrandButton(
+            label: 'Cancel',
+            kind: BrandButtonKind.ghost,
+            onPressed: () => Navigator.pop(dialogContext, false),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  return ok == true;
+}
+
 /// A confirm/cancel dialog. Replaces `showDialog` + `AlertDialog`.
 ///
 /// Returns true only when the confirming action is chosen.

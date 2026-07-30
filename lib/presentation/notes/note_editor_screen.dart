@@ -95,15 +95,32 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   }
 
   Future<void> _requestUnlock() async {
-    final ok = await ref
-        .read(securityServiceProvider)
-        .authenticate(reason: 'Unlock "${_note?.title ?? 'this note'}"');
+    final security = ref.read(securityServiceProvider);
+    final ok = await security.authenticate(
+      reason: 'Unlock "${_note?.title ?? 'this note'}"',
+    );
     if (!mounted) return;
     if (ok) {
       setState(() => _unlocked = true);
-    } else {
-      Navigator.of(context).maybePop();
+      return;
     }
+
+    // Biometric failed or was cancelled: offer the PIN before giving up.
+    if (security.hasPin) {
+      final pinOk = await promptForPin(
+        context,
+        security.verifyPin,
+        title: 'Unlock note',
+      );
+      if (!mounted) return;
+      if (pinOk) {
+        setState(() => _unlocked = true);
+      }
+      // A cancelled prompt leaves the locked placeholder up for a retry.
+      return;
+    }
+
+    Navigator.of(context).maybePop();
   }
 
   @override

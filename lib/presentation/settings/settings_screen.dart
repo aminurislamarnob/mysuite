@@ -274,7 +274,19 @@ class SettingsScreen extends ConsumerWidget {
                           (m) => BrandSwitchTile(
                             title: m.label,
                             value: settings.lockedModules.contains(m),
-                            onChanged: (v) => notifier.toggleModuleLock(m, v),
+                            onChanged: (v) async {
+                              // A lock with no way to authenticate is no
+                              // lock at all — set a PIN first.
+                              if (v &&
+                                  !await security.canUseBiometrics() &&
+                                  !security.hasPin) {
+                                if (context.mounted) {
+                                  final set = await _setPin(context, security);
+                                  if (!set) return;
+                                }
+                              }
+                              notifier.toggleModuleLock(m, v);
+                            },
                           ),
                         )
                         .toList(),

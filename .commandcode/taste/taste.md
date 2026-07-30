@@ -3,7 +3,7 @@
 ## General
 - Builds Flutter mobile apps (Dart, Material 3); primary development context is cross-platform mobile. Confidence: 0.9
 - Audience/locale is Bangladesh: wants Bangla language support, bKash/Nagad/Rocket payment accounts, and ৳ (BDT) currency treated as first-class in product features. Confidence: 0.8
-- Wants real, end-to-end working implementations — no mock data, no dead buttons; expects an honest report of what is done vs. what remains. Confidence: 0.65
+- Wants real, end-to-end working implementations — no mock data, no dead buttons/toggles; expects an honest report of what is done vs. what remains. When told a feature is only partially working (e.g. "PARTIAL on Android", a settings toggle that "still does nothing"), asks for it to be made fully functional. Confidence: 0.8
 
 ## Communication
 - Communicates in terse, imperative commands ("commit & push", "Run the emulator", "use X as default"), often with typos; does not want lengthy back-and-forth. Confidence: 0.85

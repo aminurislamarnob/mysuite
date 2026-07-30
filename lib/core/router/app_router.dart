@@ -22,6 +22,7 @@ import '../../presentation/settings/settings_screen.dart';
 import '../../presentation/shell/app_shell.dart';
 import '../../presentation/tasks/tasks_screen.dart';
 import '../settings/app_settings.dart';
+import 'module_lock_gate.dart';
 
 final _rootKey = GlobalKey<NavigatorState>();
 final _dashboardKey = GlobalKey<NavigatorState>(debugLabel: 'dashboard');
@@ -82,19 +83,51 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
-      GoRoute(path: '/notes', builder: (_, _) => const NotesScreen()),
+      GoRoute(
+        path: '/notes',
+        builder: (_, _) =>
+            const ModuleLockGate(module: AppModule.notes, child: NotesScreen()),
+      ),
       GoRoute(
         path: '/note_editor',
-        builder: (_, state) => NoteEditorScreen(noteId: state.extra as int?),
+        builder: (_, state) => ModuleLockGate(
+          module: AppModule.notes,
+          child: NoteEditorScreen(noteId: state.extra as int?),
+        ),
       ),
-      GoRoute(path: '/tasks', builder: (_, _) => const TasksScreen()),
-      GoRoute(path: '/habits', builder: (_, _) => const HabitsScreen()),
-      GoRoute(path: '/expenses', builder: (_, _) => const ExpensesScreen()),
-      GoRoute(path: '/medicine', builder: (_, _) => const MedicineScreen()),
+      GoRoute(
+        path: '/tasks',
+        builder: (_, _) =>
+            const ModuleLockGate(module: AppModule.tasks, child: TasksScreen()),
+      ),
+      GoRoute(
+        path: '/habits',
+        builder: (_, _) => const ModuleLockGate(
+          module: AppModule.habits,
+          child: HabitsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/expenses',
+        builder: (_, _) => const ModuleLockGate(
+          module: AppModule.expenses,
+          child: ExpensesScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/medicine',
+        builder: (_, _) => const ModuleLockGate(
+          module: AppModule.medicine,
+          child: MedicineScreen(),
+        ),
+      ),
       GoRoute(
         // A task id may be passed in to link the session to that task.
         path: '/focus',
-        builder: (_, state) => FocusScreen(taskId: state.extra as int?),
+        builder: (_, state) => ModuleLockGate(
+          module: AppModule.focus,
+          child: FocusScreen(taskId: state.extra as int?),
+        ),
       ),
       GoRoute(path: '/search', builder: (_, _) => const SearchScreen()),
       GoRoute(
