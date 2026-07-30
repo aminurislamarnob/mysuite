@@ -1000,6 +1000,54 @@ class BrandSegmented<T extends Object> extends StatelessWidget {
   }
 }
 
+/// A collapsible row, replacing Material's `ExpansionTile`.
+///
+/// forui's `FAccordion` indents its title by nothing and takes no leading
+/// glyph, so a bare one sitting in a card of [BrandTile]s reads as a different
+/// widget: flush to the card edge, with a hole where every neighbour has an
+/// icon. This matches [BrandTile]'s inset, 8px icon gap and muted 24px glyph so
+/// the row lines up with the ones above it. The inset is 14, not 10: `FItem`
+/// puts its content inside a 4px `FItemStyle.padding` before the content's own
+/// 10px, and the accordion has no equivalent outer padding of its own.
+class BrandAccordion extends StatelessWidget {
+  final String title;
+  final HugeIconData? leading;
+  final Widget child;
+
+  const BrandAccordion({
+    super.key,
+    required this.title,
+    required this.child,
+    this.leading,
+  });
+
+  @override
+  Widget build(BuildContext context) => FAccordion(
+    style: .delta(
+      titlePadding: EdgeInsetsGeometryDelta.value(
+        const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+      ),
+      childPadding: EdgeInsetsGeometryDelta.value(
+        const EdgeInsets.fromLTRB(14, 0, 14, 16),
+      ),
+    ),
+    children: [
+      FAccordionItem(
+        title: Row(
+          children: [
+            if (leading != null) ...[
+              AppIcon(leading!, size: 24, color: context.muted),
+              const SizedBox(width: 8),
+            ],
+            Expanded(child: Text(title)),
+          ],
+        ),
+        child: child,
+      ),
+    ],
+  );
+}
+
 /// A tab strip plus its views, replacing Material's `TabBar` + `TabBarView`.
 ///
 /// Always scrollable: the strip's pills size to their labels, so a long label

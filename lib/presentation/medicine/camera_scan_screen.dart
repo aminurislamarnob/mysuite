@@ -230,13 +230,11 @@ class _CameraScanScreenState extends State<CameraScanScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        FAccordion(
-          children: [
-            FAccordionItem(
-              title: const Text('Raw text', style: TextStyle(fontSize: 13)),
-              child: Text(r.rawText, style: const TextStyle(fontSize: 12)),
-            ),
-          ],
+        // No leading glyph: the detected-value rows above it have none either,
+        // so the column stays even.
+        BrandAccordion(
+          title: 'Raw text',
+          child: Text(r.rawText, style: const TextStyle(fontSize: 12)),
         ),
         const Spacer(),
         Row(

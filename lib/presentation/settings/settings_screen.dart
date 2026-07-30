@@ -266,24 +266,20 @@ class SettingsScreen extends ConsumerWidget {
                   subtitle: Text('${settings.autoLockMinutes} minutes'),
                   onTap: () => _pickAutoLock(context, notifier),
                 ),
-                FAccordion(
-                  children: [
-                    FAccordionItem(
-                      title: const Text('Lock individual modules'),
-                      child: Column(
-                        children: AppModule.values
-                            .map(
-                              (m) => BrandSwitchTile(
-                                title: m.label,
-                                value: settings.lockedModules.contains(m),
-                                onChanged: (v) =>
-                                    notifier.toggleModuleLock(m, v),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    ),
-                  ],
+                BrandAccordion(
+                  leading: AppIcons.modules,
+                  title: 'Lock individual modules',
+                  child: Column(
+                    children: AppModule.values
+                        .map(
+                          (m) => BrandSwitchTile(
+                            title: m.label,
+                            value: settings.lockedModules.contains(m),
+                            onChanged: (v) => notifier.toggleModuleLock(m, v),
+                          ),
+                        )
+                        .toList(),
+                  ),
                 ),
               ],
             ),
