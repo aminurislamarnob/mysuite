@@ -561,6 +561,9 @@ class _KanbanView extends ConsumerWidget {
                               padding: const EdgeInsets.only(bottom: 8),
                               child: LongPressDraggable<Task>(
                                 data: t,
+                                // Stays Material: drag feedback is mounted in
+                                // the Overlay rather than in this subtree, and
+                                // this is the idiomatic ancestor for it.
                                 feedback: Material(
                                   color: Colors.transparent,
                                   child: SizedBox(

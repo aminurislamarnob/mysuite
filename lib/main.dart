@@ -237,36 +237,39 @@ class _LockGateState extends ConsumerState<_LockGate>
     final controller = TextEditingController();
     String? error;
 
-    final ok = await showDialog<bool>(
-      context: context,
+    final ok = await brandDialog<bool>(
+      context,
+      title: 'Enter PIN',
+      // The lock screen is the point; tapping outside must not dismiss it.
       barrierDismissible: false,
-      builder: (_) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Enter PIN'),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            obscureText: true,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(errorText: error),
-          ),
-          actions: [
-            BrandButton(
-              label: 'Cancel',
-              kind: BrandButtonKind.ghost,
-              expand: false,
-              onPressed: () => Navigator.pop(context, false),
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (_, setState) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            BrandField(
+              controller: controller,
+              autofocus: true,
+              obscure: true,
+              keyboardType: TextInputType.number,
+              error: error,
             ),
+            const SizedBox(height: 20),
             BrandButton(
               label: 'Unlock',
-              expand: false,
               onPressed: () {
                 if (security.verifyPin(controller.text)) {
-                  Navigator.pop(context, true);
+                  Navigator.pop(dialogContext, true);
                 } else {
                   setState(() => error = 'Incorrect PIN');
                 }
               },
+            ),
+            const SizedBox(height: 8),
+            BrandButton(
+              label: 'Cancel',
+              kind: BrandButtonKind.ghost,
+              onPressed: () => Navigator.pop(dialogContext, false),
             ),
           ],
         ),

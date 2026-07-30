@@ -361,4 +361,117 @@ void main() {
       );
     });
   });
+
+  group('wrappers added during the migration', () {
+    testWidgets('BrandCheckbox ticks in the colour it is given', (tester) async {
+      // The subtask list ticks in the Tasks accent, not the brand coral, so the
+      // checked fill has to be overridable without disturbing forui's disabled
+      // and error derivations.
+      await pumpBranded(
+        tester,
+        const BrandCheckbox(
+          value: true,
+          onChanged: null,
+          color: AppColors.taskAccent,
+        ),
+      );
+
+      final fills = tester
+          .widgetList<DecoratedBox>(find.descendant(
+            of: find.byType(BrandCheckbox),
+            matching: find.byType(DecoratedBox),
+          ))
+          .map((d) => d.decoration)
+          .whereType<ShapeDecoration>()
+          .map((d) => d.color);
+
+      expect(fills, contains(AppColors.taskAccent));
+    });
+
+    testWidgets('a bare BrandField drops its fill and border', (tester) async {
+      // The note editor's title reads as a heading above the Quill body; the
+      // usual filled, outlined treatment boxes it in.
+      await pumpBranded(
+        tester,
+        const Column(
+          children: [
+            BrandField(hint: 'Filled'),
+            BrandField(hint: 'Bare', bare: true),
+          ],
+        ),
+      );
+
+      final fields = tester.widgetList<TextField>(find.byType(TextField)).toList();
+      expect(fields, hasLength(2));
+      expect(fields.first.decoration!.fillColor, AppColors.tintPeach);
+      expect(fields.last.decoration!.fillColor, Colors.transparent);
+      // forui resolves the border into a WidgetStateInputBorder; resolve it back
+      // to the concrete border to confirm the bare field carries none.
+      final border = fields.last.decoration!.border;
+      final resolved = border is WidgetStateInputBorder
+          ? border.resolve(const <WidgetState>{})
+          : border;
+      expect(resolved, InputBorder.none);
+    });
+
+    testWidgets('BrandField surfaces a validation message', (tester) async {
+      await pumpBranded(
+        tester,
+        const BrandField(hint: 'PIN', error: 'Incorrect PIN'),
+      );
+
+      expect(find.text('Incorrect PIN'), findsOneWidget);
+    });
+
+    testWidgets('BrandSegmented renders one pill per option', (tester) async {
+      await pumpBranded(
+        tester,
+        BrandSegmented<int>(
+          options: const {0: 'Build', 1: 'Reduce'},
+          icons: const {0: AppIcons.trendUp, 1: AppIcons.trendDown},
+          selected: 0,
+          onSelected: (_) {},
+        ),
+      );
+
+      expect(find.byType(Pill), findsNWidgets(2));
+      // The icons map is honoured, so the habit control keeps its trend arrows.
+      expect(find.byType(AppIcon), findsNWidgets(2));
+    });
+
+    testWidgets('BrandChip only offers a remove affordance when it can',
+        (tester) async {
+      await pumpBranded(
+        tester,
+        const Column(
+          children: [
+            BrandChip(label: '#work'),
+            BrandChip(label: '#ideas', onRemove: _noop),
+          ],
+        ),
+      );
+
+      expect(find.byType(CircleIconButton), findsOneWidget);
+    });
+
+    testWidgets('TintCard forwards a long press', (tester) async {
+      // The habit card opens its editor on long press; before this the screen
+      // nested an InkWell inside the card's own tappable.
+      var pressed = false;
+      await pumpBranded(
+        tester,
+        TintCard(
+          onLongPress: () => pressed = true,
+          child: const Text('Habit'),
+        ),
+      );
+
+      await tester.longPress(find.text('Habit'));
+      await tester.pumpAndSettle();
+
+      expect(pressed, isTrue);
+    });
+  });
 }
+
+void _noop() {}

@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../theme/app_icons.dart';
+import '../widgets/brand.dart';
+import '../widgets/common.dart';
+
 import '../../presentation/dashboard/dashboard_screen.dart';
 import '../../presentation/expenses/expenses_screen.dart';
 import '../../presentation/focus/focus_screen.dart';
@@ -96,9 +100,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
           path: '/reminders', builder: (_, _) => const RemindersScreen()),
     ],
-    errorBuilder: (_, state) => Scaffold(
-      appBar: AppBar(),
-      body: Center(child: Text('Page not found: ${state.uri}')),
+    errorBuilder: (_, state) => BrandScaffold(
+      header: const BrandTopBar(title: 'Not found', leadingIcon: AppIcons.back),
+      child: EmptyState(
+        icon: AppIcons.searchOff,
+        title: 'Page not found',
+        message: '${state.uri}',
+      ),
     ),
   );
 });

@@ -668,11 +668,16 @@ class BrandTile extends StatelessWidget {
 ///
 /// The brand's fields are filled with the peach tint and rounded to
 /// [AppRadii.field] rather than forui's bordered, unfilled default.
-class BrandField extends StatelessWidget {
+class BrandField extends StatefulWidget {
   final TextEditingController? controller;
   final String? label;
   final String? hint;
   final String? helper;
+
+  /// A validation message, shown in the error colour and switching the field to
+  /// its error variant.
+  final String? error;
+
   final int? maxLines;
   final int? minLines;
   final bool obscure;
@@ -706,6 +711,7 @@ class BrandField extends StatelessWidget {
     this.label,
     this.hint,
     this.helper,
+    this.error,
     this.maxLines = 1,
     this.minLines,
     this.obscure = false,
@@ -725,40 +731,74 @@ class BrandField extends StatelessWidget {
   });
 
   @override
+  State<BrandField> createState() => _BrandFieldState();
+}
+
+class _BrandFieldState extends State<BrandField> {
+  // forui only renders `FTextField.error` when the field is in the error
+  // WidgetState; passing `error:` alone is inert. We drive that state from the
+  // presence of an error message so a plain BrandField (no Form) still shows it.
+  final WidgetStatesController _states = WidgetStatesController();
+
+  @override
+  void initState() {
+    super.initState();
+    _states.update(WidgetState.error, widget.error != null);
+  }
+
+  @override
+  void didUpdateWidget(BrandField old) {
+    super.didUpdateWidget(old);
+    if (widget.error != old.error) {
+      _states.update(WidgetState.error, widget.error != null);
+    }
+  }
+
+  @override
+  void dispose() {
+    _states.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final brand = context.brand;
     final flattened = brand.tints.toSet().length == 1;
 
     return FTextField(
       control: .managed(
-        controller: controller,
-        onChange: onChanged == null ? null : (v) => onChanged!(v.text),
-      ),
-      label: label == null ? null : Text(label!),
-      hint: hint,
-      description: helper == null ? null : Text(helper!),
-      maxLines: obscure ? 1 : maxLines,
-      minLines: minLines,
-      obscureText: obscure,
-      autofocus: autofocus,
-      enabled: enabled,
-      keyboardType: keyboardType,
-      textInputAction: textInputAction,
-      textCapitalization: textCapitalization,
-      inputFormatters: inputFormatters,
-      onSubmit: onSubmit,
-      prefixBuilder: prefix == null ? null : (_, _, _) => prefix!,
-      suffixBuilder: suffix == null ? null : (_, _, _) => suffix!,
-      focusNode: focusNode,
-      style: .delta(
-        contentTextStyle: textStyle == null
+        controller: widget.controller,
+        onChange: widget.onChanged == null
             ? null
-            : .delta([.all(TextStyleDelta.value(textStyle!))]),
+            : (v) => widget.onChanged!(v.text),
+      ),
+      statesController: _states,
+      label: widget.label == null ? null : Text(widget.label!),
+      hint: widget.hint,
+      description: widget.helper == null ? null : Text(widget.helper!),
+      error: widget.error == null ? null : Text(widget.error!),
+      maxLines: widget.obscure ? 1 : widget.maxLines,
+      minLines: widget.minLines,
+      obscureText: widget.obscure,
+      autofocus: widget.autofocus,
+      enabled: widget.enabled,
+      keyboardType: widget.keyboardType,
+      textInputAction: widget.textInputAction,
+      textCapitalization: widget.textCapitalization,
+      inputFormatters: widget.inputFormatters,
+      onSubmit: widget.onSubmit,
+      prefixBuilder: widget.prefix == null ? null : (_, _, _) => widget.prefix!,
+      suffixBuilder: widget.suffix == null ? null : (_, _, _) => widget.suffix!,
+      focusNode: widget.focusNode,
+      style: .delta(
+        contentTextStyle: widget.textStyle == null
+            ? null
+            : .delta([.all(TextStyleDelta.value(widget.textStyle!))]),
         // At high contrast the tint flattens, so the field falls back to the
         // page surface and leans on its border instead.
         color: .delta([
           .all(
-            bare
+            widget.bare
                 ? Colors.transparent
                 : flattened
                 ? Theme.of(context).colorScheme.surface
@@ -769,7 +809,7 @@ class BrandField extends StatelessWidget {
         // error borders from FColors, which are already the brand's coral and
         // danger — the same treatment the Material inputDecorationTheme gave.
         border: .delta([
-          if (bare)
+          if (widget.bare)
             .all(InputBorder.none)
           else
             .base(
@@ -1284,8 +1324,10 @@ Future<T?> brandDialog<T>(
   required String title,
   required WidgetBuilder builder,
   List<Widget> actions = const [],
+  bool barrierDismissible = true,
 }) => showFDialog<T>(
   context: context,
+  barrierDismissible: barrierDismissible,
   builder: (context, style, animation) => FDialog(
     animation: animation,
     style: style,
