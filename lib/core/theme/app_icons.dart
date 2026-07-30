@@ -19,18 +19,23 @@ typedef HugeIconData = List<List<dynamic>>;
 ///    stretches it to fill rather than leaving it at its own size. Centring it
 ///    the way [Icon] does keeps a 20px glyph 20px inside a 44px button.
 class AppIcon extends StatelessWidget {
-  const AppIcon(this.icon, {super.key, this.size, this.color});
+  const AppIcon(this.icon, {super.key, this.size, this.color, this.semanticsLabel});
 
   final HugeIconData icon;
   final double? size;
   final Color? color;
+
+  /// Announced in place of the glyph. Supplied by forui's [FIcons] tokens, which
+  /// label their icons for screen readers.
+  final String? semanticsLabel;
 
   @override
   Widget build(BuildContext context) {
     final iconTheme = IconTheme.of(context);
     final dimension = size ?? iconTheme.size ?? 24;
 
-    return Center(
+    // Semantics adds no box of its own, so the sizing contract above is intact.
+    Widget glyph = Center(
       widthFactor: 1,
       heightFactor: 1,
       child: SizedBox.square(
@@ -42,6 +47,11 @@ class AppIcon extends StatelessWidget {
         ),
       ),
     );
+
+    if (semanticsLabel != null) {
+      glyph = Semantics(label: semanticsLabel, child: glyph);
+    }
+    return glyph;
   }
 }
 
@@ -67,6 +77,7 @@ class AppIcons {
   static const checkCircle = HugeIcons.strokeRoundedCheckmarkCircle02;
   static const circle = HugeIcons.strokeRoundedCircle;
   static const moreVertical = HugeIcons.strokeRoundedMoreVertical;
+  static const moreHorizontal = HugeIcons.strokeRoundedMoreHorizontal;
   static const search = HugeIcons.strokeRoundedSearch01;
   static const searchOff = HugeIcons.strokeRoundedSearchRemove;
   static const filterOff = HugeIcons.strokeRoundedFilterRemove;
@@ -92,6 +103,20 @@ class AppIcons {
   static const trendUp = HugeIcons.strokeRoundedChartUp;
   static const trendDown = HugeIcons.strokeRoundedChartDown;
   static const percent = HugeIcons.strokeRoundedPercent;
+
+  // Tokens forui's FIcons requires that had no semantic name here yet. Naming
+  // them after the forui token keeps the mapping in app_forui_theme.dart obvious.
+  static const chevronDown = HugeIcons.strokeRoundedArrowDown01;
+  static const chevronUp = HugeIcons.strokeRoundedArrowUp01;
+  static const chevronsUpDown = HugeIcons.strokeRoundedUnfoldMore;
+  static const clock = HugeIcons.strokeRoundedClock01;
+  static const eye = HugeIcons.strokeRoundedEye;
+  static const eyeClosed = HugeIcons.strokeRoundedViewOffSlash;
+  static const gripHorizontal = HugeIcons.strokeRoundedDragDropHorizontal;
+  static const gripVertical = HugeIcons.strokeRoundedDragDropVertical;
+  static const loader = HugeIcons.strokeRoundedLoading03;
+  static const loaderCircle = HugeIcons.strokeRoundedLoading01;
+  static const loaderPinwheel = HugeIcons.strokeRoundedLoading02;
 
   // shell destinations
   static const dashboard = HugeIcons.strokeRoundedDashboardSquare01;

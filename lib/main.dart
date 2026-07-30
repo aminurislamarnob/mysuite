@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/router/app_router.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/security_service.dart';
 import 'core/settings/app_settings.dart';
+import 'core/theme/app_forui_theme.dart';
 import 'core/theme/app_icons.dart';
 import 'core/theme/app_theme.dart';
 import 'presentation/notes/repository/note_repository.dart';
@@ -71,6 +73,8 @@ class _MySuiteAppState extends ConsumerState<MySuiteApp> {
       locale: Locale(settings.locale),
       supportedLocales: const [Locale('en'), Locale('bn')],
       localizationsDelegates: const [
+        // forui ships its own strings and covers both en and bn.
+        ...FLocalizations.localizationsDelegates,
         FlutterQuillLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -79,12 +83,35 @@ class _MySuiteAppState extends ConsumerState<MySuiteApp> {
       builder: (context, child) {
         // Apply the user's font scale on top of the platform setting.
         final media = MediaQuery.of(context);
+
+        // MaterialApp resolves themeMode itself, but FTheme takes one concrete
+        // FThemeData, so the brightness has to be decided here.
+        final brightness = switch (settings.themeMode) {
+          ThemeMode.light => Brightness.light,
+          ThemeMode.dark => Brightness.dark,
+          ThemeMode.system => media.platformBrightness,
+        };
+
         return MediaQuery(
           data: media.copyWith(
             textScaler: TextScaler.linear(settings.textScale),
             disableAnimations: settings.reduceMotion,
           ),
-          child: _LockGate(child: child ?? const SizedBox.shrink()),
+          child: FTheme(
+            data: brandForuiTheme(
+              brightness: brightness,
+              highContrast: settings.highContrast,
+              compact: settings.compactDensity,
+              locale: settings.locale,
+            ),
+            // FToaster hosts showFToast; FTooltipGroup coordinates FTooltips so
+            // only one is open at a time. Both must sit above every route.
+            child: FToaster(
+              child: FTooltipGroup(
+                child: _LockGate(child: child ?? const SizedBox.shrink()),
+              ),
+            ),
+          ),
         );
       },
     );

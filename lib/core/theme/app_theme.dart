@@ -86,6 +86,68 @@ class BrandColors extends ThemeExtension<BrandColors> {
   }
 }
 
+/// The resolved brand palette for one appearance.
+///
+/// Both the Material [ThemeData] and the forui `FThemeData` are built from an
+/// instance of this, so a colour can only be changed in one place and the two
+/// component systems cannot drift apart.
+@immutable
+class BrandTokens {
+  final Brightness brightness;
+  final bool highContrast;
+  final bool compact;
+  final String locale;
+
+  /// Body copy and headings.
+  final Color text;
+
+  /// Supporting copy, placeholder text, unselected icons.
+  final Color muted;
+
+  /// The page background.
+  final Color background;
+
+  /// Raised surfaces — dialogs, sheets, popovers.
+  final Color surface;
+
+  final Color primary;
+  final Color onPrimary;
+  final Color secondary;
+  final Color error;
+
+  /// Tints, hairline and canvas — the values with no [ColorScheme] slot.
+  final BrandColors brand;
+
+  /// Cards are normally borderless; the pastel fill separates them. At high
+  /// contrast the fill disappears, so a real outline takes over.
+  final BorderSide cardBorder;
+
+  const BrandTokens({
+    required this.brightness,
+    required this.highContrast,
+    required this.compact,
+    required this.locale,
+    required this.text,
+    required this.muted,
+    required this.background,
+    required this.surface,
+    required this.primary,
+    required this.onPrimary,
+    required this.secondary,
+    required this.error,
+    required this.brand,
+    required this.cardBorder,
+  });
+
+  bool get isDark => brightness == Brightness.dark;
+
+  /// The font family for [locale]. Bangla glyphs are absent from Bricolage
+  /// Grotesque, so Bengali falls back to Hind Siliguri.
+  String get fontFamily =>
+      (locale == 'bn' ? GoogleFonts.hindSiliguri() : GoogleFonts.bricolageGrotesque())
+          .fontFamily!;
+}
+
 extension BrandTheme on BuildContext {
   /// The brand palette for the nearest [Theme].
   ///
@@ -133,46 +195,86 @@ class AppTheme {
         );
   }
 
+  /// Resolves the brand palette for one appearance.
+  ///
+  /// This is the single place a brand colour is decided. `light()`, `dark()` and
+  /// `brandForuiTheme()` all read from it.
+  static BrandTokens tokens({
+    required Brightness brightness,
+    bool highContrast = false,
+    bool compact = false,
+    String locale = 'en',
+  }) {
+    final dark = brightness == Brightness.dark;
+
+    final text = highContrast
+        ? (dark ? Colors.white : Colors.black)
+        : (dark ? AppColors.textDark : AppColors.textLight);
+    final muted = highContrast
+        ? (dark ? const Color(0xFFD8D0CE) : const Color(0xFF3D3D3D))
+        : (dark ? AppColors.mutedDark : AppColors.mutedLight);
+
+    return BrandTokens(
+      brightness: brightness,
+      highContrast: highContrast,
+      compact: compact,
+      locale: locale,
+      text: text,
+      muted: muted,
+      background: highContrast
+          ? (dark ? Colors.black : Colors.white)
+          : (dark ? AppColors.backgroundDark : AppColors.backgroundLight),
+      surface: dark ? AppColors.surfaceDark : AppColors.surfaceLight,
+      primary: dark ? AppColors.primaryDark : AppColors.primaryLight,
+      onPrimary: dark ? const Color(0xFF3A1206) : Colors.white,
+      secondary: dark ? AppColors.coralSoft : AppColors.coralDeep,
+      error: dark ? AppColors.dangerDark : AppColors.dangerLight,
+      brand: BrandColors(
+        tints: highContrast
+            // Pastel fills wash out at high contrast, so cards fall back to
+            // flat and lean on the stronger outline instead.
+            ? (dark
+                ? const [Colors.black, Colors.black, Colors.black]
+                : const [Colors.white, Colors.white, Colors.white])
+            : (dark ? AppColors.tintsDark : AppColors.tints),
+        hairline: highContrast
+            ? (dark ? const Color(0xFF6E6E6E) : const Color(0xFF9A9A9A))
+            : (dark ? AppColors.hairlineDark : AppColors.hairlineLight),
+        canvas: dark
+            ? (highContrast ? Colors.black : AppColors.backgroundDark)
+            : Colors.white,
+      ),
+      cardBorder:
+          highContrast ? BorderSide(color: text, width: 1.2) : BorderSide.none,
+    );
+  }
+
   static ThemeData light({
     bool highContrast = false,
     bool compact = false,
     String locale = 'en',
   }) {
-    final text = highContrast ? Colors.black : AppColors.textLight;
-    final muted = highContrast ? const Color(0xFF3D3D3D) : AppColors.mutedLight;
-    return _build(
+    final t = tokens(
       brightness: Brightness.light,
-      scheme: ColorScheme.light(
-        primary: AppColors.primaryLight,
-        onPrimary: Colors.white,
-        secondary: AppColors.coralDeep,
-        surface: AppColors.surfaceLight,
-        error: AppColors.dangerLight,
-        onSurface: text,
-        outline: muted,
+      highContrast: highContrast,
+      compact: compact,
+      locale: locale,
+    );
+    return _build(
+      t,
+      ColorScheme.light(
+        primary: t.primary,
+        onPrimary: t.onPrimary,
+        secondary: t.secondary,
+        surface: t.surface,
+        error: t.error,
+        onSurface: t.text,
+        outline: t.muted,
         // `surfaceContainer` is the pastel fill Material picks for grouped
         // content, so pointing it at the peach tint brands stock widgets too.
         surfaceContainer: AppColors.tintPeach,
         surfaceContainerHighest: AppColors.tintApricot,
       ),
-      background: highContrast ? Colors.white : AppColors.backgroundLight,
-      surface: AppColors.surfaceLight,
-      text: text,
-      muted: muted,
-      primary: AppColors.primaryLight,
-      onPrimary: Colors.white,
-      brand: BrandColors(
-        tints: highContrast
-            // Pastel fills wash out at high contrast, so cards fall back to
-            // white and lean on the stronger outline instead.
-            ? const [Colors.white, Colors.white, Colors.white]
-            : AppColors.tints,
-        hairline: highContrast ? const Color(0xFF9A9A9A) : AppColors.hairlineLight,
-        canvas: Colors.white,
-      ),
-      compact: compact,
-      locale: locale,
-      highContrast: highContrast,
     );
   }
 
@@ -181,63 +283,45 @@ class AppTheme {
     bool compact = false,
     String locale = 'en',
   }) {
-    final text = highContrast ? Colors.white : AppColors.textDark;
-    final muted = highContrast ? const Color(0xFFD8D0CE) : AppColors.mutedDark;
-    return _build(
+    final t = tokens(
       brightness: Brightness.dark,
-      scheme: ColorScheme.dark(
-        primary: AppColors.primaryDark,
-        onPrimary: const Color(0xFF3A1206),
-        secondary: AppColors.coralSoft,
-        surface: AppColors.surfaceDark,
-        error: AppColors.dangerDark,
-        onSurface: text,
-        outline: muted,
+      highContrast: highContrast,
+      compact: compact,
+      locale: locale,
+    );
+    return _build(
+      t,
+      ColorScheme.dark(
+        primary: t.primary,
+        onPrimary: t.onPrimary,
+        secondary: t.secondary,
+        surface: t.surface,
+        error: t.error,
+        onSurface: t.text,
+        outline: t.muted,
         surfaceContainer: AppColors.tintsDark.first,
         surfaceContainerHighest: AppColors.tintsDark.last,
       ),
-      background: highContrast ? Colors.black : AppColors.backgroundDark,
-      surface: AppColors.surfaceDark,
-      text: text,
-      muted: muted,
-      primary: AppColors.primaryDark,
-      onPrimary: const Color(0xFF3A1206),
-      brand: BrandColors(
-        tints: highContrast
-            ? const [Colors.black, Colors.black, Colors.black]
-            : AppColors.tintsDark,
-        hairline: highContrast ? const Color(0xFF6E6E6E) : AppColors.hairlineDark,
-        canvas: highContrast ? Colors.black : AppColors.backgroundDark,
-      ),
-      compact: compact,
-      locale: locale,
-      highContrast: highContrast,
     );
   }
 
-  static ThemeData _build({
-    required Brightness brightness,
-    required ColorScheme scheme,
-    required Color background,
-    required Color surface,
-    required Color text,
-    required Color muted,
-    required Color primary,
-    required Color onPrimary,
-    required BrandColors brand,
-    required bool compact,
-    required bool highContrast,
-    required String locale,
-  }) {
+  static ThemeData _build(BrandTokens t, ColorScheme scheme) {
+    final brightness = t.brightness;
+    final background = t.background;
+    final surface = t.surface;
+    final text = t.text;
+    final muted = t.muted;
+    final primary = t.primary;
+    final onPrimary = t.onPrimary;
+    final brand = t.brand;
+    final compact = t.compact;
+    final highContrast = t.highContrast;
+    final locale = t.locale;
+    final cardBorder = t.cardBorder;
+
     final base =
         brightness == Brightness.light ? ThemeData.light() : ThemeData.dark();
     final textTheme = _textTheme(base.textTheme, text, locale);
-
-    // Cards are normally borderless — the pastel fill does the separating. At
-    // high contrast the fill disappears, so a real outline takes over.
-    final cardBorder = highContrast
-        ? BorderSide(color: text, width: 1.2)
-        : BorderSide.none;
 
     OutlineInputBorder field(Color color, double width) => OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadii.field),
