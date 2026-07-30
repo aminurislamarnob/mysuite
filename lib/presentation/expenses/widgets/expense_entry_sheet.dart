@@ -6,6 +6,7 @@ import '../../../core/settings/app_settings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/brand.dart';
 import '../../../core/widgets/common.dart';
 import '../providers/expenses_provider.dart';
 import '../repository/expense_repository.dart';
@@ -34,9 +35,8 @@ class ExpenseEntrySheet extends ConsumerStatefulWidget {
     double? amount,
     String? receiptPath,
   }) {
-    return showModalBottomSheet(
+    return brandSheet(
       context: context,
-      isScrollControlled: true,
       builder: (_) => ExpenseEntrySheet(
         initialKind: kind,
         initialNote: note,
@@ -67,9 +67,10 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
     super.initState();
     _kind = widget.initialKind;
     _amount = TextEditingController(
-        text: widget.initialAmount == null
-            ? ''
-            : widget.initialAmount!.toStringAsFixed(0));
+      text: widget.initialAmount == null
+          ? ''
+          : widget.initialAmount!.toStringAsFixed(0),
+    );
     _note = TextEditingController(text: widget.initialNote ?? '');
   }
 
@@ -92,21 +93,28 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
       return;
     }
     setState(() => _listening = true);
-    await _speech.listen(onResult: (r) {
-      if (!r.finalResult) return;
-      setState(() => _listening = false);
-      _applyVoice(r.recognizedWords);
-    });
+    await _speech.listen(
+      onResult: (r) {
+        if (!r.finalResult) return;
+        setState(() => _listening = false);
+        _applyVoice(r.recognizedWords);
+      },
+    );
   }
 
   void _applyVoice(String phrase) {
     final categories = ref.read(categoriesProvider).valueOrNull ?? const [];
     final accounts = ref.read(accountsProvider).valueOrNull ?? const [];
-    final parsed = ExpenseVoiceParser.parse(phrase,
-        categories: categories, accounts: accounts);
+    final parsed = ExpenseVoiceParser.parse(
+      phrase,
+      categories: categories,
+      accounts: accounts,
+    );
 
     setState(() {
-      if (parsed.amount != null) _amount.text = parsed.amount!.toStringAsFixed(0);
+      if (parsed.amount != null) {
+        _amount.text = parsed.amount!.toStringAsFixed(0);
+      }
       if (parsed.categoryId != null) _categoryId = parsed.categoryId;
       if (parsed.accountId != null) _accountId = parsed.accountId;
       if (parsed.kind != null) _kind = parsed.kind!;
@@ -116,7 +124,7 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
 
   void _toast(String m) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
+    brandToast(context, m);
   }
 
   Future<void> _save() async {
@@ -136,7 +144,9 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
       return;
     }
 
-    await ref.read(expenseRepositoryProvider).addTransaction(
+    await ref
+        .read(expenseRepositoryProvider)
+        .addTransaction(
           amount: amount,
           accountId: accountId,
           categoryId: _kind == TxKind.transfer ? null : _categoryId,
@@ -169,13 +179,19 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
         _ => 'Add expense',
       },
       actions: [
-        IconButton(
+        CircleIconButton(
+          icon: _listening ? AppIcons.mic : AppIcons.mic,
           tooltip: 'Voice entry',
-          icon: AppIcon(_listening ? AppIcons.mic : AppIcons.mic),
           color: _listening ? AppColors.dangerLight : null,
+          size: 40,
           onPressed: _voiceEntry,
         ),
-        TextButton(onPressed: _save, child: const Text('Save')),
+        BrandButton(
+          label: 'Save',
+          kind: BrandButtonKind.ghost,
+          expand: false,
+          onPressed: _save,
+        ),
       ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -198,12 +214,14 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
             controller: _amount,
             autofocus: true,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            style:
-                const TextStyle(fontSize: 30, fontWeight: FontWeight.w700),
+            style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w700),
             decoration: InputDecoration(
               prefixText: '$currency ',
               prefixStyle: TextStyle(
-                  fontSize: 26, fontWeight: FontWeight.w600, color: muted),
+                fontSize: 26,
+                fontWeight: FontWeight.w600,
+                color: muted,
+              ),
               hintText: '0',
             ),
           ),
@@ -216,32 +234,38 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
               spacing: 8,
               runSpacing: 8,
               children: categories
-                  .map((c) => ChoiceChip(
-                        avatar: AppIcon(AppIcons.category(c.icon),
-                            size: 16, color: Color(c.color)),
-                        label: Text(c.name),
-                        selected: _categoryId == c.id,
-                        onSelected: (_) => setState(() => _categoryId = c.id),
-                      ))
+                  .map(
+                    (c) => Pill(
+                      label: c.name,
+                      icon: AppIcons.category(c.icon),
+                      selected: _categoryId == c.id,
+                      color: Theme.of(context).colorScheme.primary,
+                      onTap: () => setState(() => _categoryId = c.id),
+                    ),
+                  )
                   .toList(),
             ),
             const SizedBox(height: 16),
           ],
 
-          Text(_kind == TxKind.transfer ? 'From account' : 'Account',
-              style: TextStyle(color: muted, fontSize: 12)),
+          Text(
+            _kind == TxKind.transfer ? 'From account' : 'Account',
+            style: TextStyle(color: muted, fontSize: 12),
+          ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: accounts
-                .map((a) => ChoiceChip(
-                      avatar: AppIcon(AppIcons.account(a.type),
-                          size: 16, color: Color(a.color)),
-                      label: Text(a.name),
-                      selected: _accountId == a.id,
-                      onSelected: (_) => setState(() => _accountId = a.id),
-                    ))
+                .map(
+                  (a) => Pill(
+                    label: a.name,
+                    icon: AppIcons.account(a.type),
+                    selected: _accountId == a.id,
+                    color: Theme.of(context).colorScheme.primary,
+                    onTap: () => setState(() => _accountId = a.id),
+                  ),
+                )
                 .toList(),
           ),
 
@@ -254,14 +278,15 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
               runSpacing: 8,
               children: accounts
                   .where((a) => a.id != _accountId)
-                  .map((a) => ChoiceChip(
-                        avatar: AppIcon(AppIcons.account(a.type),
-                            size: 16, color: Color(a.color)),
-                        label: Text(a.name),
-                        selected: _transferAccountId == a.id,
-                        onSelected: (_) =>
-                            setState(() => _transferAccountId = a.id),
-                      ))
+                  .map(
+                    (a) => Pill(
+                      label: a.name,
+                      icon: AppIcons.account(a.type),
+                      selected: _transferAccountId == a.id,
+                      color: Theme.of(context).colorScheme.primary,
+                      onTap: () => setState(() => _transferAccountId = a.id),
+                    ),
+                  )
                   .toList(),
             ),
           ],
@@ -276,8 +301,7 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
             ),
           ),
           const SizedBox(height: 8),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
+          BrandTile(
             leading: const AppIcon(AppIcons.calendar),
             title: const Text('Date'),
             subtitle: Text(Fmt.dayMonthYear(_date)),
@@ -293,8 +317,7 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
             },
           ),
           if (widget.receiptPath != null)
-            ListTile(
-              contentPadding: EdgeInsets.zero,
+            BrandTile(
               leading: const AppIcon(AppIcons.bills),
               title: const Text('Receipt attached'),
               subtitle: Text(widget.receiptPath!.split('/').last),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/database/app_database.dart';
@@ -8,6 +9,8 @@ import '../../../core/services/notification_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/brand.dart';
+import '../../../core/widgets/common.dart';
 import '../providers/tasks_provider.dart';
 import '../repository/task_repository.dart';
 import '../utils/recurrence.dart';
@@ -43,11 +46,11 @@ Widget _slideAction({
 }
 
 Color priorityColor(int priority) => switch (priority) {
-      1 => AppColors.dangerLight,
-      2 => AppColors.warningLight,
-      3 => AppColors.taskAccent,
-      _ => AppColors.mutedLight,
-    };
+  1 => AppColors.dangerLight,
+  2 => AppColors.warningLight,
+  3 => AppColors.taskAccent,
+  _ => AppColors.mutedLight,
+};
 
 class TaskTile extends ConsumerWidget {
   final Task task;
@@ -65,8 +68,10 @@ class TaskTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final repo = ref.read(taskRepositoryProvider);
     final muted = Theme.of(context).colorScheme.outline;
-    final subtasks = ref.watch(subtasksProvider(task.id)).valueOrNull ?? const [];
-    final overdue = task.dueDate != null &&
+    final subtasks =
+        ref.watch(subtasksProvider(task.id)).valueOrNull ?? const [];
+    final overdue =
+        task.dueDate != null &&
         !task.isCompleted &&
         task.dueDate!.isBefore(DateTime.now());
 
@@ -107,40 +112,40 @@ class TaskTile extends ConsumerWidget {
           ),
         ],
       ),
-      child: Card(
-        margin: const EdgeInsets.only(bottom: 8),
-        child: ListTile(
-          dense: dense,
-          onTap: () => TaskEditorSheet.show(context, task: task),
-          leading: Checkbox(
-            value: task.isCompleted,
-            activeColor: AppColors.taskAccent,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-            onChanged: (v) async {
-              final spawned = await repo.setCompleted(task.id, v ?? false);
-              if (spawned != null && context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Next occurrence scheduled')),
-                );
-              }
-            },
-          ),
-          title: Text(
-            task.title,
-            style: TextStyle(
-              fontWeight: FontWeight.w500,
-              decoration: task.isCompleted ? TextDecoration.lineThrough : null,
-              color: task.isCompleted ? muted : null,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: dense ? 4 : 8),
+        child: TintCard(
+          padding: EdgeInsets.zero,
+          child: BrandTile(
+            onTap: () => TaskEditorSheet.show(context, task: task),
+            leading: FCheckbox(
+              value: task.isCompleted,
+              semanticsLabel: task.title,
+              onChange: (v) async {
+                final spawned = await repo.setCompleted(task.id, v);
+                if (spawned != null && context.mounted) {
+                  brandToast(context, 'Next occurrence scheduled');
+                }
+              },
             ),
-          ),
-          subtitle: _buildSubtitle(context, muted, overdue, subtasks),
-          trailing: Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(
-              color: priorityColor(task.priority),
-              shape: BoxShape.circle,
+            title: Text(
+              task.title,
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                decoration: task.isCompleted
+                    ? TextDecoration.lineThrough
+                    : null,
+                color: task.isCompleted ? muted : null,
+              ),
+            ),
+            subtitle: _buildSubtitle(context, muted, overdue, subtasks),
+            trailing: Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                color: priorityColor(task.priority),
+                shape: BoxShape.circle,
+              ),
             ),
           ),
         ),
@@ -149,35 +154,49 @@ class TaskTile extends ConsumerWidget {
   }
 
   Widget? _buildSubtitle(
-      BuildContext context, Color muted, bool overdue, List<Task> subtasks) {
+    BuildContext context,
+    Color muted,
+    bool overdue,
+    List<Task> subtasks,
+  ) {
     final bits = <Widget>[];
 
     if (showDue && task.dueDate != null) {
-      bits.add(_chip(
-        icon: AppIcons.calendar,
-        label: Fmt.due(task.dueDate!, withTime: task.hasDueTime),
-        color: overdue ? AppColors.dangerLight : muted,
-      ));
+      bits.add(
+        _chip(
+          icon: AppIcons.calendar,
+          label: Fmt.due(task.dueDate!, withTime: task.hasDueTime),
+          color: overdue ? AppColors.dangerLight : muted,
+        ),
+      );
     }
     if (task.recurrenceRule != null) {
-      bits.add(_chip(
+      bits.add(
+        _chip(
           icon: AppIcons.repeat,
           label: Recurrence.label(task.recurrenceRule),
-          color: muted));
+          color: muted,
+        ),
+      );
     }
     if (subtasks.isNotEmpty) {
       final done = subtasks.where((s) => s.isCompleted).length;
-      bits.add(_chip(
+      bits.add(
+        _chip(
           icon: AppIcons.checklist,
           label: '$done/${subtasks.length}',
-          color: muted));
+          color: muted,
+        ),
+      );
     }
     if (task.loggedMinutes > 0) {
-      bits.add(_chip(
-        icon: AppIcons.focus,
-        label: Fmt.durationFromMinutes(task.loggedMinutes),
-        color: AppColors.focusAccent,
-      ));
+      bits.add(
+        _chip(
+          icon: AppIcons.focus,
+          label: Fmt.durationFromMinutes(task.loggedMinutes),
+          color: AppColors.focusAccent,
+        ),
+      );
     }
 
     if (bits.isEmpty) return null;

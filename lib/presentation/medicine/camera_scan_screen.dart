@@ -3,9 +3,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:forui/forui.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/widgets/common.dart';
 
 enum ScanMode { receipt, prescription }
 
@@ -75,8 +77,9 @@ class _CameraScanScreenState extends State<CameraScanScreen> {
       }
       _imagePath = photo.path;
 
-      final recognized =
-          await _recognizer.processImage(InputImage.fromFilePath(photo.path));
+      final recognized = await _recognizer.processImage(
+        InputImage.fromFilePath(photo.path),
+      );
       final text = recognized.text;
 
       if (text.trim().isEmpty) {
@@ -116,15 +119,15 @@ class _CameraScanScreenState extends State<CameraScanScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    CircularProgressIndicator(),
+                    FCircularProgress(),
                     SizedBox(height: 16),
                     Text('Reading the image…'),
                   ],
                 ),
               )
             : _result != null
-                ? _buildResult(_result!, isReceipt)
-                : _buildPrompt(isReceipt),
+            ? _buildResult(_result!, isReceipt)
+            : _buildPrompt(isReceipt),
       ),
     );
   }
@@ -135,9 +138,7 @@ class _CameraScanScreenState extends State<CameraScanScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           AppIcon(
-            isReceipt
-                ? AppIcons.bills
-                : AppIcons.prescription,
+            isReceipt ? AppIcons.bills : AppIcons.prescription,
             size: 64,
             color: Theme.of(context).colorScheme.outline,
           ),
@@ -151,15 +152,18 @@ class _CameraScanScreenState extends State<CameraScanScreen> {
           ),
           if (_error != null) ...[
             const SizedBox(height: 16),
-            Text(_error!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.dangerLight)),
+            Text(
+              _error!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.dangerLight),
+            ),
           ],
           const SizedBox(height: 28),
-          FilledButton.icon(
+          BrandButton(
+            label: 'Take a photo',
+            icon: AppIcons.camera,
+            expand: false,
             onPressed: () => _scan(ImageSource.camera),
-            icon: const AppIcon(AppIcons.camera),
-            label: const Text('Take a photo'),
           ),
           const SizedBox(height: 10),
           TextButton.icon(
@@ -182,7 +186,10 @@ class _CameraScanScreenState extends State<CameraScanScreen> {
             ('Medicine', r.medicineName),
             ('Dosage', r.dosage),
             ('Times per day', r.timesPerDay?.toString()),
-            ('Duration', r.durationDays == null ? null : '${r.durationDays} days'),
+            (
+              'Duration',
+              r.durationDays == null ? null : '${r.durationDays} days',
+            ),
           ];
 
     return Column(
@@ -191,52 +198,59 @@ class _CameraScanScreenState extends State<CameraScanScreen> {
         if (_imagePath != null)
           ClipRRect(
             borderRadius: BorderRadius.circular(20),
-            child: Image.file(File(_imagePath!),
-                height: 140, width: double.infinity, fit: BoxFit.cover),
+            child: Image.file(
+              File(_imagePath!),
+              height: 140,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
           ),
         const SizedBox(height: 16),
-        const Text('What we found',
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+        const Text(
+          'What we found',
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+        ),
         const SizedBox(height: 12),
-        ...rows.map((row) => ListTile(
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-              title: Text(row.$1),
-              trailing: Text(
-                row.$2 ?? 'not detected',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: row.$2 == null
-                      ? Theme.of(context).colorScheme.outline
-                      : null,
-                ),
+        ...rows.map(
+          (row) => BrandTile(
+            title: Text(row.$1),
+            trailing: Text(
+              row.$2 ?? 'not detected',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: row.$2 == null
+                    ? Theme.of(context).colorScheme.outline
+                    : null,
               ),
-            )),
+            ),
+          ),
+        ),
         const SizedBox(height: 12),
         ExpansionTile(
           tilePadding: EdgeInsets.zero,
           title: const Text('Raw text', style: TextStyle(fontSize: 13)),
-          children: [
-            Text(r.rawText, style: const TextStyle(fontSize: 12)),
-          ],
+          children: [Text(r.rawText, style: const TextStyle(fontSize: 12))],
         ),
         const Spacer(),
         Row(
           children: [
             Expanded(
-              child: OutlinedButton(
+              child: BrandButton(
+                label: 'Rescan',
+                kind: BrandButtonKind.outline,
+                expand: false,
                 onPressed: () => setState(() {
                   _result = null;
                   _imagePath = null;
                 }),
-                child: const Text('Rescan'),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: FilledButton(
+              child: BrandButton(
+                label: 'Use these details',
+                expand: false,
                 onPressed: () => Navigator.pop(context, r),
-                child: const Text('Use these details'),
               ),
             ),
           ],
@@ -261,9 +275,10 @@ class ReceiptParser {
 
     // Prefer a line that explicitly names the total.
     for (final line in lines.reversed) {
-      if (!RegExp(r'\b(grand\s+total|total|amount|due|payable)\b',
-              caseSensitive: false)
-          .hasMatch(line)) {
+      if (!RegExp(
+        r'\b(grand\s+total|total|amount|due|payable)\b',
+        caseSensitive: false,
+      ).hasMatch(line)) {
         continue;
       }
       final value = _lastNumber(line);
@@ -295,8 +310,9 @@ class ReceiptParser {
   }
 
   static double? _lastNumber(String line) {
-    final matches =
-        RegExp(r'(\d[\d,]*(?:\.\d{1,2})?)').allMatches(line).toList();
+    final matches = RegExp(
+      r'(\d[\d,]*(?:\.\d{1,2})?)',
+    ).allMatches(line).toList();
     if (matches.isEmpty) return null;
     return double.tryParse(matches.last.group(1)!.replaceAll(',', ''));
   }
@@ -310,23 +326,24 @@ class PrescriptionParser {
     final lower = text.toLowerCase();
 
     // "500mg", "5 ml", "10 mcg"
-    final dosage = RegExp(r'(\d+(?:\.\d+)?)\s*(mg|ml|mcg|g|iu)\b',
-            caseSensitive: false)
-        .firstMatch(text)
-        ?.group(0);
+    final dosage = RegExp(
+      r'(\d+(?:\.\d+)?)\s*(mg|ml|mcg|g|iu)\b',
+      caseSensitive: false,
+    ).firstMatch(text)?.group(0);
 
     // A medicine name usually sits immediately before its strength.
     String? name;
     final nameMatch = RegExp(
-            r'([A-Z][A-Za-z\-]{2,})\s+\d+(?:\.\d+)?\s*(?:mg|ml|mcg|g|iu)\b')
-        .firstMatch(text);
+      r'([A-Z][A-Za-z\-]{2,})\s+\d+(?:\.\d+)?\s*(?:mg|ml|mcg|g|iu)\b',
+    ).firstMatch(text);
     if (nameMatch != null) {
       name = nameMatch.group(1);
     } else {
       // Fall back to the first capitalised word after an Rx marker.
-      final rx = RegExp(r'(?:rx|tab|cap|syp)[.:\s]+([A-Za-z][A-Za-z\-]{2,})',
-              caseSensitive: false)
-          .firstMatch(text);
+      final rx = RegExp(
+        r'(?:rx|tab|cap|syp)[.:\s]+([A-Za-z][A-Za-z\-]{2,})',
+        caseSensitive: false,
+      ).firstMatch(text);
       name = rx?.group(1);
     }
 
@@ -336,20 +353,23 @@ class PrescriptionParser {
     if (RegExp(r'\btwice\b').hasMatch(lower)) timesPerDay = 2;
     if (RegExp(r'\b(thrice|three times)\b').hasMatch(lower)) timesPerDay = 3;
 
-    final timesMatch =
-        RegExp(r'(\d+)\s*times?\s*(?:a|per)?\s*day').firstMatch(lower);
+    final timesMatch = RegExp(
+      r'(\d+)\s*times?\s*(?:a|per)?\s*day',
+    ).firstMatch(lower);
     if (timesMatch != null) {
       timesPerDay = int.tryParse(timesMatch.group(1)!);
     }
 
     // The South-Asian "1+0+1" dosing notation: count the non-zero slots.
-    final plusNotation =
-        RegExp(r'\b([01])\s*\+\s*([01])\s*\+\s*([01])\b').firstMatch(lower);
+    final plusNotation = RegExp(
+      r'\b([01])\s*\+\s*([01])\s*\+\s*([01])\b',
+    ).firstMatch(lower);
     if (plusNotation != null) {
-      timesPerDay = [1, 2, 3]
-          .map((i) => plusNotation.group(i))
-          .where((g) => g != '0')
-          .length;
+      timesPerDay = [
+        1,
+        2,
+        3,
+      ].map((i) => plusNotation.group(i)).where((g) => g != '0').length;
     }
 
     // Course length: "for 7 days", "for 2 weeks".

@@ -41,8 +41,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
     final stats = ref.watch(focusStatsProvider).valueOrNull ?? FocusStats.empty;
     final goal = ref.watch(focusGoalProvider);
     final tasks = ref.watch(openTasksProvider).valueOrNull ?? const [];
-    final linkedTask =
-        tasks.where((t) => t.id == state.taskId).firstOrNull;
+    final linkedTask = tasks.where((t) => t.id == state.taskId).firstOrNull;
 
     // Watch for the moment a session finishes so we can ask for a rating.
     ref.listen(focusTimerProvider, (prev, next) {
@@ -53,22 +52,22 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
       }
     });
 
-    final accent =
-        state.isBreak ? AppColors.successLight : AppColors.focusAccent;
+    final accent = state.isBreak
+        ? AppColors.successLight
+        : AppColors.focusAccent;
 
     return Scaffold(
       appBar: BrandTopBar(
         title: state.isBreak
             ? 'Break'
             : state.mode.countsUp
-                ? 'Flow'
-                : 'Focus',
+            ? 'Flow'
+            : 'Focus',
         leadingIcon: AppIcons.back,
         trailingIcon: AppIcons.barChart,
         trailingTooltip: 'Stats',
-        onTrailing: () => showModalBottomSheet(
+        onTrailing: () => brandSheet(
           context: context,
-          isScrollControlled: true,
           builder: (_) => const _FocusStatsSheet(),
         ),
       ),
@@ -116,13 +115,16 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
                         children: List.generate(
                           math.min(state.completedIntervals, 8),
                           (_) => Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 2.5),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 2.5,
+                            ),
                             child: Container(
                               width: 7,
                               height: 7,
                               decoration: BoxDecoration(
-                                  color: accent, shape: BoxShape.circle),
+                                color: accent,
+                                shape: BoxShape.circle,
+                              ),
                             ),
                           ),
                         ),
@@ -167,23 +169,23 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
             accent: accent,
             onTap: _pickTask,
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-            child: ListTile(
-              contentPadding: EdgeInsets.zero,
+            child: BrandTile(
               leading: AppIcon(AppIcons.link, color: accent),
               title: Text(linkedTask?.title ?? 'Not linked to a task'),
               subtitle: Text(
                 linkedTask == null
                     ? 'Link a task to log this time against it'
                     : linkedTask.estimateMinutes == null
-                        ? 'Time will be logged to this task'
-                        : 'Estimate ${Fmt.durationFromMinutes(linkedTask.estimateMinutes!)} · '
-                            'logged ${Fmt.durationFromMinutes(linkedTask.loggedMinutes)}',
+                    ? 'Time will be logged to this task'
+                    : 'Estimate ${Fmt.durationFromMinutes(linkedTask.estimateMinutes!)} · '
+                          'logged ${Fmt.durationFromMinutes(linkedTask.loggedMinutes)}',
                 style: const TextStyle(fontSize: 12),
               ),
               trailing: linkedTask == null
                   ? AppIcon(AppIcons.chevronRight, color: context.muted)
-                  : IconButton(
-                      icon: const AppIcon(AppIcons.close, size: 18),
+                  : CircleIconButton(
+                      icon: AppIcons.close,
+                      size: 40,
                       onPressed: () => notifier.linkTask(null),
                     ),
             ),
@@ -199,9 +201,11 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
           ),
           Align(
             alignment: Alignment.centerRight,
-            child: TextButton(
+            child: BrandButton(
+              label: 'Change goal',
+              kind: BrandButtonKind.ghost,
+              expand: false,
               onPressed: _editGoal,
-              child: const Text('Change goal'),
             ),
           ),
 
@@ -222,22 +226,27 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: FocusMode.values
-                .map((m) => Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: Text(m.label),
-                        selected: state.mode == m,
-                        onSelected: (_) => notifier.setMode(m),
-                      ),
-                    ))
+                .map(
+                  (m) => Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Pill(
+                      label: m.label,
+                      selected: state.mode == m,
+                      color: Theme.of(context).colorScheme.primary,
+                      onTap: () => notifier.setMode(m),
+                    ),
+                  ),
+                )
                 .toList(),
           ),
         ),
         if (state.mode == FocusMode.custom)
           Row(
             children: [
-              Text('${state.customMinutes} min',
-                  style: const TextStyle(fontWeight: FontWeight.w600)),
+              Text(
+                '${state.customMinutes} min',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
               Expanded(
                 child: Slider(
                   value: state.customMinutes.toDouble(),
@@ -257,7 +266,10 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
   /// The transport row from the reference: a big filled circle in the middle,
   /// flanked by two soft-tinted secondary circles.
   Widget _buildControls(
-      FocusState state, FocusTimerNotifier notifier, Color accent) {
+    FocusState state,
+    FocusTimerNotifier notifier,
+    Color accent,
+  ) {
     final idle =
         state.phase == TimerPhase.idle || state.phase == TimerPhase.finished;
 
@@ -309,27 +321,27 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
   Future<void> _pickTask() async {
     final tasks = ref.read(openTasksProvider).valueOrNull ?? const [];
     if (tasks.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No open tasks to link.')),
-      );
+      brandToast(context, 'No open tasks to link.');
       return;
     }
-    final picked = await showModalBottomSheet<int>(
+    final picked = await brandSheet<int>(
       context: context,
-      isScrollControlled: true,
       builder: (_) => SheetScaffold(
         title: 'Link a task',
         child: Column(
           children: tasks
-              .map((t) => ListTile(
-                    leading: const AppIcon(AppIcons.checkCircle),
-                    title: Text(t.title),
-                    subtitle: t.estimateMinutes == null
-                        ? null
-                        : Text(
-                            'Estimate ${Fmt.durationFromMinutes(t.estimateMinutes!)}'),
-                    onTap: () => Navigator.pop(context, t.id),
-                  ))
+              .map(
+                (t) => BrandTile(
+                  leading: const AppIcon(AppIcons.checkCircle),
+                  title: Text(t.title),
+                  subtitle: t.estimateMinutes == null
+                      ? null
+                      : Text(
+                          'Estimate ${Fmt.durationFromMinutes(t.estimateMinutes!)}',
+                        ),
+                  onTap: () => Navigator.pop(context, t.id),
+                ),
+              )
               .toList(),
         ),
       ),
@@ -340,8 +352,9 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
   }
 
   Future<void> _editGoal() async {
-    final controller =
-        TextEditingController(text: '${ref.read(focusGoalProvider)}');
+    final controller = TextEditingController(
+      text: '${ref.read(focusGoalProvider)}',
+    );
     final result = await showDialog<String>(
       context: context,
       builder: (_) => AlertDialog(
@@ -353,12 +366,17 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
           decoration: const InputDecoration(suffixText: 'minutes'),
         ),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel')),
-          FilledButton(
-              onPressed: () => Navigator.pop(context, controller.text),
-              child: const Text('Save')),
+          BrandButton(
+            label: 'Cancel',
+            kind: BrandButtonKind.ghost,
+            expand: false,
+            onPressed: () => Navigator.pop(context),
+          ),
+          BrandButton(
+            label: 'Save',
+            expand: false,
+            onPressed: () => Navigator.pop(context, controller.text),
+          ),
         ],
       ),
     );
@@ -377,16 +395,18 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
     final controller = TextEditingController();
     var rating = 3;
 
-    final saved = await showModalBottomSheet<bool>(
+    final saved = await brandSheet<bool>(
       context: context,
-      isScrollControlled: true,
       builder: (_) => StatefulBuilder(
         builder: (context, setState) => SheetScaffold(
           title: 'Session complete',
           actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Save')),
+            BrandButton(
+              label: 'Save',
+              kind: BrandButtonKind.ghost,
+              expand: false,
+              onPressed: () => Navigator.pop(context, true),
+            ),
           ],
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -401,7 +421,8 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
                 autofocus: true,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: const InputDecoration(
-                    labelText: 'What did you work on?'),
+                  labelText: 'What did you work on?',
+                ),
               ),
               const SizedBox(height: 20),
               const Text('Focus quality'),
@@ -410,11 +431,9 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: List.generate(5, (i) {
                   final value = i + 1;
-                  return IconButton(
-                    icon: AppIcon(
-                      value <= rating ? AppIcons.star : AppIcons.star,
-                      color: AppColors.warningLight,
-                    ),
+                  return CircleIconButton(
+                    icon: value <= rating ? AppIcons.star : AppIcons.star,
+                    size: 40,
                     onPressed: () => setState(() => rating = value),
                   );
                 }),
@@ -426,9 +445,13 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
     );
 
     if (saved == true) {
-      await ref.read(focusTimerProvider.notifier).annotateLast(
+      await ref
+          .read(focusTimerProvider.notifier)
+          .annotateLast(
             last.id,
-            note: controller.text.trim().isEmpty ? null : controller.text.trim(),
+            note: controller.text.trim().isEmpty
+                ? null
+                : controller.text.trim(),
             rating: rating,
           );
     }
@@ -471,8 +494,11 @@ class _RoundAction extends StatelessWidget {
           height: size,
           child: Center(
             child: icon != null
-                ? AppIcon(icon!,
-                    color: soft ? color : Colors.white, size: size * 0.42)
+                ? AppIcon(
+                    icon!,
+                    color: soft ? color : Colors.white,
+                    size: size * 0.42,
+                  )
                 : Text(
                     label!,
                     style: TextStyle(
@@ -510,18 +536,17 @@ class _AmbientRow extends ConsumerWidget {
       children: labels.entries.map((e) {
         final (label, icon) = e.value;
         final selected = active == e.key;
-        return FilterChip(
-          avatar: AppIcon(icon, size: 16),
-          label: Text(label),
+        return Pill(
+          label: label,
+          icon: icon,
           selected: selected,
-          onSelected: (_) async {
+          color: Theme.of(context).colorScheme.primary,
+          onTap: () => ((_) async {
             final ok = await notifier.toggle(e.key);
             if (!ok && context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('$label sound is not bundled yet.')),
-              );
+              brandToast(context, '$label sound is not bundled yet.');
             }
-          },
+          })(!(selected)),
         );
       }).toList(),
     );
@@ -624,42 +649,49 @@ class _FocusStatsSheet extends ConsumerWidget {
           if (sessions.isEmpty)
             Text('No sessions yet.', style: TextStyle(color: muted))
           else
-            ...sessions.take(12).map((s) => ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  dense: true,
-                  leading: AppIcon(
-                    s.isCompleted ? AppIcons.checkCircle : AppIcons.session,
-                    color: s.isCompleted
-                        ? AppColors.successLight
-                        : muted,
-                    size: 20,
-                  ),
-                  title: Text(
-                    s.note?.isNotEmpty == true ? s.note! : 'Focus session',
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                  subtitle: Text(
-                    '${Fmt.relativeDay(s.startTime)} · ${Fmt.time(s.startTime)}',
-                    style: TextStyle(fontSize: 11, color: muted),
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (s.rating != null) ...[
-                        const AppIcon(AppIcons.star,
-                            size: 12, color: AppColors.warningLight),
-                        Text('${s.rating}',
-                            style: const TextStyle(fontSize: 11)),
-                        const SizedBox(width: 8),
+            ...sessions
+                .take(12)
+                .map(
+                  (s) => BrandTile(
+                    leading: AppIcon(
+                      s.isCompleted ? AppIcons.checkCircle : AppIcons.session,
+                      color: s.isCompleted ? AppColors.successLight : muted,
+                      size: 20,
+                    ),
+                    title: Text(
+                      s.note?.isNotEmpty == true ? s.note! : 'Focus session',
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                    subtitle: Text(
+                      '${Fmt.relativeDay(s.startTime)} · ${Fmt.time(s.startTime)}',
+                      style: TextStyle(fontSize: 11, color: muted),
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (s.rating != null) ...[
+                          const AppIcon(
+                            AppIcons.star,
+                            size: 12,
+                            color: AppColors.warningLight,
+                          ),
+                          Text(
+                            '${s.rating}',
+                            style: const TextStyle(fontSize: 11),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        Text(
+                          Fmt.duration(Duration(seconds: s.actualSeconds)),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
                       ],
-                      Text(
-                        Fmt.duration(Duration(seconds: s.actualSeconds)),
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w600, fontSize: 12),
-                      ),
-                    ],
+                    ),
                   ),
-                )),
+                ),
         ],
       ),
     );

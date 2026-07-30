@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:forui/forui.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/widgets/brand.dart';
 import '../../core/widgets/common.dart';
 import 'providers/tasks_provider.dart';
 import 'repository/task_repository.dart';
@@ -74,16 +76,17 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
     }
     if (!await _speech.initialize()) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Speech recognition unavailable on this device.')));
+        brandToast(context, 'Speech recognition unavailable on this device.');
       }
       return;
     }
     setState(() => _listening = true);
-    await _speech.listen(onResult: (r) {
-      _quickAdd.text = r.recognizedWords;
-      if (r.finalResult) setState(() => _listening = false);
-    });
+    await _speech.listen(
+      onResult: (r) {
+        _quickAdd.text = r.recognizedWords;
+        if (r.finalResult) setState(() => _listening = false);
+      },
+    );
   }
 
   @override
@@ -98,15 +101,17 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
       appBar: AppBar(
         title: Text(projectName),
         actions: [
-          IconButton(
+          CircleIconButton(
+            icon: AppIcons.search,
             tooltip: 'Search',
-            icon: const AppIcon(AppIcons.search),
+            size: 40,
             onPressed: () => context.push('/search'),
           ),
           if (projectId != null)
-            IconButton(
+            CircleIconButton(
+              icon: AppIcons.filterOff,
               tooltip: 'Clear project filter',
-              icon: const AppIcon(AppIcons.filterOff),
+              size: 40,
               onPressed: () =>
                   ref.read(taskProjectFilterProvider.notifier).state = null,
             ),
@@ -157,8 +162,10 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => TaskEditorSheet.show(context,
-            projectId: ref.read(taskProjectFilterProvider)),
+        onPressed: () => TaskEditorSheet.show(
+          context,
+          projectId: ref.read(taskProjectFilterProvider),
+        ),
         backgroundColor: AppColors.taskAccent,
         foregroundColor: Colors.white,
         child: const AppIcon(AppIcons.add),
@@ -180,16 +187,18 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
           suffixIcon: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton(
+              CircleIconButton(
+                icon: _listening ? AppIcons.mic : AppIcons.mic,
                 tooltip: 'Dictate',
-                icon: AppIcon(_listening ? AppIcons.mic : AppIcons.mic, size: 20),
                 color: _listening ? AppColors.dangerLight : null,
+                size: 40,
                 onPressed: _dictate,
               ),
-              IconButton(
+              CircleIconButton(
+                icon: AppIcons.arrowUp,
                 tooltip: 'Add',
-                icon: const AppIcon(AppIcons.arrowUp, size: 20),
                 color: AppColors.taskAccent,
+                size: 40,
                 onPressed: _submitQuickAdd,
               ),
             ],
@@ -201,10 +210,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
 }
 
 /// Applies the active project filter to any task list.
-List<Task> _applyFilter(List<Task> tasks, int? projectId) =>
-    projectId == null
-        ? tasks
-        : tasks.where((t) => t.projectId == projectId).toList();
+List<Task> _applyFilter(List<Task> tasks, int? projectId) => projectId == null
+    ? tasks
+    : tasks.where((t) => t.projectId == projectId).toList();
 
 class _TaskListView extends ConsumerWidget {
   final StreamProvider<List<Task>> provider;
@@ -259,8 +267,10 @@ class _TaskListView extends ConsumerWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(top: 8, bottom: 8),
-                  child: Text(Fmt.relativeDay(day),
-                      style: const TextStyle(fontWeight: FontWeight.w700)),
+                  child: Text(
+                    Fmt.relativeDay(day),
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
                 ),
                 ...groups[day]!.map((t) => TaskTile(task: t, showDue: false)),
               ],
@@ -268,7 +278,7 @@ class _TaskListView extends ConsumerWidget {
           },
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: FCircularProgress()),
       error: (e, _) =>
           EmptyState(icon: AppIcons.error, title: 'Error', message: '$e'),
     );
@@ -278,10 +288,12 @@ class _TaskListView extends ConsumerWidget {
 // --- Calendar ---------------------------------------------------------------
 
 final _calendarMonthProvider = StateProvider<DateTime>(
-    (ref) => DateTime(DateTime.now().year, DateTime.now().month));
+  (ref) => DateTime(DateTime.now().year, DateTime.now().month),
+);
 
-final _calendarSelectedProvider =
-    StateProvider<DateTime>((ref) => Fmt.dateOnly(DateTime.now()));
+final _calendarSelectedProvider = StateProvider<DateTime>(
+  (ref) => Fmt.dateOnly(DateTime.now()),
+);
 
 class _CalendarView extends ConsumerWidget {
   const _CalendarView();
@@ -305,11 +317,14 @@ class _CalendarView extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: [
-              IconButton(
-                icon: const AppIcon(AppIcons.chevronLeft),
-                onPressed: () => ref
-                    .read(_calendarMonthProvider.notifier)
-                    .state = DateTime(month.year, month.month - 1),
+              CircleIconButton(
+                icon: AppIcons.chevronLeft,
+                size: 40,
+                onPressed: () =>
+                    ref.read(_calendarMonthProvider.notifier).state = DateTime(
+                      month.year,
+                      month.month - 1,
+                    ),
               ),
               Expanded(
                 child: Text(
@@ -318,11 +333,14 @@ class _CalendarView extends ConsumerWidget {
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
-              IconButton(
-                icon: const AppIcon(AppIcons.chevronRight),
-                onPressed: () => ref
-                    .read(_calendarMonthProvider.notifier)
-                    .state = DateTime(month.year, month.month + 1),
+              CircleIconButton(
+                icon: AppIcons.chevronRight,
+                size: 40,
+                onPressed: () =>
+                    ref.read(_calendarMonthProvider.notifier).state = DateTime(
+                      month.year,
+                      month.month + 1,
+                    ),
               ),
             ],
           ),
@@ -331,12 +349,16 @@ class _CalendarView extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: ['M', 'T', 'W', 'T', 'F', 'S', 'S']
-                .map((d) => Expanded(
-                      child: Center(
-                        child: Text(d,
-                            style: TextStyle(fontSize: 11, color: muted)),
+                .map(
+                  (d) => Expanded(
+                    child: Center(
+                      child: Text(
+                        d,
+                        style: TextStyle(fontSize: 11, color: muted),
                       ),
-                    ))
+                    ),
+                  ),
+                )
                 .toList(),
           ),
         ),
@@ -353,7 +375,11 @@ class _CalendarView extends ConsumerWidget {
             itemCount: leadingBlanks + daysInMonth,
             itemBuilder: (_, i) {
               if (i < leadingBlanks) return const SizedBox.shrink();
-              final day = DateTime(month.year, month.month, i - leadingBlanks + 1);
+              final day = DateTime(
+                month.year,
+                month.month,
+                i - leadingBlanks + 1,
+              );
               final count = (grouped[day] ?? const []).length;
               final isSelected = Fmt.isSameDay(day, selected);
               final isToday = Fmt.isSameDay(day, DateTime.now());
@@ -367,8 +393,8 @@ class _CalendarView extends ConsumerWidget {
                     color: isSelected
                         ? AppColors.taskAccent
                         : isToday
-                            ? AppColors.taskAccent.withValues(alpha: 0.12)
-                            : null,
+                        ? AppColors.taskAccent.withValues(alpha: 0.12)
+                        : null,
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Column(
@@ -378,8 +404,9 @@ class _CalendarView extends ConsumerWidget {
                         '${day.day}',
                         style: TextStyle(
                           fontSize: 13,
-                          fontWeight:
-                              isToday ? FontWeight.w700 : FontWeight.w400,
+                          fontWeight: isToday
+                              ? FontWeight.w700
+                              : FontWeight.w400,
                           color: isSelected ? Colors.white : null,
                         ),
                       ),
@@ -404,7 +431,7 @@ class _CalendarView extends ConsumerWidget {
             },
           ),
         ),
-        const Divider(height: 24),
+        FDivider(),
         Expanded(
           child: selectedTasks.isEmpty
               ? EmptyState(
@@ -452,9 +479,11 @@ class _KanbanView extends ConsumerWidget {
               // "Done" is driven by completion, not just the board column, so
               // completing a task anywhere moves it here.
               final items = tasks
-                  .where((t) => status == 2
-                      ? t.isCompleted
-                      : !t.isCompleted && t.boardStatus == status)
+                  .where(
+                    (t) => status == 2
+                        ? t.isCompleted
+                        : !t.isCompleted && t.boardStatus == status,
+                  )
                   .toList();
 
               return Container(
@@ -478,10 +507,9 @@ class _KanbanView extends ConsumerWidget {
                       decoration: BoxDecoration(
                         color: candidate.isNotEmpty
                             ? color.withValues(alpha: 0.12)
-                            : Theme.of(context)
-                                .colorScheme
-                                .outline
-                                .withValues(alpha: 0.05),
+                            : Theme.of(
+                                context,
+                              ).colorScheme.outline.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       padding: const EdgeInsets.all(10),
@@ -495,19 +523,25 @@ class _KanbanView extends ConsumerWidget {
                                 width: 8,
                                 height: 8,
                                 decoration: BoxDecoration(
-                                    color: color, shape: BoxShape.circle),
+                                  color: color,
+                                  shape: BoxShape.circle,
+                                ),
                               ),
                               const SizedBox(width: 8),
-                              Text(label,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w700)),
+                              Text(
+                                label,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                               const Spacer(),
-                              Text('${items.length}',
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .outline)),
+                              Text(
+                                '${items.length}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Theme.of(context).colorScheme.outline,
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 10),
@@ -515,32 +549,37 @@ class _KanbanView extends ConsumerWidget {
                             Padding(
                               padding: const EdgeInsets.symmetric(vertical: 24),
                               child: Center(
-                                child: Text('Drop tasks here',
-                                    style: TextStyle(
-                                        fontSize: 12,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .outline)),
+                                child: Text(
+                                  'Drop tasks here',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outline,
+                                  ),
+                                ),
                               ),
                             ),
-                          ...items.map((t) => Padding(
-                                padding: const EdgeInsets.only(bottom: 8),
-                                child: LongPressDraggable<Task>(
-                                  data: t,
-                                  feedback: Material(
-                                    color: Colors.transparent,
-                                    child: SizedBox(
-                                      width: 260,
-                                      child: _KanbanCard(task: t, dragging: true),
-                                    ),
+                          ...items.map(
+                            (t) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: LongPressDraggable<Task>(
+                                data: t,
+                                feedback: Material(
+                                  color: Colors.transparent,
+                                  child: SizedBox(
+                                    width: 260,
+                                    child: _KanbanCard(task: t, dragging: true),
                                   ),
-                                  childWhenDragging: Opacity(
-                                    opacity: 0.3,
-                                    child: _KanbanCard(task: t),
-                                  ),
+                                ),
+                                childWhenDragging: Opacity(
+                                  opacity: 0.3,
                                   child: _KanbanCard(task: t),
                                 ),
-                              )),
+                                child: _KanbanCard(task: t),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     );
@@ -551,7 +590,7 @@ class _KanbanView extends ConsumerWidget {
           ),
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: FCircularProgress()),
       error: (e, _) =>
           EmptyState(icon: AppIcons.error, title: 'Error', message: '$e'),
     );
@@ -641,25 +680,25 @@ class _MatrixView extends ConsumerWidget {
             'Do first',
             'Urgent & important',
             AppColors.dangerLight,
-            tasks.where((t) => urgent(t) && important(t)).toList()
+            tasks.where((t) => urgent(t) && important(t)).toList(),
           ),
           (
             'Schedule',
             'Important, not urgent',
             AppColors.taskAccent,
-            tasks.where((t) => !urgent(t) && important(t)).toList()
+            tasks.where((t) => !urgent(t) && important(t)).toList(),
           ),
           (
             'Delegate',
             'Urgent, not important',
             AppColors.warningLight,
-            tasks.where((t) => urgent(t) && !important(t)).toList()
+            tasks.where((t) => urgent(t) && !important(t)).toList(),
           ),
           (
             'Eliminate',
             'Neither',
             AppColors.mutedLight,
-            tasks.where((t) => !urgent(t) && !important(t)).toList()
+            tasks.where((t) => !urgent(t) && !important(t)).toList(),
           ),
         ];
 
@@ -677,55 +716,68 @@ class _MatrixView extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title,
-                        style: TextStyle(
-                            fontWeight: FontWeight.w700, color: color)),
-                    Text(subtitle,
-                        style: TextStyle(
-                            fontSize: 10,
-                            color: Theme.of(context).colorScheme.outline)),
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: color,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     Expanded(
                       child: items.isEmpty
                           ? Center(
-                              child: Text('Empty',
-                                  style: TextStyle(
-                                      fontSize: 11,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .outline)),
+                              child: Text(
+                                'Empty',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Theme.of(context).colorScheme.outline,
+                                ),
+                              ),
                             )
                           : ListView(
                               padding: EdgeInsets.zero,
                               children: items
-                                  .map((t) => InkWell(
-                                        onTap: () => TaskEditorSheet.show(
-                                            context,
-                                            task: t),
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 5),
-                                          child: Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text('• ',
-                                                  style:
-                                                      TextStyle(color: color)),
-                                              Expanded(
-                                                child: Text(
-                                                  t.title,
-                                                  style: const TextStyle(
-                                                      fontSize: 12),
-                                                  maxLines: 2,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
+                                  .map(
+                                    (t) => InkWell(
+                                      onTap: () => TaskEditorSheet.show(
+                                        context,
+                                        task: t,
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 5,
                                         ),
-                                      ))
+                                        child: Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              '• ',
+                                              style: TextStyle(color: color),
+                                            ),
+                                            Expanded(
+                                              child: Text(
+                                                t.title,
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                ),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  )
                                   .toList(),
                             ),
                     ),
@@ -736,7 +788,7 @@ class _MatrixView extends ConsumerWidget {
           }).toList(),
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: FCircularProgress()),
       error: (e, _) =>
           EmptyState(icon: AppIcons.error, title: 'Error', message: '$e'),
     );
@@ -762,41 +814,41 @@ class _ProjectDrawer extends ConsumerWidget {
             decoration: BoxDecoration(color: AppColors.taskAccent),
             child: Align(
               alignment: Alignment.bottomLeft,
-              child: Text('Projects',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700)),
+              child: Text(
+                'Projects',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ),
-          ListTile(
-            dense: true,
+          BrandTile(
             leading: const AppIcon(AppIcons.inbox, size: 20),
             title: const Text('All tasks'),
             selected: selected == null,
-            selectedTileColor: AppColors.taskAccent.withValues(alpha: 0.12),
             onTap: () {
               ref.read(taskProjectFilterProvider.notifier).state = null;
               Navigator.pop(context);
             },
           ),
-          const Divider(),
+          FDivider(),
           projects.maybeWhen(
             data: (list) => Column(
               children: list.map((p) {
-                final open =
-                    counts.where((t) => t.projectId == p.id).length;
-                return ListTile(
-                  dense: true,
-                  leading: AppIcon(AppIcons.project(p.icon),
-                      size: 20, color: Color(p.color)),
+                final open = counts.where((t) => t.projectId == p.id).length;
+                return BrandTile(
+                  leading: AppIcon(
+                    AppIcons.project(p.icon),
+                    size: 20,
+                    color: Color(p.color),
+                  ),
                   title: Text(p.name),
                   trailing: open == 0
                       ? null
                       : Text('$open', style: const TextStyle(fontSize: 12)),
                   selected: selected == p.id,
-                  selectedTileColor:
-                      AppColors.taskAccent.withValues(alpha: 0.12),
                   onTap: () {
                     ref.read(taskProjectFilterProvider.notifier).state = p.id;
                     Navigator.pop(context);
@@ -810,9 +862,8 @@ class _ProjectDrawer extends ConsumerWidget {
             ),
             orElse: () => const SizedBox.shrink(),
           ),
-          const Divider(),
-          ListTile(
-            dense: true,
+          FDivider(),
+          BrandTile(
             leading: const AppIcon(AppIcons.add, size: 20),
             title: const Text('New project'),
             onTap: () => _createProject(context, ref),
@@ -842,7 +893,9 @@ class _ProjectDrawer extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               ColorPickerRow(
-                  selected: color, onChanged: (c) => setState(() => color = c)),
+                selected: color,
+                onChanged: (c) => setState(() => color = c),
+              ),
               const SizedBox(height: 12),
               IconPickerRow(
                 options: AppIcons.projectIcons,
@@ -853,12 +906,17 @@ class _ProjectDrawer extends ConsumerWidget {
             ],
           ),
           actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel')),
-            FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Create')),
+            BrandButton(
+              label: 'Cancel',
+              kind: BrandButtonKind.ghost,
+              expand: false,
+              onPressed: () => Navigator.pop(context, false),
+            ),
+            BrandButton(
+              label: 'Create',
+              expand: false,
+              onPressed: () => Navigator.pop(context, true),
+            ),
           ],
         ),
       ),

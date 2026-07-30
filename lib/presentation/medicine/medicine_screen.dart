@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/services/export_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/widgets/brand.dart';
 import '../../core/widgets/common.dart';
 import 'providers/medicine_provider.dart';
 import 'repository/medicine_repository.dart';
@@ -41,14 +43,16 @@ class _MedicineScreenState extends ConsumerState<MedicineScreen>
       appBar: AppBar(
         title: const Text('Medicine'),
         actions: [
-          IconButton(
+          CircleIconButton(
+            icon: AppIcons.symptom,
             tooltip: 'Log a symptom',
-            icon: const AppIcon(AppIcons.symptom),
+            size: 40,
             onPressed: () => _logSymptom(context),
           ),
-          IconButton(
+          CircleIconButton(
+            icon: AppIcons.share,
             tooltip: 'Share schedule',
-            icon: const AppIcon(AppIcons.share),
+            size: 40,
             onPressed: _exportSchedule,
           ),
         ],
@@ -90,29 +94,30 @@ class _MedicineScreenState extends ConsumerState<MedicineScreen>
     final export = ref.read(exportServiceProvider);
     final views = ref.read(monthDoseViewsProvider).valueOrNull ?? const [];
     if (views.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No doses scheduled this month.')),
-      );
+      brandToast(context, 'No doses scheduled this month.');
       return;
     }
     final profiles = ref.read(profilesProvider).valueOrNull ?? const [];
     final activeId = ref.read(activeProfileProvider);
     final profileName = activeId == null
         ? 'All profiles'
-        : profiles.where((p) => p.id == activeId).firstOrNull?.name ?? 'Profile';
+        : profiles.where((p) => p.id == activeId).firstOrNull?.name ??
+              'Profile';
     final adherence = ref.read(adherenceProvider).valueOrNull;
 
     final file = await export.medicineSchedulePdf(
       profileName: profileName,
       adherence: adherence?.monthly,
       doses: views
-          .map((v) => (
-                medicine: v.medicine.name,
-                dosage: v.dosageLabel,
-                meal: v.mealLabel,
-                at: v.at,
-                status: v.status,
-              ))
+          .map(
+            (v) => (
+              medicine: v.medicine.name,
+              dosage: v.dosageLabel,
+              meal: v.mealLabel,
+              at: v.at,
+              status: v.status,
+            ),
+          )
           .toList(),
     );
     await export.shareFile(file, text: 'Medicine schedule');
@@ -122,16 +127,18 @@ class _MedicineScreenState extends ConsumerState<MedicineScreen>
     final controller = TextEditingController();
     var severity = 1;
 
-    final saved = await showModalBottomSheet<bool>(
+    final saved = await brandSheet<bool>(
       context: context,
-      isScrollControlled: true,
       builder: (_) => StatefulBuilder(
         builder: (context, setState) => SheetScaffold(
           title: 'Log symptom',
           actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Save')),
+            BrandButton(
+              label: 'Save',
+              kind: BrandButtonKind.ghost,
+              expand: false,
+              onPressed: () => Navigator.pop(context, true),
+            ),
           ],
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,7 +147,9 @@ class _MedicineScreenState extends ConsumerState<MedicineScreen>
                 controller: controller,
                 autofocus: true,
                 decoration: const InputDecoration(
-                    labelText: 'Symptom', hintText: 'Headache, nausea…'),
+                  labelText: 'Symptom',
+                  hintText: 'Headache, nausea…',
+                ),
               ),
               const SizedBox(height: 20),
               const Text('Severity'),
@@ -159,7 +168,9 @@ class _MedicineScreenState extends ConsumerState<MedicineScreen>
     );
 
     if (saved == true && controller.text.trim().isNotEmpty) {
-      await ref.read(medicineRepositoryProvider).logSymptom(
+      await ref
+          .read(medicineRepositoryProvider)
+          .logSymptom(
             symptom: controller.text.trim(),
             severity: severity,
             profileId: ref.read(activeProfileProvider),
@@ -178,7 +189,8 @@ class _TodayTab extends ConsumerWidget {
     final doses = ref.watch(todayDoseViewsProvider);
     final adherence = ref.watch(adherenceProvider).valueOrNull;
     final lowStock = ref.watch(lowStockProvider);
-    final forecast = ref.watch(runOutForecastProvider)
+    final forecast = ref
+        .watch(runOutForecastProvider)
         .where((f) => f.date != null)
         .toList();
     final conflicts = ref.watch(conflictsProvider);
@@ -224,12 +236,15 @@ class _TodayTab extends ConsumerWidget {
             context,
             icon: AppIcons.warning,
             color: AppColors.warningLight,
-            title: '${conflicts.length} timing conflict'
+            title:
+                '${conflicts.length} timing conflict'
                 '${conflicts.length == 1 ? '' : 's'} this month',
             body: conflicts
                 .take(3)
-                .map((c) =>
-                    '${c.first} and ${c.second} both at ${Fmt.time(c.at)} on ${Fmt.dayMonth(c.at)}')
+                .map(
+                  (c) =>
+                      '${c.first} and ${c.second} both at ${Fmt.time(c.at)} on ${Fmt.dayMonth(c.at)}',
+                )
                 .join('\n'),
           ),
           const SizedBox(height: 12),
@@ -247,8 +262,9 @@ class _TodayTab extends ConsumerWidget {
           const SizedBox(height: 12),
         ],
 
-        for (final m in lowStock.where((m) =>
-            !forecast.any((f) => f.medicine.id == m.id))) ...[
+        for (final m in lowStock.where(
+          (m) => !forecast.any((f) => f.medicine.id == m.id),
+        )) ...[
           _alert(
             context,
             icon: AppIcons.inventory,
@@ -268,7 +284,7 @@ class _TodayTab extends ConsumerWidget {
                   message: 'Add a medicine to generate its schedule.',
                 )
               : Column(children: list.map((v) => DoseTile(view: v)).toList()),
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const Center(child: FCircularProgress()),
           error: (e, _) => Text('$e'),
         ),
       ],
@@ -298,9 +314,13 @@ class _TodayTab extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w700, fontSize: 13)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
                 const SizedBox(height: 2),
                 Text(body, style: const TextStyle(fontSize: 12)),
               ],
@@ -325,13 +345,14 @@ class DoseTile extends ConsumerWidget {
     final muted = Theme.of(context).colorScheme.outline;
     final taken = view.status == DoseStatus.taken;
     final skipped = view.status == DoseStatus.skipped;
-    final missed = !taken &&
+    final missed =
+        !taken &&
         !skipped &&
         view.at.isBefore(DateTime.now().subtract(const Duration(hours: 1)));
 
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
-      child: ListTile(
+      child: BrandTile(
         onLongPress: () => repo.setDoseStatus(view.dose.id, DoseStatus.skipped),
         leading: Container(
           padding: const EdgeInsets.all(9),
@@ -339,8 +360,11 @@ class DoseTile extends ConsumerWidget {
             color: AppColors.medicineAccent.withValues(alpha: 0.12),
             shape: BoxShape.circle,
           ),
-          child: AppIcon(AppIcons.medicineForm(view.medicine.form),
-              color: AppColors.medicineAccent, size: 20),
+          child: AppIcon(
+            AppIcons.medicineForm(view.medicine.form),
+            color: AppColors.medicineAccent,
+            size: 20,
+          ),
         ),
         title: Text(
           view.medicine.name,
@@ -358,21 +382,23 @@ class DoseTile extends ConsumerWidget {
             if (missed) 'Missed',
           ].join(' · '),
           style: TextStyle(
-              fontSize: 11, color: missed ? AppColors.dangerLight : muted),
+            fontSize: 11,
+            color: missed ? AppColors.dangerLight : muted,
+          ),
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(Fmt.time(view.at),
-                style: const TextStyle(
-                    fontWeight: FontWeight.w700, fontSize: 13)),
+            Text(
+              Fmt.time(view.at),
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+            ),
             const SizedBox(width: 6),
-            IconButton(
+            CircleIconButton(
+              icon: taken ? AppIcons.checkCircle : AppIcons.circle,
               tooltip: taken ? 'Mark not taken' : 'Mark taken',
-              icon: AppIcon(
-                  taken ? AppIcons.checkCircle : AppIcons.circle),
               color: taken ? AppColors.successLight : muted,
-              iconSize: 28,
+              size: 40,
               onPressed: () => repo.setDoseStatus(
                 view.dose.id,
                 taken ? DoseStatus.pending : DoseStatus.taken,
@@ -387,8 +413,9 @@ class DoseTile extends ConsumerWidget {
 
 // --- Calendar ---------------------------------------------------------------
 
-final _selectedDayProvider =
-    StateProvider<DateTime>((ref) => Fmt.dateOnly(DateTime.now()));
+final _selectedDayProvider = StateProvider<DateTime>(
+  (ref) => Fmt.dateOnly(DateTime.now()),
+);
 
 class _CalendarTab extends ConsumerWidget {
   const _CalendarTab();
@@ -411,12 +438,16 @@ class _CalendarTab extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: ['M', 'T', 'W', 'T', 'F', 'S', 'S']
-                .map((d) => Expanded(
-                      child: Center(
-                        child: Text(d,
-                            style: TextStyle(fontSize: 11, color: muted)),
+                .map(
+                  (d) => Expanded(
+                    child: Center(
+                      child: Text(
+                        d,
+                        style: TextStyle(fontSize: 11, color: muted),
                       ),
-                    ))
+                    ),
+                  ),
+                )
                 .toList(),
           ),
         ),
@@ -427,22 +458,26 @@ class _CalendarTab extends ConsumerWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 7, childAspectRatio: 0.92),
+              crossAxisCount: 7,
+              childAspectRatio: 0.92,
+            ),
             itemCount: leading + daysInMonth,
             itemBuilder: (_, i) {
               if (i < leading) return const SizedBox.shrink();
-              final day =
-                  DateTime(month.year, month.month, i - leading + 1);
+              final day = DateTime(month.year, month.month, i - leading + 1);
               final doses = byDay[day] ?? const <DoseView>[];
               final isSel = Fmt.isSameDay(day, selected);
               final isToday = Fmt.isSameDay(day, DateTime.now());
 
-              final taken =
-                  doses.where((d) => d.status == DoseStatus.taken).length;
+              final taken = doses
+                  .where((d) => d.status == DoseStatus.taken)
+                  .length;
               final allTaken = doses.isNotEmpty && taken == doses.length;
-              final anyMissed = doses.any((d) =>
-                  d.status == DoseStatus.pending &&
-                  d.at.isBefore(DateTime.now()));
+              final anyMissed = doses.any(
+                (d) =>
+                    d.status == DoseStatus.pending &&
+                    d.at.isBefore(DateTime.now()),
+              );
 
               return GestureDetector(
                 onTap: () =>
@@ -453,20 +488,23 @@ class _CalendarTab extends ConsumerWidget {
                     color: isSel
                         ? AppColors.medicineAccent
                         : isToday
-                            ? AppColors.medicineAccent.withValues(alpha: 0.1)
-                            : null,
+                        ? AppColors.medicineAccent.withValues(alpha: 0.1)
+                        : null,
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text('${day.day}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight:
-                                isToday ? FontWeight.w700 : FontWeight.w400,
-                            color: isSel ? Colors.white : null,
-                          )),
+                      Text(
+                        '${day.day}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: isToday
+                              ? FontWeight.w700
+                              : FontWeight.w400,
+                          color: isSel ? Colors.white : null,
+                        ),
+                      ),
                       const SizedBox(height: 3),
                       if (doses.isEmpty)
                         const SizedBox(height: 6)
@@ -479,10 +517,10 @@ class _CalendarTab extends ConsumerWidget {
                             color: isSel
                                 ? Colors.white
                                 : allTaken
-                                    ? AppColors.successLight
-                                    : anyMissed
-                                        ? AppColors.dangerLight
-                                        : AppColors.medicineAccent,
+                                ? AppColors.successLight
+                                : anyMissed
+                                ? AppColors.dangerLight
+                                : AppColors.medicineAccent,
                           ),
                         ),
                     ],
@@ -492,7 +530,7 @@ class _CalendarTab extends ConsumerWidget {
             },
           ),
         ),
-        const Divider(height: 20),
+        FDivider(),
         Expanded(
           child: selectedDoses.isEmpty
               ? EmptyState(
@@ -501,8 +539,9 @@ class _CalendarTab extends ConsumerWidget {
                 )
               : ListView(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
-                  children:
-                      selectedDoses.map((v) => DoseTile(view: v)).toList(),
+                  children: selectedDoses
+                      .map((v) => DoseTile(view: v))
+                      .toList(),
                 ),
         ),
       ],
@@ -518,18 +557,22 @@ class _MonthSwitcher extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Row(
       children: [
-        IconButton(
-          icon: const AppIcon(AppIcons.chevronLeft),
+        CircleIconButton(
+          icon: AppIcons.chevronLeft,
+          size: 40,
           onPressed: () => ref.read(scheduleMonthProvider.notifier).state =
               DateTime(month.year, month.month - 1),
         ),
         Expanded(
-          child: Text(Fmt.monthYear(month),
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontWeight: FontWeight.w700)),
+          child: Text(
+            Fmt.monthYear(month),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
         ),
-        IconButton(
-          icon: const AppIcon(AppIcons.chevronRight),
+        CircleIconButton(
+          icon: AppIcons.chevronRight,
+          size: 40,
           onPressed: () => ref.read(scheduleMonthProvider.notifier).state =
               DateTime(month.year, month.month + 1),
         ),
@@ -556,7 +599,8 @@ class _TimelineTab extends ConsumerWidget {
           child: days.isEmpty
               ? const EmptyState(
                   icon: AppIcons.timeline,
-                  title: 'Nothing scheduled this month')
+                  title: 'Nothing scheduled this month',
+                )
               : ListView.builder(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
                   itemCount: days.length,
@@ -573,16 +617,20 @@ class _TimelineTab extends ConsumerWidget {
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           child: Row(
                             children: [
-                              Text(Fmt.relativeDay(day),
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w700)),
+                              Text(
+                                Fmt.relativeDay(day),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                               const SizedBox(width: 8),
-                              Text('$taken/${doses.length} taken',
-                                  style: TextStyle(
-                                      fontSize: 11,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .outline)),
+                              Text(
+                                '$taken/${doses.length} taken',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Theme.of(context).colorScheme.outline,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -614,8 +662,7 @@ class _TableTab extends ConsumerWidget {
     final slots = <int>{
       for (final list in byDay.values)
         for (final v in list) v.at.hour * 60 + v.at.minute,
-    }.toList()
-      ..sort();
+    }.toList()..sort();
 
     if (days.isEmpty) {
       return Column(
@@ -623,8 +670,9 @@ class _TableTab extends ConsumerWidget {
           _MonthSwitcher(month: month),
           const Expanded(
             child: EmptyState(
-                icon: AppIcons.spreadsheet,
-                title: 'Nothing scheduled this month'),
+              icon: AppIcons.spreadsheet,
+              title: 'Nothing scheduled this month',
+            ),
           ),
         ],
       );
@@ -645,83 +693,107 @@ class _TableTab extends ConsumerWidget {
                 columnSpacing: 18,
                 columns: [
                   const DataColumn(
-                      label: Text('Date',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w700, fontSize: 12))),
-                  ...slots.map((s) => DataColumn(
-                        label: Text(Fmt.minutesOfDay(s),
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w700, fontSize: 12)),
-                      )),
+                    label: Text(
+                      'Date',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  ...slots.map(
+                    (s) => DataColumn(
+                      label: Text(
+                        Fmt.minutesOfDay(s),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
                 rows: days.map((day) {
                   final doses = byDay[day]!;
-                  return DataRow(cells: [
-                    DataCell(Text(Fmt.dayMonth(day),
-                        style: const TextStyle(fontSize: 12))),
-                    ...slots.map((slot) {
-                      final atSlot = doses
-                          .where((v) => v.at.hour * 60 + v.at.minute == slot)
-                          .toList();
-                      if (atSlot.isEmpty) {
-                        return DataCell(Text('—',
-                            style: TextStyle(color: muted, fontSize: 12)));
-                      }
-                      return DataCell(
-                        Wrap(
-                          spacing: 4,
-                          children: atSlot.map((v) {
-                            final taken = v.status == DoseStatus.taken;
-                            final skipped = v.status == DoseStatus.skipped;
-                            return InkWell(
-                              onTap: () => repo.setDoseStatus(
-                                v.dose.id,
-                                taken ? DoseStatus.pending : DoseStatus.taken,
-                              ),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: (taken
-                                          ? AppColors.successLight
-                                          : skipped
-                                              ? muted
-                                              : AppColors.medicineAccent)
-                                      .withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    AppIcon(
-                                      taken
-                                          ? AppIcons.check
-                                          : skipped
-                                              ? AppIcons.close
-                                              : AppIcons.circle,
-                                      size: 11,
-                                      color: taken
-                                          ? AppColors.successLight
-                                          : skipped
-                                              ? muted
-                                              : AppColors.medicineAccent,
-                                    ),
-                                    const SizedBox(width: 3),
-                                    Text(
-                                      v.medicine.name.length > 10
-                                          ? '${v.medicine.name.substring(0, 9)}…'
-                                          : v.medicine.name,
-                                      style: const TextStyle(fontSize: 10),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }).toList(),
+                  return DataRow(
+                    cells: [
+                      DataCell(
+                        Text(
+                          Fmt.dayMonth(day),
+                          style: const TextStyle(fontSize: 12),
                         ),
-                      );
-                    }),
-                  ]);
+                      ),
+                      ...slots.map((slot) {
+                        final atSlot = doses
+                            .where((v) => v.at.hour * 60 + v.at.minute == slot)
+                            .toList();
+                        if (atSlot.isEmpty) {
+                          return DataCell(
+                            Text(
+                              '—',
+                              style: TextStyle(color: muted, fontSize: 12),
+                            ),
+                          );
+                        }
+                        return DataCell(
+                          Wrap(
+                            spacing: 4,
+                            children: atSlot.map((v) {
+                              final taken = v.status == DoseStatus.taken;
+                              final skipped = v.status == DoseStatus.skipped;
+                              return InkWell(
+                                onTap: () => repo.setDoseStatus(
+                                  v.dose.id,
+                                  taken ? DoseStatus.pending : DoseStatus.taken,
+                                ),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        (taken
+                                                ? AppColors.successLight
+                                                : skipped
+                                                ? muted
+                                                : AppColors.medicineAccent)
+                                            .withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      AppIcon(
+                                        taken
+                                            ? AppIcons.check
+                                            : skipped
+                                            ? AppIcons.close
+                                            : AppIcons.circle,
+                                        size: 11,
+                                        color: taken
+                                            ? AppColors.successLight
+                                            : skipped
+                                            ? muted
+                                            : AppColors.medicineAccent,
+                                      ),
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        v.medicine.name.length > 10
+                                            ? '${v.medicine.name.substring(0, 9)}…'
+                                            : v.medicine.name,
+                                        style: const TextStyle(fontSize: 10),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        );
+                      }),
+                    ],
+                  );
                 }).toList(),
               ),
             ),
@@ -760,21 +832,24 @@ class _MedicinesTab extends ConsumerWidget {
                 final low = m.inventory <= m.lowStockThreshold;
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
-                  child: ListTile(
-                    onTap: () =>
-                        MedicineEditorSheet.show(context, medicine: m),
+                  child: BrandTile(
+                    onTap: () => MedicineEditorSheet.show(context, medicine: m),
                     leading: Container(
                       padding: const EdgeInsets.all(9),
                       decoration: BoxDecoration(
-                        color:
-                            AppColors.medicineAccent.withValues(alpha: 0.12),
+                        color: AppColors.medicineAccent.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
-                      child: AppIcon(AppIcons.medicineForm(m.form),
-                          color: AppColors.medicineAccent, size: 20),
+                      child: AppIcon(
+                        AppIcons.medicineForm(m.form),
+                        color: AppColors.medicineAccent,
+                        size: 20,
+                      ),
                     ),
-                    title: Text(m.name,
-                        style: const TextStyle(fontWeight: FontWeight.w600)),
+                    title: Text(
+                      m.name,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -804,7 +879,9 @@ class _MedicinesTab extends ConsumerWidget {
                       },
                       itemBuilder: (_) => const [
                         PopupMenuItem(
-                            value: 'refill', child: Text('Add stock')),
+                          value: 'refill',
+                          child: Text('Add stock'),
+                        ),
                         PopupMenuItem(value: 'delete', child: Text('Delete')),
                       ],
                     ),
@@ -812,13 +889,12 @@ class _MedicinesTab extends ConsumerWidget {
                 );
               }).toList(),
             ),
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: FCircularProgress()),
       error: (e, _) => Text('$e'),
     );
   }
 
-  Future<void> _refill(
-      BuildContext context, WidgetRef ref, Medicine m) async {
+  Future<void> _refill(BuildContext context, WidgetRef ref, Medicine m) async {
     final controller = TextEditingController(text: '30');
     final result = await showDialog<String>(
       context: context,
@@ -829,15 +905,22 @@ class _MedicinesTab extends ConsumerWidget {
           autofocus: true,
           keyboardType: TextInputType.number,
           decoration: InputDecoration(
-              labelText: 'Units to add', suffixText: m.dosageUnit),
+            labelText: 'Units to add',
+            suffixText: m.dosageUnit,
+          ),
         ),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel')),
-          FilledButton(
-              onPressed: () => Navigator.pop(context, controller.text),
-              child: const Text('Add')),
+          BrandButton(
+            label: 'Cancel',
+            kind: BrandButtonKind.ghost,
+            expand: false,
+            onPressed: () => Navigator.pop(context),
+          ),
+          BrandButton(
+            label: 'Add',
+            expand: false,
+            onPressed: () => Navigator.pop(context, controller.text),
+          ),
         ],
       ),
     );
@@ -866,64 +949,66 @@ class _ProfileDrawer extends ConsumerWidget {
             decoration: BoxDecoration(color: AppColors.medicineAccent),
             child: Align(
               alignment: Alignment.bottomLeft,
-              child: Text('Profiles',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700)),
+              child: Text(
+                'Profiles',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ),
-          ListTile(
-            dense: true,
+          BrandTile(
             leading: const AppIcon(AppIcons.people, size: 20),
             title: const Text('Everyone'),
             selected: active == null,
-            selectedTileColor:
-                AppColors.medicineAccent.withValues(alpha: 0.12),
             onTap: () {
               ref.read(activeProfileProvider.notifier).state = null;
               Navigator.pop(context);
             },
           ),
-          const Divider(),
+          FDivider(),
           profiles.maybeWhen(
             data: (list) => Column(
               children: list
-                  .map((p) => ListTile(
-                        dense: true,
-                        leading: CircleAvatar(
-                          radius: 12,
-                          backgroundColor: Color(p.color),
-                          child: Text(
-                            p.name.isEmpty ? '?' : p.name[0].toUpperCase(),
-                            style: const TextStyle(
-                                fontSize: 11, color: Colors.white),
+                  .map(
+                    (p) => BrandTile(
+                      leading: CircleAvatar(
+                        radius: 12,
+                        backgroundColor: Color(p.color),
+                        child: Text(
+                          p.name.isEmpty ? '?' : p.name[0].toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.white,
                           ),
                         ),
-                        title: Text(p.name),
-                        subtitle: Text(p.relation,
-                            style: const TextStyle(fontSize: 11)),
-                        selected: active == p.id,
-                        selectedTileColor: AppColors.medicineAccent
-                            .withValues(alpha: 0.12),
-                        onTap: () {
-                          ref.read(activeProfileProvider.notifier).state = p.id;
-                          Navigator.pop(context);
-                        },
-                        onLongPress: () async {
-                          Navigator.pop(context);
-                          await ref
-                              .read(medicineRepositoryProvider)
-                              .deleteProfile(p.id);
-                        },
-                      ))
+                      ),
+                      title: Text(p.name),
+                      subtitle: Text(
+                        p.relation,
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                      selected: active == p.id,
+                      onTap: () {
+                        ref.read(activeProfileProvider.notifier).state = p.id;
+                        Navigator.pop(context);
+                      },
+                      onLongPress: () async {
+                        Navigator.pop(context);
+                        await ref
+                            .read(medicineRepositoryProvider)
+                            .deleteProfile(p.id);
+                      },
+                    ),
+                  )
                   .toList(),
             ),
             orElse: () => const SizedBox.shrink(),
           ),
-          const Divider(),
-          ListTile(
-            dense: true,
+          FDivider(),
+          BrandTile(
             leading: const AppIcon(AppIcons.personAdd, size: 20),
             title: const Text('Add profile'),
             onTap: () => _addProfile(context, ref),
@@ -955,31 +1040,38 @@ class _ProfileDrawer extends ConsumerWidget {
               TextField(
                 controller: relation,
                 decoration: const InputDecoration(
-                    labelText: 'Relation', hintText: 'Mum, son, partner'),
+                  labelText: 'Relation',
+                  hintText: 'Mum, son, partner',
+                ),
               ),
               const SizedBox(height: 16),
               ColorPickerRow(
-                  selected: color, onChanged: (c) => setState(() => color = c)),
+                selected: color,
+                onChanged: (c) => setState(() => color = c),
+              ),
             ],
           ),
           actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel')),
-            FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Create')),
+            BrandButton(
+              label: 'Cancel',
+              kind: BrandButtonKind.ghost,
+              expand: false,
+              onPressed: () => Navigator.pop(context, false),
+            ),
+            BrandButton(
+              label: 'Create',
+              expand: false,
+              onPressed: () => Navigator.pop(context, true),
+            ),
           ],
         ),
       ),
     );
 
     if (saved == true && name.text.trim().isNotEmpty) {
-      await ref.read(medicineRepositoryProvider).createProfile(
-            name.text.trim(),
-            relation.text.trim(),
-            color,
-          );
+      await ref
+          .read(medicineRepositoryProvider)
+          .createProfile(name.text.trim(), relation.text.trim(), color);
     }
     if (context.mounted) Navigator.of(context).maybePop();
   }

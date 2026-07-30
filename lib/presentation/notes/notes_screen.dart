@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:go_router/go_router.dart';
+import 'package:forui/forui.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/widgets/brand.dart';
 import '../../core/widgets/common.dart';
 import 'providers/notes_provider.dart';
 import 'repository/note_repository.dart';
@@ -25,26 +27,32 @@ class NotesScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(filter.title),
         actions: [
-          IconButton(
+          CircleIconButton(
+            icon: AppIcons.search,
             tooltip: 'Search',
-            icon: const AppIcon(AppIcons.search),
+            size: 40,
             onPressed: () => context.push('/search'),
           ),
-          IconButton(
+          CircleIconButton(
+            icon: AppIcons.journal,
             tooltip: "Today's journal",
-            icon: const AppIcon(AppIcons.journal),
+            size: 40,
             onPressed: () async {
               final note = await repo.journalNoteFor(DateTime.now());
               if (context.mounted) context.push('/note_editor', extra: note.id);
             },
           ),
           if (filter.scope == NoteScope.trash)
-            IconButton(
+            CircleIconButton(
+              icon: AppIcons.deleteForever,
               tooltip: 'Empty trash',
-              icon: const AppIcon(AppIcons.deleteForever),
+              size: 40,
               onPressed: () async {
-                final ok = await confirmDialog(context, 'Empty trash?',
-                    'Every note in the trash will be permanently deleted.');
+                final ok = await confirmDialog(
+                  context,
+                  'Empty trash?',
+                  'Every note in the trash will be permanently deleted.',
+                );
                 if (ok) await repo.emptyTrash();
               },
             ),
@@ -79,7 +87,7 @@ class NotesScreen extends ConsumerWidget {
                 _NoteCard(note: notes[i], scope: filter.scope),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: FCircularProgress()),
         error: (e, _) => EmptyState(
           icon: AppIcons.error,
           title: 'Could not load notes',
@@ -99,26 +107,33 @@ class NotesScreen extends ConsumerWidget {
 }
 
 /// Presents the template picker, creates the note and opens the editor.
-Future<void> newNoteFlow(BuildContext context, WidgetRef ref,
-    {int? folderId}) async {
-  final template = await showModalBottomSheet<NoteTemplate>(
+Future<void> newNoteFlow(
+  BuildContext context,
+  WidgetRef ref, {
+  int? folderId,
+}) async {
+  final template = await brandSheet<NoteTemplate>(
     context: context,
     builder: (_) => SheetScaffold(
       title: 'New note',
       child: Column(
         children: NoteTemplate.all
-            .map((t) => ListTile(
-                  leading: AppIcon(t.icon, color: AppColors.noteAccent),
-                  title: Text(t.name),
-                  onTap: () => Navigator.pop(context, t),
-                ))
+            .map(
+              (t) => BrandTile(
+                leading: AppIcon(t.icon, color: AppColors.noteAccent),
+                title: Text(t.name),
+                onTap: () => Navigator.pop(context, t),
+              ),
+            )
             .toList(),
       ),
     ),
   );
   if (template == null || !context.mounted) return;
 
-  final id = await ref.read(noteRepositoryProvider).createNote(
+  final id = await ref
+      .read(noteRepositoryProvider)
+      .createNote(
         title: template.title,
         contentJson: template.contentJson,
         folderId: folderId ?? ref.read(noteFilterProvider).folderId,
@@ -127,19 +142,27 @@ Future<void> newNoteFlow(BuildContext context, WidgetRef ref,
 }
 
 Future<bool> confirmDialog(
-    BuildContext context, String title, String body) async {
+  BuildContext context,
+  String title,
+  String body,
+) async {
   final result = await showDialog<bool>(
     context: context,
     builder: (_) => AlertDialog(
       title: Text(title),
       content: Text(body),
       actions: [
-        TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel')),
-        FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Confirm')),
+        BrandButton(
+          label: 'Cancel',
+          kind: BrandButtonKind.ghost,
+          expand: false,
+          onPressed: () => Navigator.pop(context, false),
+        ),
+        BrandButton(
+          label: 'Confirm',
+          expand: false,
+          onPressed: () => Navigator.pop(context, true),
+        ),
       ],
     ),
   );
@@ -181,14 +204,19 @@ class _NoteCard extends ConsumerWidget {
                     child: Text(
                       note.title,
                       style: const TextStyle(
-                          fontWeight: FontWeight.w700, fontSize: 15),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   if (note.isPinned)
-                    const AppIcon(AppIcons.pin,
-                        size: 14, color: AppColors.noteAccent),
+                    const AppIcon(
+                      AppIcons.pin,
+                      size: 14,
+                      color: AppColors.noteAccent,
+                    ),
                   if (note.isLocked)
                     AppIcon(AppIcons.lock, size: 14, color: muted),
                 ],
@@ -211,19 +239,27 @@ class _NoteCard extends ConsumerWidget {
                           spacing: 6,
                           runSpacing: 4,
                           children: tags
-                              .map((t) => Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: Color(t.color)
-                                          .withValues(alpha: 0.15),
-                                      borderRadius: BorderRadius.circular(999),
+                              .map(
+                                (t) => Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Color(
+                                      t.color,
+                                    ).withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  child: Text(
+                                    '#${t.name}',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Color(t.color),
                                     ),
-                                    child: Text('#${t.name}',
-                                        style: TextStyle(
-                                            fontSize: 10,
-                                            color: Color(t.color))),
-                                  ))
+                                  ),
+                                ),
+                              )
                               .toList(),
                         ),
                       ),
@@ -244,14 +280,14 @@ class _NoteCard extends ConsumerWidget {
   }
 
   void _showActions(BuildContext context, NoteRepository repo) {
-    showModalBottomSheet(
+    brandSheet(
       context: context,
       builder: (_) => SheetScaffold(
         title: note.title,
         child: Column(
           children: scope == NoteScope.trash
               ? [
-                  ListTile(
+                  BrandTile(
                     leading: const AppIcon(AppIcons.restore),
                     title: const Text('Restore'),
                     onTap: () {
@@ -259,7 +295,7 @@ class _NoteCard extends ConsumerWidget {
                       Navigator.pop(context);
                     },
                   ),
-                  ListTile(
+                  BrandTile(
                     leading: const AppIcon(AppIcons.deleteForever),
                     title: const Text('Delete forever'),
                     onTap: () {
@@ -269,48 +305,51 @@ class _NoteCard extends ConsumerWidget {
                   ),
                 ]
               : [
-                  ListTile(
-                    leading: AppIcon(note.isPinned
-                        ? AppIcons.pin
-                        : AppIcons.pin),
+                  BrandTile(
+                    leading: AppIcon(
+                      note.isPinned ? AppIcons.pin : AppIcons.pin,
+                    ),
                     title: Text(note.isPinned ? 'Unpin' : 'Pin to top'),
                     onTap: () {
                       repo.updateNote(note.id, isPinned: !note.isPinned);
                       Navigator.pop(context);
                     },
                   ),
-                  ListTile(
-                    leading:
-                        AppIcon(note.isFavorite ? AppIcons.star : AppIcons.star),
-                    title: Text(note.isFavorite
-                        ? 'Remove from favorites'
-                        : 'Add to favorites'),
+                  BrandTile(
+                    leading: AppIcon(
+                      note.isFavorite ? AppIcons.star : AppIcons.star,
+                    ),
+                    title: Text(
+                      note.isFavorite
+                          ? 'Remove from favorites'
+                          : 'Add to favorites',
+                    ),
                     onTap: () {
                       repo.updateNote(note.id, isFavorite: !note.isFavorite);
                       Navigator.pop(context);
                     },
                   ),
-                  ListTile(
-                    leading: AppIcon(note.isArchived
-                        ? AppIcons.unarchive
-                        : AppIcons.archive),
+                  BrandTile(
+                    leading: AppIcon(
+                      note.isArchived ? AppIcons.unarchive : AppIcons.archive,
+                    ),
                     title: Text(note.isArchived ? 'Unarchive' : 'Archive'),
                     onTap: () {
                       repo.updateNote(note.id, isArchived: !note.isArchived);
                       Navigator.pop(context);
                     },
                   ),
-                  ListTile(
-                    leading: AppIcon(note.isLocked
-                        ? AppIcons.unlock
-                        : AppIcons.lock),
+                  BrandTile(
+                    leading: AppIcon(
+                      note.isLocked ? AppIcons.unlock : AppIcons.lock,
+                    ),
                     title: Text(note.isLocked ? 'Remove lock' : 'Lock note'),
                     onTap: () {
                       repo.updateNote(note.id, isLocked: !note.isLocked);
                       Navigator.pop(context);
                     },
                   ),
-                  ListTile(
+                  BrandTile(
                     leading: const AppIcon(AppIcons.delete),
                     title: const Text('Move to trash'),
                     onTap: () {
@@ -348,11 +387,14 @@ class _NotesDrawer extends ConsumerWidget {
             decoration: BoxDecoration(color: AppColors.noteAccent),
             child: Align(
               alignment: Alignment.bottomLeft,
-              child: Text('Notes',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700)),
+              child: Text(
+                'Notes',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ),
           _DrawerItem(
@@ -380,17 +422,20 @@ class _NotesDrawer extends ConsumerWidget {
             selected: filter.scope == NoteScope.trash,
             onTap: () => apply(const NoteFilter(scope: NoteScope.trash)),
           ),
-          const Divider(),
+          FDivider(),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
             child: Row(
               children: [
                 const Expanded(
-                  child: Text('Folders',
-                      style: TextStyle(fontWeight: FontWeight.w700)),
+                  child: Text(
+                    'Folders',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
                 ),
-                IconButton(
-                  icon: const AppIcon(AppIcons.add, size: 20),
+                CircleIconButton(
+                  icon: AppIcons.add,
+                  size: 40,
                   onPressed: () => _createFolder(context, ref),
                 ),
               ],
@@ -399,30 +444,33 @@ class _NotesDrawer extends ConsumerWidget {
           folders.maybeWhen(
             data: (list) => Column(
               children: list
-                  .map((f) => _DrawerItem(
-                        icon: AppIcons.folder,
-                        label: f.name,
-                        selected: filter.folderId == f.id,
-                        onTap: () =>
-                            apply(NoteFilter(folderId: f.id, label: f.name)),
-                        onLongPress: () async {
-                          Navigator.pop(context);
-                          final ok = await confirmDialog(
-                              context,
-                              'Delete folder?',
-                              'Notes inside will be kept and moved to All Notes.');
-                          if (ok) {
-                            await ref
-                                .read(noteRepositoryProvider)
-                                .deleteFolder(f.id);
-                          }
-                        },
-                      ))
+                  .map(
+                    (f) => _DrawerItem(
+                      icon: AppIcons.folder,
+                      label: f.name,
+                      selected: filter.folderId == f.id,
+                      onTap: () =>
+                          apply(NoteFilter(folderId: f.id, label: f.name)),
+                      onLongPress: () async {
+                        Navigator.pop(context);
+                        final ok = await confirmDialog(
+                          context,
+                          'Delete folder?',
+                          'Notes inside will be kept and moved to All Notes.',
+                        );
+                        if (ok) {
+                          await ref
+                              .read(noteRepositoryProvider)
+                              .deleteFolder(f.id);
+                        }
+                      },
+                    ),
+                  )
                   .toList(),
             ),
             orElse: () => const SizedBox.shrink(),
           ),
-          const Divider(),
+          FDivider(),
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 12, 16, 4),
             child: Text('Tags', style: TextStyle(fontWeight: FontWeight.w700)),
@@ -431,19 +479,24 @@ class _NotesDrawer extends ConsumerWidget {
             data: (list) => list.isEmpty
                 ? const Padding(
                     padding: EdgeInsets.fromLTRB(16, 4, 16, 16),
-                    child: Text('Tags you add to notes appear here.',
-                        style: TextStyle(fontSize: 12)),
+                    child: Text(
+                      'Tags you add to notes appear here.',
+                      style: TextStyle(fontSize: 12),
+                    ),
                   )
                 : Column(
                     children: list
-                        .map((t) => _DrawerItem(
-                              icon: AppIcons.tag,
-                              iconColor: Color(t.color),
-                              label: '#${t.name}',
-                              selected: filter.tagId == t.id,
-                              onTap: () => apply(
-                                  NoteFilter(tagId: t.id, label: '#${t.name}')),
-                            ))
+                        .map(
+                          (t) => _DrawerItem(
+                            icon: AppIcons.tag,
+                            iconColor: Color(t.color),
+                            label: '#${t.name}',
+                            selected: filter.tagId == t.id,
+                            onTap: () => apply(
+                              NoteFilter(tagId: t.id, label: '#${t.name}'),
+                            ),
+                          ),
+                        )
                         .toList(),
                   ),
             orElse: () => const SizedBox.shrink(),
@@ -467,12 +520,17 @@ class _NotesDrawer extends ConsumerWidget {
           onSubmitted: (v) => Navigator.pop(context, v),
         ),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel')),
-          FilledButton(
-              onPressed: () => Navigator.pop(context, controller.text),
-              child: const Text('Create')),
+          BrandButton(
+            label: 'Cancel',
+            kind: BrandButtonKind.ghost,
+            expand: false,
+            onPressed: () => Navigator.pop(context),
+          ),
+          BrandButton(
+            label: 'Create',
+            expand: false,
+            onPressed: () => Navigator.pop(context, controller.text),
+          ),
         ],
       ),
     );
@@ -503,10 +561,8 @@ class _DrawerItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      dense: true,
+    return BrandTile(
       selected: selected,
-      selectedTileColor: AppColors.noteAccent.withValues(alpha: 0.12),
       leading: AppIcon(icon, size: 20, color: iconColor),
       title: Text(label, overflow: TextOverflow.ellipsis),
       trailing: trailing == null

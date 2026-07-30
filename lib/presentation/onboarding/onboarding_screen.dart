@@ -36,7 +36,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   void _next() {
     if (_index < _lastPage) {
       _pages.nextPage(
-          duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
     } else {
       _finish();
     }
@@ -49,17 +51,20 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     // Seed whichever starter habits were picked.
     if (_modules.contains(AppModule.habits) && _habits.isNotEmpty) {
       final repo = ref.read(habitRepositoryProvider);
-      for (final preset
-          in HabitRepository.presets.where((p) => _habits.contains(p.name))) {
-        await repo.createHabit(HabitsCompanion(
-          name: drift.Value(preset.name),
-          icon: drift.Value(preset.icon),
-          color: drift.Value(preset.color),
-          unit: drift.Value(preset.unit),
-          goalType: drift.Value(preset.goalType),
-          targetAmount: drift.Value(preset.target),
-          caffeineMgPerUnit: drift.Value(preset.caffeine),
-        ));
+      for (final preset in HabitRepository.presets.where(
+        (p) => _habits.contains(p.name),
+      )) {
+        await repo.createHabit(
+          HabitsCompanion(
+            name: drift.Value(preset.name),
+            icon: drift.Value(preset.icon),
+            color: drift.Value(preset.color),
+            unit: drift.Value(preset.unit),
+            goalType: drift.Value(preset.goalType),
+            targetAmount: drift.Value(preset.target),
+            caffeineMgPerUnit: drift.Value(preset.caffeine),
+          ),
+        );
       }
     }
 
@@ -147,17 +152,20 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style: const TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.w700,
-                height: 1.15,
-                letterSpacing: -0.8,
-              )),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.w700,
+              height: 1.15,
+              letterSpacing: -0.8,
+            ),
+          ),
           const SizedBox(height: 10),
-          Text(subtitle,
-              style: TextStyle(
-                  color: context.muted, fontSize: 15, height: 1.45)),
+          Text(
+            subtitle,
+            style: TextStyle(color: context.muted, fontSize: 15, height: 1.45),
+          ),
           const SizedBox(height: 28),
           child,
         ],
@@ -174,46 +182,59 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       child: Column(
         children: [
           for (var i = 0; i < AppModule.values.length; i++)
-            Builder(builder: (context) {
-              final m = AppModule.values[i];
-              final (icon, color) = ModulesScreen.metaFor(m);
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: TintCard(
-                  tintIndex: i,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 14),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 42,
-                        height: 42,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                            color: color, shape: BoxShape.circle),
-                        child: AppIcon(icon, color: Colors.white, size: 21),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(m.label,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 15)),
-                            Text(m.blurb,
-                                style: TextStyle(
-                                    fontSize: 12.5, color: context.muted)),
-                          ],
+            Builder(
+              builder: (context) {
+                final m = AppModule.values[i];
+                final (icon, color) = ModulesScreen.metaFor(m);
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: TintCard(
+                    tintIndex: i,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                          ),
+                          child: AppIcon(icon, color: Colors.white, size: 21),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                m.label,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
+                                ),
+                              ),
+                              Text(
+                                m.blurb,
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  color: context.muted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              );
-            }),
+                );
+              },
+            ),
         ],
       ),
     );
@@ -229,15 +250,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           _choice(
             label: 'English',
             selected: settings.locale == 'en',
-            onTap: () =>
-                ref.read(settingsProvider.notifier).setLocale('en'),
+            onTap: () => ref.read(settingsProvider.notifier).setLocale('en'),
           ),
           _choice(
             label: 'বাংলা',
             sublabel: 'Bangla',
             selected: settings.locale == 'bn',
-            onTap: () =>
-                ref.read(settingsProvider.notifier).setLocale('bn'),
+            onTap: () => ref.read(settingsProvider.notifier).setLocale('bn'),
           ),
         ],
       ),
@@ -287,7 +306,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Widget _modulesPage() {
     return _shell(
       title: 'Which tools do you want?',
-      subtitle: 'Turn off anything you will not use — you can add it back later.',
+      subtitle:
+          'Turn off anything you will not use — you can add it back later.',
       child: Column(
         children: [
           ...AppModule.values.map((m) {
@@ -295,8 +315,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             final on = _modules.contains(m);
             return BrandTile(
               leading: AppIcon(icon, color: color),
-              title: Text(m.label,
-                  style: const TextStyle(fontWeight: FontWeight.w600)),
+              title: Text(
+                m.label,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
               subtitle: Text(m.blurb, style: const TextStyle(fontSize: 12)),
               trailing: FCheckbox(
                 value: on,
@@ -317,25 +339,29 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
             const Align(
               alignment: Alignment.centerLeft,
-              child: Text('Start tracking a few habits?',
-                  style: TextStyle(fontWeight: FontWeight.w700)),
+              child: Text(
+                'Start tracking a few habits?',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
             ),
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: HabitRepository.presets
-                  .map((p) => Pill(
-                        icon: AppIcons.habit(p.icon),
-                        label: p.name,
-                        color: Color(p.color),
-                        selected: _habits.contains(p.name),
-                        onTap: () => setState(() {
-                          _habits.contains(p.name)
-                              ? _habits.remove(p.name)
-                              : _habits.add(p.name);
-                        }),
-                      ))
+                  .map(
+                    (p) => Pill(
+                      icon: AppIcons.habit(p.icon),
+                      label: p.name,
+                      color: Color(p.color),
+                      selected: _habits.contains(p.name),
+                      onTap: () => setState(() {
+                        _habits.contains(p.name)
+                            ? _habits.remove(p.name)
+                            : _habits.add(p.name);
+                      }),
+                    ),
+                  )
                   .toList(),
             ),
           ],
@@ -361,7 +387,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               if (v && !await security.canUseBiometrics()) {
                 if (!mounted) return;
                 brandToast(
-                    context, 'No biometrics found — set a PIN in Settings.');
+                  context,
+                  'No biometrics found — set a PIN in Settings.',
+                );
               }
               ref.read(settingsProvider.notifier).setAppLock(v);
             },
@@ -369,8 +397,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           BrandTile(
             leading: const AppIcon(AppIcons.notificationsActive),
             title: const Text('Allow reminders'),
-            subtitle: const Text('Dose times, tasks and bills',
-                style: TextStyle(fontSize: 12)),
+            subtitle: const Text(
+              'Dose times, tasks and bills',
+              style: TextStyle(fontSize: 12),
+            ),
             trailing: const AppIcon(AppIcons.chevronRight),
             onTap: () async {
               final granted = await ref
@@ -392,8 +422,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             padding: EdgeInsets.all(16),
             child: Row(
               children: [
-                AppIcon(AppIcons.privacy,
-                    size: 20, color: AppColors.coral),
+                AppIcon(AppIcons.privacy, size: 20, color: AppColors.coral),
                 SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -415,30 +444,34 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     required bool selected,
     required VoidCallback onTap,
   }) {
-    return Builder(builder: (context) {
-      final primary = Theme.of(context).colorScheme.primary;
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: TintCard(
-          // The chosen option fills with the brand wash so the selection reads
-          // from across the room; the rest stay on the neutral pastel.
-          accent: selected ? primary : null,
-          onTap: onTap,
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-          child: BrandTile(
-            title: Text(label,
+    return Builder(
+      builder: (context) {
+        final primary = Theme.of(context).colorScheme.primary;
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: TintCard(
+            // The chosen option fills with the brand wash so the selection reads
+            // from across the room; the rest stay on the neutral pastel.
+            accent: selected ? primary : null,
+            onTap: onTap,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+            child: BrandTile(
+              title: Text(
+                label,
                 style: const TextStyle(
-                    fontWeight: FontWeight.w600, fontSize: 15)),
-            subtitle: sublabel == null ? null : Text(sublabel),
-            trailing: AppIcon(
-              selected
-                  ? AppIcons.checkCircle
-                  : AppIcons.circle,
-              color: selected ? primary : context.muted,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+              ),
+              subtitle: sublabel == null ? null : Text(sublabel),
+              trailing: AppIcon(
+                selected ? AppIcons.checkCircle : AppIcons.circle,
+                color: selected ? primary : context.muted,
+              ),
             ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 }

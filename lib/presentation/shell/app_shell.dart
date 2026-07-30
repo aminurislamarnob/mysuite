@@ -31,9 +31,9 @@ class AppShell extends ConsumerWidget {
     final body = reduceMotion
         ? navigationShell
         : navigationShell
-            .animate(key: ValueKey(navigationShell.currentIndex))
-            .fadeIn(duration: 220.ms)
-            .slideY(begin: 0.03, end: 0, curve: Curves.easeOutQuart);
+              .animate(key: ValueKey(navigationShell.currentIndex))
+              .fadeIn(duration: 220.ms)
+              .slideY(begin: 0.03, end: 0, curve: Curves.easeOutQuart);
 
     // The bar is stacked over the body rather than placed in FScaffold's footer
     // slot: it draws its own background, floats the action button above the
@@ -49,37 +49,37 @@ class AppShell extends ConsumerWidget {
             right: 0,
             bottom: 0,
             child: CurvedNavBar(
-        currentIndex: navigationShell.currentIndex,
-        onSelected: (i) => navigationShell.goBranch(
-          i,
-          initialLocation: i == navigationShell.currentIndex,
-        ),
-        centerAction: QuickAddButton(
-          onPressed: () => showQuickAdd(context, ref),
-        ),
-        items: const [
-          CurvedNavItem(
-            icon: AppIcons.dashboard,
-            selectedIcon: AppIcons.dashboard,
-            label: 'Today',
-          ),
-          CurvedNavItem(
-            icon: AppIcons.modules,
-            selectedIcon: AppIcons.modules,
-            label: 'Modules',
-          ),
-          CurvedNavItem(
-            icon: AppIcons.insights,
-            selectedIcon: AppIcons.insights,
-            label: 'Insights',
-          ),
-          CurvedNavItem(
-            icon: AppIcons.settings,
-            selectedIcon: AppIcons.settings,
-            label: 'Settings',
-          ),
-        ],
-      ),
+              currentIndex: navigationShell.currentIndex,
+              onSelected: (i) => navigationShell.goBranch(
+                i,
+                initialLocation: i == navigationShell.currentIndex,
+              ),
+              centerAction: QuickAddButton(
+                onPressed: () => showQuickAdd(context, ref),
+              ),
+              items: const [
+                CurvedNavItem(
+                  icon: AppIcons.dashboard,
+                  selectedIcon: AppIcons.dashboard,
+                  label: 'Today',
+                ),
+                CurvedNavItem(
+                  icon: AppIcons.modules,
+                  selectedIcon: AppIcons.modules,
+                  label: 'Modules',
+                ),
+                CurvedNavItem(
+                  icon: AppIcons.insights,
+                  selectedIcon: AppIcons.insights,
+                  label: 'Insights',
+                ),
+                CurvedNavItem(
+                  icon: AppIcons.settings,
+                  selectedIcon: AppIcons.settings,
+                  label: 'Settings',
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -236,8 +236,7 @@ Widget _tile({
               width: 42,
               height: 42,
               alignment: Alignment.center,
-              decoration:
-                  BoxDecoration(color: color, shape: BoxShape.circle),
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
               child: AppIcon(icon, color: Colors.white, size: 21),
             ),
             const SizedBox(width: 14),
@@ -246,13 +245,18 @@ Widget _tile({
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(title,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w600, fontSize: 15)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
+                  ),
                   if (subtitle != null)
-                    Text(subtitle,
-                        style:
-                            TextStyle(fontSize: 12, color: context.muted)),
+                    Text(
+                      subtitle,
+                      style: TextStyle(fontSize: 12, color: context.muted),
+                    ),
                 ],
               ),
             ),
@@ -317,8 +321,10 @@ Future<void> _showDosePicker(BuildContext context, WidgetRef ref) async {
       child: Column(
         children: doses.map((v) {
           return BrandTile(
-            leading: AppIcon(AppIcons.medicineForm(v.medicine.form),
-                color: AppColors.medicineAccent),
+            leading: AppIcon(
+              AppIcons.medicineForm(v.medicine.form),
+              color: AppColors.medicineAccent,
+            ),
             title: Text(v.medicine.name),
             subtitle: Text(
               '${v.dosageLabel}${v.mealLabel.isEmpty ? '' : ' · ${v.mealLabel}'}',

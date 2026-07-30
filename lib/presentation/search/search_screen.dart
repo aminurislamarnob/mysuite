@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:forui/forui.dart';
 
 import '../../core/settings/app_settings.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/widgets/brand.dart';
 import '../../core/widgets/common.dart';
 import 'search_provider.dart';
 
@@ -30,8 +32,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final settings = ref.watch(settingsProvider);
     final query = ref.watch(searchQueryProvider);
 
-    final kinds =
-        ResultKind.values.where((k) => settings.isEnabled(k.module)).toList();
+    final kinds = ResultKind.values
+        .where((k) => settings.isEnabled(k.module))
+        .toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -45,13 +48,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             focusedBorder: InputBorder.none,
             filled: false,
           ),
-          onChanged: (v) =>
-              ref.read(searchQueryProvider.notifier).state = v,
+          onChanged: (v) => ref.read(searchQueryProvider.notifier).state = v,
         ),
         actions: [
           if (query.isNotEmpty)
-            IconButton(
-              icon: const AppIcon(AppIcons.close),
+            CircleIconButton(
+              icon: AppIcons.close,
+              size: 40,
               onPressed: () {
                 _controller.clear();
                 ref.read(searchQueryProvider.notifier).state = '';
@@ -68,25 +71,29 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    label: const Text('All'),
+                  child: Pill(
+                    label: 'All',
                     selected: filter == null,
-                    onSelected: (_) => ref
-                        .read(searchKindFilterProvider.notifier)
-                        .state = null,
+                    color: Theme.of(context).colorScheme.primary,
+                    onTap: () =>
+                        ref.read(searchKindFilterProvider.notifier).state =
+                            null,
                   ),
                 ),
-                ...kinds.map((k) => Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        avatar: AppIcon(k.icon, size: 15, color: k.color),
-                        label: Text(k.label),
-                        selected: filter == k,
-                        onSelected: (_) => ref
-                            .read(searchKindFilterProvider.notifier)
-                            .state = filter == k ? null : k,
-                      ),
-                    )),
+                ...kinds.map(
+                  (k) => Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Pill(
+                      label: k.label,
+                      icon: k.icon,
+                      selected: filter == k,
+                      color: Theme.of(context).colorScheme.primary,
+                      onTap: () =>
+                          ref.read(searchKindFilterProvider.notifier).state =
+                              filter == k ? null : k,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -98,7 +105,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             return const EmptyState(
               icon: AppIcons.search,
               title: 'Search across every module',
-              message: 'Notes, tasks, habits, medicines, expenses and focus '
+              message:
+                  'Notes, tasks, habits, medicines, expenses and focus '
                   'sessions — all from one bar.',
             );
           }
@@ -112,27 +120,39 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             itemCount: hits.length,
             itemBuilder: (_, i) {
               final hit = hits[i];
-              return ListTile(
+              return BrandTile(
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: hit.kind.color.withValues(alpha: 0.13),
                     shape: BoxShape.circle,
                   ),
-                  child: AppIcon(hit.kind.icon, size: 18, color: hit.kind.color),
+                  child: AppIcon(
+                    hit.kind.icon,
+                    size: 18,
+                    color: hit.kind.color,
+                  ),
                 ),
-                title: Text(hit.title,
-                    maxLines: 1, overflow: TextOverflow.ellipsis),
-                subtitle: Text(hit.subtitle,
-                    maxLines: 1, overflow: TextOverflow.ellipsis),
-                trailing: Text(hit.kind.label,
-                    style: TextStyle(fontSize: 10, color: hit.kind.color)),
+                title: Text(
+                  hit.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                subtitle: Text(
+                  hit.subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                trailing: Text(
+                  hit.kind.label,
+                  style: TextStyle(fontSize: 10, color: hit.kind.color),
+                ),
                 onTap: () => _open(hit),
               );
             },
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: FCircularProgress()),
         error: (e, _) =>
             EmptyState(icon: AppIcons.error, title: 'Error', message: '$e'),
       ),

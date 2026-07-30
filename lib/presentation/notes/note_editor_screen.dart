@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:forui/forui.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/services/export_service.dart';
@@ -12,6 +13,7 @@ import '../../core/services/security_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/widgets/brand.dart';
 import '../../core/widgets/common.dart';
 import '../tasks/repository/task_repository.dart';
 import 'repository/note_repository.dart';
@@ -66,12 +68,13 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
       _unlocked = true;
     }
 
-    _controller = quill.QuillController(
-      document: document,
-      selection: const TextSelection.collapsed(offset: 0),
-    )..addListener(() {
-        if (!_dirty && mounted) setState(() => _dirty = true);
-      });
+    _controller =
+        quill.QuillController(
+          document: document,
+          selection: const TextSelection.collapsed(offset: 0),
+        )..addListener(() {
+          if (!_dirty && mounted) setState(() => _dirty = true);
+        });
 
     if (mounted) setState(() => _loading = false);
 
@@ -92,8 +95,9 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   }
 
   Future<void> _requestUnlock() async {
-    final ok = await ref.read(securityServiceProvider).authenticate(
-        reason: 'Unlock "${_note?.title ?? 'this note'}"');
+    final ok = await ref
+        .read(securityServiceProvider)
+        .authenticate(reason: 'Unlock "${_note?.title ?? 'this note'}"');
     if (!mounted) return;
     if (ok) {
       setState(() => _unlocked = true);
@@ -145,7 +149,10 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
     final notifier = ref.read(notificationServiceProvider);
     if (_reminderAt != null) {
       await notifier.scheduleNoteReminder(
-          noteId: id, title: title, when: _reminderAt!);
+        noteId: id,
+        title: title,
+        when: _reminderAt!,
+      );
     } else {
       await notifier.cancelNoteReminder(id);
     }
@@ -211,11 +218,12 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
       onResult: (r) {
         if (!r.finalResult) return;
         final index = _controller!.selection.baseOffset.clamp(
-            0, _controller!.document.length - 1);
+          0,
+          _controller!.document.length - 1,
+        );
         _controller!.document.insert(index, '${r.recognizedWords} ');
         _controller!.updateSelection(
-          TextSelection.collapsed(
-              offset: index + r.recognizedWords.length + 1),
+          TextSelection.collapsed(offset: index + r.recognizedWords.length + 1),
           quill.ChangeSource.local,
         );
       },
@@ -224,14 +232,13 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
 
   void _toast(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    brandToast(context, message);
   }
 
   @override
   Widget build(BuildContext context) {
     if (_loading || _controller == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(body: Center(child: FCircularProgress()));
     }
     if (_note?.isLocked == true && !_unlocked) {
       return Scaffold(
@@ -254,23 +261,28 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(_note == null ? 'New note' : 'Edit note',
-              style: const TextStyle(fontSize: 16)),
+          title: Text(
+            _note == null ? 'New note' : 'Edit note',
+            style: const TextStyle(fontSize: 16),
+          ),
           actions: [
-            IconButton(
+            CircleIconButton(
+              icon: _listening ? AppIcons.mic : AppIcons.mic,
               tooltip: _listening ? 'Stop dictation' : 'Dictate',
-              icon: AppIcon(_listening ? AppIcons.mic : AppIcons.mic),
               color: _listening ? AppColors.dangerLight : null,
+              size: 40,
               onPressed: _toggleDictation,
             ),
-            IconButton(
+            CircleIconButton(
+              icon: AppIcons.moreVertical,
               tooltip: 'More',
-              icon: const AppIcon(AppIcons.moreVertical),
+              size: 40,
               onPressed: _showMoreSheet,
             ),
-            IconButton(
+            CircleIconButton(
+              icon: AppIcons.check,
               tooltip: 'Save',
-              icon: const AppIcon(AppIcons.check),
+              size: 40,
               onPressed: _save,
             ),
           ],
@@ -283,14 +295,15 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
                 controller: _titleController,
                 onChanged: (_) => _dirty = true,
                 style: const TextStyle(
-                    fontSize: 22, fontWeight: FontWeight.w700),
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                ),
                 decoration: const InputDecoration(
                   hintText: 'Title',
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
                   filled: false,
-                  contentPadding: EdgeInsets.zero,
                 ),
               ),
             ),
@@ -304,21 +317,25 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
                     if (_reminderAt != null)
                       Chip(
                         avatar: const AppIcon(AppIcons.alarm, size: 14),
-                        label: Text(Fmt.due(_reminderAt!, withTime: true),
-                            style: const TextStyle(fontSize: 11)),
+                        label: Text(
+                          Fmt.due(_reminderAt!, withTime: true),
+                          style: const TextStyle(fontSize: 11),
+                        ),
                         onDeleted: () => setState(() => _reminderAt = null),
-                        visualDensity: VisualDensity.compact,
                       ),
-                    ..._tags.map((t) => Chip(
-                          label: Text('#$t',
-                              style: const TextStyle(fontSize: 11)),
-                          onDeleted: () => setState(() => _tags.remove(t)),
-                          visualDensity: VisualDensity.compact,
-                        )),
+                    ..._tags.map(
+                      (t) => Chip(
+                        label: Text(
+                          '#$t',
+                          style: const TextStyle(fontSize: 11),
+                        ),
+                        onDeleted: () => setState(() => _tags.remove(t)),
+                      ),
+                    ),
                   ],
                 ),
               ),
-            const Divider(height: 16),
+            FDivider(),
             quill.QuillSimpleToolbar(
               controller: _controller!,
               config: const quill.QuillSimpleToolbarConfig(
@@ -338,7 +355,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
                 showLink: true,
               ),
             ),
-            const Divider(height: 1),
+            FDivider(),
             Expanded(
               child: quill.QuillEditor.basic(
                 controller: _controller!,
@@ -357,13 +374,13 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   }
 
   void _showMoreSheet() {
-    showModalBottomSheet(
+    brandSheet(
       context: context,
       builder: (sheetContext) => SheetScaffold(
         title: 'Note options',
         child: Column(
           children: [
-            ListTile(
+            BrandTile(
               leading: const AppIcon(AppIcons.tag),
               title: const Text('Tags'),
               subtitle: Text(_tags.isEmpty ? 'None' : _tags.join(', ')),
@@ -372,7 +389,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
                 _editTags();
               },
             ),
-            ListTile(
+            BrandTile(
               leading: const AppIcon(AppIcons.folder),
               title: const Text('Move to folder'),
               onTap: () {
@@ -380,7 +397,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
                 _pickFolder();
               },
             ),
-            ListTile(
+            BrandTile(
               leading: const AppIcon(AppIcons.alarmAdd),
               title: const Text('Set reminder'),
               subtitle: _reminderAt == null
@@ -391,8 +408,8 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
                 _pickReminder();
               },
             ),
-            const Divider(),
-            ListTile(
+            FDivider(),
+            BrandTile(
               leading: const AppIcon(AppIcons.checklist),
               title: const Text('Convert checklist to tasks'),
               onTap: () {
@@ -400,24 +417,28 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
                 _convertChecklistToTasks();
               },
             ),
-            ListTile(
+            BrandTile(
               leading: const AppIcon(AppIcons.pdf),
               title: const Text('Export as PDF'),
               onTap: () async {
                 Navigator.pop(sheetContext);
                 await _save(pop: false);
-                await ref.read(exportServiceProvider).shareNoteAsPdf(
+                await ref
+                    .read(exportServiceProvider)
+                    .shareNoteAsPdf(
                       title: _titleController.text.trim(),
                       body: NoteRepository.plainTextOf(_contentJson),
                     );
               },
             ),
-            ListTile(
+            BrandTile(
               leading: const AppIcon(AppIcons.share),
               title: const Text('Share as text'),
               onTap: () async {
                 Navigator.pop(sheetContext);
-                await ref.read(exportServiceProvider).shareText(
+                await ref
+                    .read(exportServiceProvider)
+                    .shareText(
                       '${_titleController.text}\n\n'
                       '${NoteRepository.plainTextOf(_contentJson)}',
                     );
@@ -444,12 +465,17 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
           ),
         ),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel')),
-          FilledButton(
-              onPressed: () => Navigator.pop(context, controller.text),
-              child: const Text('Save')),
+          BrandButton(
+            label: 'Cancel',
+            kind: BrandButtonKind.ghost,
+            expand: false,
+            onPressed: () => Navigator.pop(context),
+          ),
+          BrandButton(
+            label: 'Save',
+            expand: false,
+            onPressed: () => Navigator.pop(context, controller.text),
+          ),
         ],
       ),
     );
@@ -468,23 +494,25 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   Future<void> _pickFolder() async {
     final folders = await ref.read(noteRepositoryProvider).watchFolders().first;
     if (!mounted) return;
-    final picked = await showModalBottomSheet<int?>(
+    final picked = await brandSheet<int?>(
       context: context,
       builder: (_) => SheetScaffold(
         title: 'Move to folder',
         child: Column(
           children: [
-            ListTile(
+            BrandTile(
               leading: const AppIcon(AppIcons.clear),
               title: const Text('No folder'),
               onTap: () => Navigator.pop(context, -1),
             ),
-            ...folders.map((f) => ListTile(
-                  leading: const AppIcon(AppIcons.folder),
-                  title: Text(f.name),
-                  selected: f.id == _folderId,
-                  onTap: () => Navigator.pop(context, f.id),
-                )),
+            ...folders.map(
+              (f) => BrandTile(
+                leading: const AppIcon(AppIcons.folder),
+                title: Text(f.name),
+                selected: f.id == _folderId,
+                onTap: () => Navigator.pop(context, f.id),
+              ),
+            ),
           ],
         ),
       ),
@@ -507,12 +535,18 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
     final time = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(
-          _reminderAt ?? DateTime.now().add(const Duration(hours: 1))),
+        _reminderAt ?? DateTime.now().add(const Duration(hours: 1)),
+      ),
     );
     if (time == null) return;
     setState(() {
-      _reminderAt =
-          DateTime(date.year, date.month, date.day, time.hour, time.minute);
+      _reminderAt = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
       _dirty = true;
     });
   }

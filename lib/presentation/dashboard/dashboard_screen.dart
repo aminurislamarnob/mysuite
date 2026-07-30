@@ -109,7 +109,9 @@ class _NextUpBanner extends ConsumerWidget {
 
     if (settings.isEnabled(AppModule.medicine)) {
       final doses = ref.watch(todayDoseViewsProvider).valueOrNull ?? const [];
-      final next = doses.where((d) => d.status == DoseStatus.pending).firstOrNull;
+      final next = doses
+          .where((d) => d.status == DoseStatus.pending)
+          .firstOrNull;
       if (next != null) {
         return HeroBanner(
           label: 'Medicine',
@@ -182,52 +184,62 @@ class _TodaySummary extends ConsumerWidget {
 
     if (settings.isEnabled(AppModule.medicine)) {
       final doses = ref.watch(todayDoseViewsProvider).valueOrNull ?? const [];
-      final remaining = doses.where((d) => d.status == DoseStatus.pending).length;
-      add((tint) => PlanCard(
-            icon: AppIcons.medicine,
-            accent: AppColors.medicineAccent,
-            label: 'Medicine',
-            value: remaining == 0 ? 'All taken' : '$remaining left',
-            tintIndex: tint,
-            onTap: () => context.push('/medicine'),
-          ));
+      final remaining = doses
+          .where((d) => d.status == DoseStatus.pending)
+          .length;
+      add(
+        (tint) => PlanCard(
+          icon: AppIcons.medicine,
+          accent: AppColors.medicineAccent,
+          label: 'Medicine',
+          value: remaining == 0 ? 'All taken' : '$remaining left',
+          tintIndex: tint,
+          onTap: () => context.push('/medicine'),
+        ),
+      );
     }
     if (settings.isEnabled(AppModule.tasks)) {
       final tasks = ref.watch(todayTasksProvider).valueOrNull ?? const [];
       final open = tasks.where((t) => !t.isCompleted).length;
-      add((tint) => PlanCard(
-            icon: AppIcons.tasks,
-            accent: AppColors.taskAccent,
-            label: 'Tasks',
-            value: open == 0 ? 'All done' : '$open due',
-            tintIndex: tint,
-            onTap: () => context.push('/tasks'),
-          ));
+      add(
+        (tint) => PlanCard(
+          icon: AppIcons.tasks,
+          accent: AppColors.taskAccent,
+          label: 'Tasks',
+          value: open == 0 ? 'All done' : '$open due',
+          tintIndex: tint,
+          onTap: () => context.push('/tasks'),
+        ),
+      );
     }
     if (settings.isEnabled(AppModule.focus)) {
       final stats = ref.watch(focusStatsProvider).valueOrNull;
-      add((tint) => PlanCard(
-            icon: AppIcons.focus,
-            accent: AppColors.focusAccent,
-            label: 'Focus',
-            value: Fmt.duration(stats?.today ?? Duration.zero),
-            tintIndex: tint,
-            onTap: () => context.push('/focus'),
-          ));
+      add(
+        (tint) => PlanCard(
+          icon: AppIcons.focus,
+          accent: AppColors.focusAccent,
+          label: 'Focus',
+          value: Fmt.duration(stats?.today ?? Duration.zero),
+          tintIndex: tint,
+          onTap: () => context.push('/focus'),
+        ),
+      );
     }
     if (settings.isEnabled(AppModule.expenses)) {
       final today = ref.watch(recentExpensesProvider).valueOrNull ?? const [];
       final spentToday = today
           .where((e) => e.kind == 0 && Fmt.isSameDay(e.date, DateTime.now()))
           .fold<double>(0, (a, e) => a + e.amount);
-      add((tint) => PlanCard(
-            icon: AppIcons.expenses,
-            accent: AppColors.expenseAccent,
-            label: 'Spent',
-            value: Fmt.compactMoney(spentToday, currency),
-            tintIndex: tint,
-            onTap: () => context.push('/expenses'),
-          ));
+      add(
+        (tint) => PlanCard(
+          icon: AppIcons.expenses,
+          accent: AppColors.expenseAccent,
+          label: 'Spent',
+          value: Fmt.compactMoney(spentToday, currency),
+          tintIndex: tint,
+          onTap: () => context.push('/expenses'),
+        ),
+      );
     }
     if (settings.isEnabled(AppModule.habits)) {
       final habits = ref.watch(habitsListProvider).valueOrNull ?? const [];
@@ -238,14 +250,16 @@ class _TodaySummary extends ConsumerWidget {
             ? amount >= h.targetAmount
             : amount <= h.targetAmount;
       }).length;
-      add((tint) => PlanCard(
-            icon: AppIcons.habits,
-            accent: AppColors.habitAccent,
-            label: 'Habits',
-            value: habits.isEmpty ? 'None yet' : '$done / ${habits.length}',
-            tintIndex: tint,
-            onTap: () => context.push('/habits'),
-          ));
+      add(
+        (tint) => PlanCard(
+          icon: AppIcons.habits,
+          accent: AppColors.habitAccent,
+          label: 'Habits',
+          value: habits.isEmpty ? 'None yet' : '$done / ${habits.length}',
+          tintIndex: tint,
+          onTap: () => context.push('/habits'),
+        ),
+      );
     }
 
     if (cards.isEmpty) return const SizedBox.shrink();
@@ -287,7 +301,8 @@ class _ActivityChart extends ConsumerWidget {
       final stats = ref.watch(focusStatsProvider).valueOrNull;
       if (stats != null && stats.byDay.isNotEmpty) {
         values = [
-          for (final d in days) (stats.byDay[d] ?? Duration.zero).inMinutes.toDouble(),
+          for (final d in days)
+            (stats.byDay[d] ?? Duration.zero).inMinutes.toDouble(),
         ];
         title = 'Focus minutes';
       } else {
@@ -346,14 +361,19 @@ class _MedicineWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final doses = ref.watch(todayDoseViewsProvider).valueOrNull ?? const [];
-    final upcoming =
-        doses.where((d) => d.status == DoseStatus.pending).take(3).toList();
+    final upcoming = doses
+        .where((d) => d.status == DoseStatus.pending)
+        .take(3)
+        .toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionHeader('Medicine',
-            actionLabel: 'Open', onAction: () => context.push('/medicine')),
+        SectionHeader(
+          'Medicine',
+          actionLabel: 'Open',
+          onAction: () => context.push('/medicine'),
+        ),
         if (upcoming.isEmpty)
           _quiet(context, 'All doses handled for today.')
         else
@@ -374,8 +394,11 @@ class _TasksWidget extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionHeader('Tasks due today',
-            actionLabel: 'Open', onAction: () => context.push('/tasks')),
+        SectionHeader(
+          'Tasks due today',
+          actionLabel: 'Open',
+          onAction: () => context.push('/tasks'),
+        ),
         if (open.isEmpty)
           _quiet(context, 'Nothing due — you are all caught up.')
         else
@@ -397,8 +420,11 @@ class _HabitsWidget extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionHeader('Habits',
-            actionLabel: 'Open', onAction: () => context.push('/habits')),
+        SectionHeader(
+          'Habits',
+          actionLabel: 'Open',
+          onAction: () => context.push('/habits'),
+        ),
         if (habits.isEmpty)
           _quiet(context, 'No habits yet.')
         else
@@ -427,19 +453,30 @@ class _HabitsWidget extends ConsumerWidget {
                       children: [
                         Row(
                           children: [
-                            AppIcon(AppIcons.habit(h.icon), color: color, size: 22),
+                            AppIcon(
+                              AppIcons.habit(h.icon),
+                              color: color,
+                              size: 22,
+                            ),
                             const Spacer(),
                             if (done)
-                              AppIcon(AppIcons.checkCircle,
-                                  size: 16, color: color),
+                              AppIcon(
+                                AppIcons.checkCircle,
+                                size: 16,
+                                color: color,
+                              ),
                           ],
                         ),
                         const Spacer(),
-                        Text(h.name,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w600, fontSize: 13),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis),
+                        Text(
+                          h.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                         const SizedBox(height: 2),
                         Row(
                           children: [
@@ -447,7 +484,9 @@ class _HabitsWidget extends ConsumerWidget {
                               child: Text(
                                 '${_trim(amount)} / ${_trim(h.targetAmount)}',
                                 style: TextStyle(
-                                    fontSize: 12, color: context.muted),
+                                  fontSize: 12,
+                                  color: context.muted,
+                                ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -456,8 +495,11 @@ class _HabitsWidget extends ConsumerWidget {
                             InkWell(
                               onTap: () => repo.addToDay(h.id, 1),
                               customBorder: const CircleBorder(),
-                              child: AppIcon(AppIcons.addCircle,
-                                  color: color, size: 24),
+                              child: AppIcon(
+                                AppIcons.addCircle,
+                                color: color,
+                                size: 24,
+                              ),
                             ),
                           ],
                         ),
@@ -489,8 +531,11 @@ class _ExpensesWidget extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionHeader("Today's spending",
-            actionLabel: 'Open', onAction: () => context.push('/expenses')),
+        SectionHeader(
+          "Today's spending",
+          actionLabel: 'Open',
+          onAction: () => context.push('/expenses'),
+        ),
         if (todays.isEmpty)
           _quiet(context, 'Nothing recorded today.')
         else
@@ -500,28 +545,35 @@ class _ExpensesWidget extends ConsumerWidget {
             child: Column(
               children: [
                 for (final e in todays)
-                  Builder(builder: (context) {
-                    final cat = categories
-                        .where((c) => c.id == e.categoryId)
-                        .firstOrNull;
-                    return ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      dense: true,
-                      leading: AppIcon(AppIcons.category(cat?.icon ?? 'other'),
-                          color: Color(cat?.color ?? 0xFF6C6C6C), size: 22),
-                      title: Text(
-                        e.note?.isNotEmpty == true
-                            ? e.note!
-                            : cat?.name ?? 'Expense',
-                        style: const TextStyle(fontSize: 14),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      trailing: Text(Fmt.money(e.amount, currency),
+                  Builder(
+                    builder: (context) {
+                      final cat = categories
+                          .where((c) => c.id == e.categoryId)
+                          .firstOrNull;
+                      return BrandTile(
+                        leading: AppIcon(
+                          AppIcons.category(cat?.icon ?? 'other'),
+                          color: Color(cat?.color ?? 0xFF6C6C6C),
+                          size: 22,
+                        ),
+                        title: Text(
+                          e.note?.isNotEmpty == true
+                              ? e.note!
+                              : cat?.name ?? 'Expense',
+                          style: const TextStyle(fontSize: 14),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        trailing: Text(
+                          Fmt.money(e.amount, currency),
                           style: const TextStyle(
-                              fontWeight: FontWeight.w700, fontSize: 14)),
-                    );
-                  }),
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
               ],
             ),
           ),
@@ -541,8 +593,11 @@ class _FocusWidget extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionHeader('Focus',
-            actionLabel: 'Start', onAction: () => context.push('/focus')),
+        SectionHeader(
+          'Focus',
+          actionLabel: 'Start',
+          onAction: () => context.push('/focus'),
+        ),
         TintCard(
           accent: AppColors.focusAccent,
           child: Row(
@@ -555,10 +610,11 @@ class _FocusWidget extends ConsumerWidget {
                 color: AppColors.focusAccent,
                 center: FittedBox(
                   child: Text(
-                    Fmt.percent(
-                        goal == 0 ? 0 : stats.today.inMinutes / goal),
+                    Fmt.percent(goal == 0 ? 0 : stats.today.inMinutes / goal),
                     style: const TextStyle(
-                        fontWeight: FontWeight.w700, fontSize: 15),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                    ),
                   ),
                 ),
               ),
@@ -568,11 +624,12 @@ class _FocusWidget extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(Fmt.duration(stats.today),
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleLarge
-                            ?.copyWith(fontSize: 24)),
+                    Text(
+                      Fmt.duration(stats.today),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.titleLarge?.copyWith(fontSize: 24),
+                    ),
                     Text(
                       'of ${Fmt.durationFromMinutes(goal)} · '
                       '${stats.sessionsToday} sessions',
@@ -600,8 +657,11 @@ class _NotesWidget extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionHeader('Recent notes',
-            actionLabel: 'Open', onAction: () => context.push('/notes')),
+        SectionHeader(
+          'Recent notes',
+          actionLabel: 'Open',
+          onAction: () => context.push('/notes'),
+        ),
         if (notes.isEmpty)
           _quiet(context, 'No notes yet.')
         else
@@ -611,15 +671,18 @@ class _NotesWidget extends ConsumerWidget {
             child: Column(
               children: [
                 for (final n in notes)
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    dense: true,
-                    leading: const AppIcon(AppIcons.notes,
-                        color: AppColors.noteAccent, size: 22),
-                    title: Text(n.title,
-                        style: const TextStyle(fontSize: 14),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis),
+                  BrandTile(
+                    leading: const AppIcon(
+                      AppIcons.notes,
+                      color: AppColors.noteAccent,
+                      size: 22,
+                    ),
+                    title: Text(
+                      n.title,
+                      style: const TextStyle(fontSize: 14),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     subtitle: Text(
                       NoteRepository.previewOf(n.content, max: 60),
                       style: const TextStyle(fontSize: 12),
@@ -640,7 +703,6 @@ String _trim(double v) =>
     v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(1);
 
 Widget _quiet(BuildContext context, String message) => Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Text(message,
-          style: TextStyle(color: context.muted, fontSize: 14)),
-    );
+  padding: const EdgeInsets.symmetric(vertical: 4),
+  child: Text(message, style: TextStyle(color: context.muted, fontSize: 14)),
+);

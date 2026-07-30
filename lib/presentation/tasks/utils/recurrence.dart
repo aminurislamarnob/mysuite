@@ -86,12 +86,21 @@ class Recurrence {
       if (candidate == null || !candidate.isAfter(from)) {
         final nextMonth = _addMonths(DateTime(from.year, from.month, 1), 1);
         candidate = _nthWeekdayOfMonth(
-            nextMonth.year, nextMonth.month, week, weekday);
+          nextMonth.year,
+          nextMonth.month,
+          week,
+          weekday,
+        );
       }
       if (candidate == null) return null;
       // Carry the original time-of-day across.
-      return DateTime(candidate.year, candidate.month, candidate.day,
-          from.hour, from.minute);
+      return DateTime(
+        candidate.year,
+        candidate.month,
+        candidate.day,
+        from.hour,
+        from.minute,
+      );
     }
 
     return null;
@@ -104,12 +113,21 @@ class Recurrence {
     final year = d.year + totalMonths ~/ 12;
     final month = totalMonths % 12 + 1;
     final lastDay = DateTime(year, month + 1, 0).day;
-    return DateTime(year, month, d.day > lastDay ? lastDay : d.day, d.hour,
-        d.minute);
+    return DateTime(
+      year,
+      month,
+      d.day > lastDay ? lastDay : d.day,
+      d.hour,
+      d.minute,
+    );
   }
 
   static DateTime? _nthWeekdayOfMonth(
-      int year, int month, int nth, int weekday) {
+    int year,
+    int month,
+    int nth,
+    int weekday,
+  ) {
     final first = DateTime(year, month, 1);
     final offset = (weekday - first.weekday + 7) % 7;
     final day = 1 + offset + (nth - 1) * 7;
@@ -119,19 +137,19 @@ class Recurrence {
   }
 
   static String _ordinal(int n) => switch (n) {
-        1 => '1st',
-        2 => '2nd',
-        3 => '3rd',
-        _ => '${n}th',
-      };
+    1 => '1st',
+    2 => '2nd',
+    3 => '3rd',
+    _ => '${n}th',
+  };
 
   static String _weekdayName(int weekday) => const [
-        'Monday',
-        'Tuesday',
-        'Wednesday',
-        'Thursday',
-        'Friday',
-        'Saturday',
-        'Sunday',
-      ][(weekday - 1).clamp(0, 6)];
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
+  ][(weekday - 1).clamp(0, 6)];
 }

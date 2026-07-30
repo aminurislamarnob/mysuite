@@ -30,21 +30,52 @@ class ExpenseVoiceParser {
 
   /// Words that hint at a category but are not the category's own name.
   static const _categoryHints = <String, List<String>>{
-    'Food': ['lunch', 'dinner', 'breakfast', 'snack', 'restaurant', 'meal',
-      'tea', 'coffee'],
-    'Transport': ['bus', 'taxi', 'uber', 'pathao', 'rickshaw', 'fuel', 'petrol',
-      'cng', 'train', 'fare'],
+    'Food': [
+      'lunch',
+      'dinner',
+      'breakfast',
+      'snack',
+      'restaurant',
+      'meal',
+      'tea',
+      'coffee',
+    ],
+    'Transport': [
+      'bus',
+      'taxi',
+      'uber',
+      'pathao',
+      'rickshaw',
+      'fuel',
+      'petrol',
+      'cng',
+      'train',
+      'fare',
+    ],
     'Groceries': ['grocery', 'groceries', 'bazar', 'market', 'vegetables'],
-    'Bills': ['bill', 'electricity', 'gas', 'water', 'internet', 'wifi',
-      'recharge'],
+    'Bills': [
+      'bill',
+      'electricity',
+      'gas',
+      'water',
+      'internet',
+      'wifi',
+      'recharge',
+    ],
     'Health': ['medicine', 'doctor', 'pharmacy', 'hospital', 'clinic'],
     'Entertainment': ['movie', 'cinema', 'game', 'netflix', 'concert'],
     'Shopping': ['shirt', 'shoes', 'clothes', 'dress', 'shopping'],
     'Education': ['book', 'course', 'tuition', 'exam', 'fee'],
   };
 
-  static const _incomeWords = ['earned', 'received', 'got paid', 'income',
-    'salary', 'refund'];
+  static const _incomeWords = [
+    'earned',
+    'received',
+    'got paid',
+    'income',
+    'salary',
+    'refund',
+  ];
 
   static ParsedExpense parse(
     String phrase, {
@@ -56,8 +87,9 @@ class ExpenseVoiceParser {
 
     // --- Amount ---
     // Accepts "200", "1,200", "৳200", "200 taka", "200tk".
-    final amountMatch =
-        RegExp(r'(\d[\d,]*(?:\.\d+)?)').firstMatch(lower.replaceAll('৳', ' '));
+    final amountMatch = RegExp(
+      r'(\d[\d,]*(?:\.\d+)?)',
+    ).firstMatch(lower.replaceAll('৳', ' '));
     final amount = amountMatch == null
         ? null
         : double.tryParse(amountMatch.group(1)!.replaceAll(',', ''));
@@ -104,11 +136,13 @@ class ExpenseVoiceParser {
     // Strip the bookkeeping words so the note reads as a description.
     note = note
         .replaceAll(
-            RegExp(
-                r'\b(spent|paid|spend|bought|for|on|with|using|taka|tk|bdt|'
-                r'earned|received|income)\b',
-                caseSensitive: false),
-            ' ')
+          RegExp(
+            r'\b(spent|paid|spend|bought|for|on|with|using|taka|tk|bdt|'
+            r'earned|received|income)\b',
+            caseSensitive: false,
+          ),
+          ' ',
+        )
         .replaceAll(RegExp(r'[\d,]+(\.\d+)?'), ' ')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();

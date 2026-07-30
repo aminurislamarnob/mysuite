@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/brand.dart';
 import '../../../core/widgets/common.dart';
 import '../providers/tasks_provider.dart';
 import '../repository/task_repository.dart';
@@ -19,9 +21,8 @@ class TaskEditorSheet extends ConsumerStatefulWidget {
   const TaskEditorSheet({super.key, this.task, this.projectId});
 
   static Future<void> show(BuildContext context, {Task? task, int? projectId}) {
-    return showModalBottomSheet(
+    return brandSheet(
       context: context,
-      isScrollControlled: true,
       builder: (_) => TaskEditorSheet(task: task, projectId: projectId),
     );
   }
@@ -126,7 +127,10 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
 
     if (_reminder != null) {
       await notifier.scheduleTaskReminder(
-          taskId: id, title: title, when: _reminder!);
+        taskId: id,
+        title: title,
+        when: _reminder!,
+      );
     } else {
       await notifier.cancelTaskReminder(id);
     }
@@ -143,9 +147,10 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
       title: _isEditing ? 'Edit task' : 'New task',
       actions: [
         if (_isEditing)
-          IconButton(
+          CircleIconButton(
+            icon: AppIcons.delete,
             tooltip: 'Delete',
-            icon: const AppIcon(AppIcons.delete),
+            size: 40,
             onPressed: () async {
               await ref
                   .read(taskRepositoryProvider)
@@ -156,7 +161,12 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
               if (context.mounted) Navigator.pop(context);
             },
           ),
-        TextButton(onPressed: _save, child: const Text('Save')),
+        BrandButton(
+          label: 'Save',
+          kind: BrandButtonKind.ghost,
+          expand: false,
+          onPressed: _save,
+        ),
       ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,10 +213,12 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
                 ? 'None'
                 : Fmt.due(_dueDate!, withTime: _hasTime),
             onTap: _pickDueDate,
-            onClear: _dueDate == null ? null : () => setState(() {
-              _dueDate = null;
-              _hasTime = false;
-            }),
+            onClear: _dueDate == null
+                ? null
+                : () => setState(() {
+                    _dueDate = null;
+                    _hasTime = false;
+                  }),
           ),
           _row(
             icon: AppIcons.alarm,
@@ -215,8 +227,9 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
                 ? 'None'
                 : Fmt.due(_reminder!, withTime: true),
             onTap: _pickReminder,
-            onClear:
-                _reminder == null ? null : () => setState(() => _reminder = null),
+            onClear: _reminder == null
+                ? null
+                : () => setState(() => _reminder = null),
           ),
           _row(
             icon: AppIcons.repeat,
@@ -234,8 +247,9 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
                 ? 'None'
                 : Fmt.durationFromMinutes(_estimate!),
             onTap: _pickEstimate,
-            onClear:
-                _estimate == null ? null : () => setState(() => _estimate = null),
+            onClear: _estimate == null
+                ? null
+                : () => setState(() => _estimate = null),
           ),
           const SizedBox(height: 12),
 
@@ -245,18 +259,21 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              ChoiceChip(
-                label: const Text('None'),
+              Pill(
+                label: 'None',
                 selected: _projectId == null,
-                onSelected: (_) => setState(() => _projectId = null),
+                color: Theme.of(context).colorScheme.primary,
+                onTap: () => setState(() => _projectId = null),
               ),
-              ...projects.map((p) => ChoiceChip(
-                    avatar: AppIcon(AppIcons.project(p.icon),
-                        size: 16, color: Color(p.color)),
-                    label: Text(p.name),
-                    selected: _projectId == p.id,
-                    onSelected: (_) => setState(() => _projectId = p.id),
-                  )),
+              ...projects.map(
+                (p) => Pill(
+                  label: p.name,
+                  icon: AppIcons.project(p.icon),
+                  selected: _projectId == p.id,
+                  color: Theme.of(context).colorScheme.primary,
+                  onTap: () => setState(() => _projectId = p.id),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -272,7 +289,7 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
 
           if (_isEditing) ...[
             const SizedBox(height: 20),
-            const Divider(),
+            FDivider(),
             const SizedBox(height: 8),
             Text('Subtasks', style: TextStyle(color: muted, fontSize: 12)),
             _SubtaskList(parentId: widget.task!.id),
@@ -288,8 +305,11 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
                     onSubmitted: (_) => _addSubtask(),
                   ),
                 ),
-                IconButton(
-                    icon: const AppIcon(AppIcons.add), onPressed: _addSubtask),
+                CircleIconButton(
+                  icon: AppIcons.add,
+                  size: 40,
+                  onPressed: _addSubtask,
+                ),
               ],
             ),
           ],
@@ -314,16 +334,17 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
     required VoidCallback onTap,
     VoidCallback? onClear,
   }) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      dense: true,
+    return BrandTile(
       leading: AppIcon(icon, size: 20),
       title: Text(label),
       subtitle: Text(value),
       trailing: onClear == null
           ? const AppIcon(AppIcons.chevronRight)
-          : IconButton(
-              icon: const AppIcon(AppIcons.close, size: 18), onPressed: onClear),
+          : CircleIconButton(
+              icon: AppIcons.close,
+              size: 40,
+              onPressed: onClear,
+            ),
       onTap: onTap,
     );
   }
@@ -342,12 +363,17 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
       builder: (_) => AlertDialog(
         title: const Text('Add a time?'),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('All day')),
-          FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Pick time')),
+          BrandButton(
+            label: 'All day',
+            kind: BrandButtonKind.ghost,
+            expand: false,
+            onPressed: () => Navigator.pop(context, false),
+          ),
+          BrandButton(
+            label: 'Pick time',
+            expand: false,
+            onPressed: () => Navigator.pop(context, true),
+          ),
         ],
       ),
     );
@@ -361,7 +387,12 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
       if (time != null) {
         setState(() {
           _dueDate = DateTime(
-              date.year, date.month, date.day, time.hour, time.minute);
+            date.year,
+            date.month,
+            date.day,
+            time.hour,
+            time.minute,
+          );
           _hasTime = true;
         });
         return;
@@ -384,31 +415,39 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
     final time = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(
-          _reminder ?? DateTime.now().add(const Duration(hours: 1))),
+        _reminder ?? DateTime.now().add(const Duration(hours: 1)),
+      ),
     );
     if (time == null) return;
     setState(() {
-      _reminder =
-          DateTime(date.year, date.month, date.day, time.hour, time.minute);
+      _reminder = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
     });
   }
 
   Future<void> _pickRecurrence() async {
-    final picked = await showModalBottomSheet<String?>(
+    final picked = await brandSheet<String?>(
       context: context,
       builder: (_) => SheetScaffold(
         title: 'Repeat',
         child: Column(
           children: [
-            ListTile(
+            BrandTile(
               title: const Text('Does not repeat'),
               onTap: () => Navigator.pop(context, ''),
             ),
-            ...Recurrence.presets.entries.map((e) => ListTile(
-                  title: Text(e.value),
-                  selected: _recurrence == e.key,
-                  onTap: () => Navigator.pop(context, e.key),
-                )),
+            ...Recurrence.presets.entries.map(
+              (e) => BrandTile(
+                title: Text(e.value),
+                selected: _recurrence == e.key,
+                onTap: () => Navigator.pop(context, e.key),
+              ),
+            ),
           ],
         ),
       ),
@@ -418,18 +457,20 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
   }
 
   Future<void> _pickEstimate() async {
-    final picked = await showModalBottomSheet<int>(
+    final picked = await brandSheet<int>(
       context: context,
       builder: (_) => SheetScaffold(
         title: 'Time estimate',
         child: Column(
           children: [15, 25, 30, 45, 60, 90, 120]
-              .map((m) => ListTile(
-                    leading: const AppIcon(AppIcons.focus),
-                    title: Text(Fmt.durationFromMinutes(m)),
-                    selected: _estimate == m,
-                    onTap: () => Navigator.pop(context, m),
-                  ))
+              .map(
+                (m) => BrandTile(
+                  leading: const AppIcon(AppIcons.focus),
+                  title: Text(Fmt.durationFromMinutes(m)),
+                  selected: _estimate == m,
+                  onTap: () => Navigator.pop(context, m),
+                ),
+              )
               .toList(),
         ),
       ),
@@ -448,31 +489,32 @@ class _SubtaskList extends ConsumerWidget {
     return subtasks.maybeWhen(
       data: (list) => Column(
         children: list
-            .map((s) => ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  dense: true,
-                  visualDensity: VisualDensity.compact,
-                  leading: Checkbox(
-                    value: s.isCompleted,
-                    activeColor: AppColors.taskAccent,
-                    onChanged: (v) => ref
-                        .read(taskRepositoryProvider)
-                        .setCompleted(s.id, v ?? false),
+            .map(
+              (s) => BrandTile(
+                leading: Checkbox(
+                  value: s.isCompleted,
+                  activeColor: AppColors.taskAccent,
+                  onChanged: (v) => ref
+                      .read(taskRepositoryProvider)
+                      .setCompleted(s.id, v ?? false),
+                ),
+                title: Text(
+                  s.title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    decoration: s.isCompleted
+                        ? TextDecoration.lineThrough
+                        : null,
                   ),
-                  title: Text(
-                    s.title,
-                    style: TextStyle(
-                      fontSize: 14,
-                      decoration:
-                          s.isCompleted ? TextDecoration.lineThrough : null,
-                    ),
-                  ),
-                  trailing: IconButton(
-                    icon: const AppIcon(AppIcons.close, size: 16),
-                    onPressed: () =>
-                        ref.read(taskRepositoryProvider).deleteTask(s.id),
-                  ),
-                ))
+                ),
+                trailing: CircleIconButton(
+                  icon: AppIcons.close,
+                  size: 40,
+                  onPressed: () =>
+                      ref.read(taskRepositoryProvider).deleteTask(s.id),
+                ),
+              ),
+            )
             .toList(),
       ),
       orElse: () => const SizedBox.shrink(),

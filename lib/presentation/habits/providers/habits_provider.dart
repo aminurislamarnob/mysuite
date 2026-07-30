@@ -12,15 +12,19 @@ final habitProvider = FutureProvider.family<Habit?, int>((ref, id) {
   return ref.watch(habitRepositoryProvider).getHabit(id);
 });
 
-final habitLogsProvider =
-    StreamProvider.family<List<HabitLog>, int>((ref, habitId) {
+final habitLogsProvider = StreamProvider.family<List<HabitLog>, int>((
+  ref,
+  habitId,
+) {
   return ref.watch(habitRepositoryProvider).watchLogs(habitId);
 });
 
 /// Streak, completion rate and totals for one habit, recomputed whenever its
 /// logs change.
-final habitStatsProvider =
-    StreamProvider.family<HabitStats, int>((ref, habitId) async* {
+final habitStatsProvider = StreamProvider.family<HabitStats, int>((
+  ref,
+  habitId,
+) async* {
   final repo = ref.watch(habitRepositoryProvider);
   final habit = await repo.getHabit(habitId);
   if (habit == null) {

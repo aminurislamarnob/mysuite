@@ -85,8 +85,10 @@ class InsightsScreen extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 14),
-            const Text('Completion heatmap',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+            const Text(
+              'Completion heatmap',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            ),
             const SizedBox(height: 8),
             SizedBox(
               height: 7 * 17.0,
@@ -169,7 +171,7 @@ class InsightsScreen extends ConsumerWidget {
                     sublabel: report.changeVsPrevious == null
                         ? null
                         : '${report.changeVsPrevious! >= 0 ? '+' : ''}'
-                            '${(report.changeVsPrevious! * 100).toStringAsFixed(0)}% vs last',
+                              '${(report.changeVsPrevious! * 100).toStringAsFixed(0)}% vs last',
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -192,7 +194,8 @@ class InsightsScreen extends ConsumerWidget {
           if (settings.isEnabled(AppModule.habits) && habits.isNotEmpty) ...[
             const SectionHeader('Habits'),
             ...habits.map((h) {
-              final stats = ref.watch(habitStatsProvider(h.id)).valueOrNull ??
+              final stats =
+                  ref.watch(habitStatsProvider(h.id)).valueOrNull ??
                   HabitStats.empty;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
@@ -206,8 +209,10 @@ class InsightsScreen extends ConsumerWidget {
               );
             }),
             if (caffeine > 0)
-              Text('Caffeine today: ${caffeine.toStringAsFixed(0)} mg',
-                  style: TextStyle(fontSize: 12, color: muted)),
+              Text(
+                'Caffeine today: ${caffeine.toStringAsFixed(0)} mg',
+                style: TextStyle(fontSize: 12, color: muted),
+              ),
           ],
         ],
       ),
@@ -263,21 +268,22 @@ class InsightsScreen extends ConsumerWidget {
         adherence.worstWeekday != null &&
         adherence.totalMisses >= 2) {
       lines.add(
-          '⚠️ Doses slip most on ${_weekdayName(adherence.worstWeekday!)}s');
+        '⚠️ Doses slip most on ${_weekdayName(adherence.worstWeekday!)}s',
+      );
     }
 
     return lines;
   }
 
   static String _weekdayName(int weekday) => const [
-        'Monday',
-        'Tuesday',
-        'Wednesday',
-        'Thursday',
-        'Friday',
-        'Saturday',
-        'Sunday',
-      ][(weekday - 1).clamp(0, 6)];
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
+  ][(weekday - 1).clamp(0, 6)];
 }
 
 class _DigestCard extends StatelessWidget {
@@ -294,14 +300,18 @@ class _DigestCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const AppIcon(AppIcons.sparkle,
-                    size: 18, color: AppColors.primaryLight),
+                const AppIcon(
+                  AppIcons.sparkle,
+                  size: 18,
+                  color: AppColors.primaryLight,
+                ),
                 const SizedBox(width: 8),
-                Text('This week',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w700)),
+                Text(
+                  'This week',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 14),
@@ -310,13 +320,17 @@ class _DigestCard extends StatelessWidget {
                 'Not enough data yet. Log a few things and your weekly digest '
                 'will appear here.',
                 style: TextStyle(
-                    color: Theme.of(context).colorScheme.outline, fontSize: 13),
+                  color: Theme.of(context).colorScheme.outline,
+                  fontSize: 13,
+                ),
               )
             else
-              ...lines.map((l) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(l, style: const TextStyle(fontSize: 14)),
-                  )),
+              ...lines.map(
+                (l) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(l, style: const TextStyle(fontSize: 14)),
+                ),
+              ),
           ],
         ),
       ),

@@ -1,12 +1,14 @@
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/brand.dart';
 import '../../../core/widgets/common.dart';
 import '../camera_scan_screen.dart';
 import '../providers/medicine_provider.dart';
@@ -19,9 +21,8 @@ class MedicineEditorSheet extends ConsumerStatefulWidget {
   const MedicineEditorSheet({super.key, this.medicine});
 
   static Future<void> show(BuildContext context, {Medicine? medicine}) {
-    return showModalBottomSheet(
+    return brandSheet(
       context: context,
-      isScrollControlled: true,
       builder: (_) => MedicineEditorSheet(medicine: medicine),
     );
   }
@@ -80,7 +81,14 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
 
   @override
   void dispose() {
-    for (final c in [_name, _dosage, _dosageUnit, _inventory, _doctor, _notes]) {
+    for (final c in [
+      _name,
+      _dosage,
+      _dosageUnit,
+      _inventory,
+      _doctor,
+      _notes,
+    ]) {
       c.dispose();
     }
     super.dispose();
@@ -90,14 +98,14 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
       v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(1);
 
   ScheduleSpec get _spec => ScheduleSpec(
-        start: _start,
-        end: _end,
-        frequency: _frequency,
-        doseMinutes: _times,
-        intervalHours: _intervalHours,
-        weekdayMask: _weekdayMask,
-        skipDates: _skip,
-      );
+    start: _start,
+    end: _end,
+    frequency: _frequency,
+    doseMinutes: _times,
+    intervalHours: _intervalHours,
+    weekdayMask: _weekdayMask,
+    skipDates: _skip,
+  );
 
   Future<void> _scanPrescription() async {
     final result = await Navigator.of(context).push<ScanResult>(
@@ -110,8 +118,7 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
     setState(() {
       if (result.medicineName != null) _name.text = result.medicineName!;
       if (result.dosage != null) {
-        final numeric =
-            RegExp(r'[\d.]+').firstMatch(result.dosage!)?.group(0);
+        final numeric = RegExp(r'[\d.]+').firstMatch(result.dosage!)?.group(0);
         final unit = RegExp(r'[a-zA-Z]+').firstMatch(result.dosage!)?.group(0);
         if (numeric != null) _dosage.text = numeric;
         if (unit != null) _dosageUnit.text = unit;
@@ -128,19 +135,20 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
 
   /// Sensible waking-hour defaults for N doses a day.
   static List<int> _defaultTimesFor(int count) => switch (count) {
-        1 => [480], // 08:00
-        2 => [480, 1200], // 08:00, 20:00
-        3 => [480, 840, 1200], // 08:00, 14:00, 20:00
-        4 => [480, 720, 1020, 1320], // 08:00, 12:00, 17:00, 22:00
-        _ => List.generate(
-            count.clamp(1, 6), (i) => 480 + (i * (840 ~/ count.clamp(1, 6)))),
-      };
+    1 => [480], // 08:00
+    2 => [480, 1200], // 08:00, 20:00
+    3 => [480, 840, 1200], // 08:00, 14:00, 20:00
+    4 => [480, 720, 1020, 1320], // 08:00, 12:00, 17:00, 22:00
+    _ => List.generate(
+      count.clamp(1, 6),
+      (i) => 480 + (i * (840 ~/ count.clamp(1, 6))),
+    ),
+  };
 
   Future<void> _save() async {
     final name = _name.text.trim();
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Enter a medicine name.')));
+      brandToast(context, 'Enter a medicine name.');
       return;
     }
 
@@ -152,14 +160,16 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
       name: drift.Value(name),
       form: drift.Value(_form),
       dosage: drift.Value(double.tryParse(_dosage.text.trim()) ?? 1),
-      dosageUnit: drift.Value(_dosageUnit.text.trim().isEmpty
-          ? 'tablet'
-          : _dosageUnit.text.trim()),
+      dosageUnit: drift.Value(
+        _dosageUnit.text.trim().isEmpty ? 'tablet' : _dosageUnit.text.trim(),
+      ),
       inventory: drift.Value(int.tryParse(_inventory.text.trim()) ?? 0),
-      doctorName:
-          drift.Value(_doctor.text.trim().isEmpty ? null : _doctor.text.trim()),
-      notes:
-          drift.Value(_notes.text.trim().isEmpty ? null : _notes.text.trim()),
+      doctorName: drift.Value(
+        _doctor.text.trim().isEmpty ? null : _doctor.text.trim(),
+      ),
+      notes: drift.Value(
+        _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+      ),
       profileId: drift.Value(profileId),
       frequencyType: drift.Value(_frequency.index),
       doseTimes: drift.Value(ScheduleSpec.encodeTimes(_times)),
@@ -191,10 +201,11 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
     } on Exception catch (e) {
       debugPrint('Could not schedule dose reminders: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Saved, but reminders could not be scheduled. '
-              'Check notification permissions in Settings.'),
-        ));
+        brandToast(
+          context,
+          'Saved, but reminders could not be scheduled. '
+          'Check notification permissions in Settings.',
+        );
       }
     }
 
@@ -213,9 +224,11 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
     final horizon = DateTime.now().add(const Duration(days: 14));
 
     final upcoming = doses
-        .where((d) =>
-            d.scheduledTime.isAfter(DateTime.now()) &&
-            d.scheduledTime.isBefore(horizon))
+        .where(
+          (d) =>
+              d.scheduledTime.isAfter(DateTime.now()) &&
+              d.scheduledTime.isBefore(horizon),
+        )
         .take(50);
 
     for (final dose in upcoming) {
@@ -241,12 +254,18 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
     return SheetScaffold(
       title: _isEditing ? 'Edit medicine' : 'Add medicine',
       actions: [
-        IconButton(
+        CircleIconButton(
+          icon: AppIcons.scan,
           tooltip: 'Scan prescription',
-          icon: const AppIcon(AppIcons.scan),
+          size: 40,
           onPressed: _scanPrescription,
         ),
-        TextButton(onPressed: _save, child: const Text('Save')),
+        BrandButton(
+          label: 'Save',
+          kind: BrandButtonKind.ghost,
+          expand: false,
+          onPressed: _save,
+        ),
       ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -256,7 +275,9 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
             autofocus: !_isEditing,
             textCapitalization: TextCapitalization.words,
             decoration: const InputDecoration(
-                labelText: 'Medicine name', hintText: 'Amoxicillin'),
+              labelText: 'Medicine name',
+              hintText: 'Amoxicillin',
+            ),
           ),
           const SizedBox(height: 16),
 
@@ -266,15 +287,18 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
             spacing: 8,
             runSpacing: 8,
             children: AppIcons.medicineForms.keys
-                .map((f) => ChoiceChip(
-                      avatar: AppIcon(AppIcons.medicineForm(f), size: 16),
-                      label: Text(f[0].toUpperCase() + f.substring(1)),
-                      selected: _form == f,
-                      onSelected: (_) => setState(() {
-                        _form = f;
-                        _dosageUnit.text = f;
-                      }),
-                    ))
+                .map(
+                  (f) => Pill(
+                    label: f[0].toUpperCase() + f.substring(1),
+                    icon: AppIcons.medicineForm(f),
+                    selected: _form == f,
+                    color: Theme.of(context).colorScheme.primary,
+                    onTap: () => setState(() {
+                      _form = f;
+                      _dosageUnit.text = f;
+                    }),
+                  ),
+                )
                 .toList(),
           ),
           const SizedBox(height: 16),
@@ -284,8 +308,9 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
               Expanded(
                 child: TextField(
                   controller: _dosage,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: const InputDecoration(labelText: 'Dose'),
                   onChanged: (_) => setState(() {}),
                 ),
@@ -316,11 +341,14 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
             Wrap(
               spacing: 8,
               children: profiles
-                  .map((p) => ChoiceChip(
-                        label: Text(p.name),
-                        selected: (_profileId ?? profiles.first.id) == p.id,
-                        onSelected: (_) => setState(() => _profileId = p.id),
-                      ))
+                  .map(
+                    (p) => Pill(
+                      label: p.name,
+                      selected: (_profileId ?? profiles.first.id) == p.id,
+                      color: Theme.of(context).colorScheme.primary,
+                      onTap: () => setState(() => _profileId = p.id),
+                    ),
+                  )
                   .toList(),
             ),
             const SizedBox(height: 20),
@@ -343,8 +371,10 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
           if (_frequency == MedFrequency.everyXHours)
             Row(
               children: [
-                Text('Every $_intervalHours hours',
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                Text(
+                  'Every $_intervalHours hours',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
                 Expanded(
                   child: Slider(
                     value: _intervalHours.toDouble(),
@@ -361,8 +391,10 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
           else ...[
             Row(
               children: [
-                Text('Dose times',
-                    style: TextStyle(color: muted, fontSize: 12)),
+                Text(
+                  'Dose times',
+                  style: TextStyle(color: muted, fontSize: 12),
+                ),
                 const Spacer(),
                 TextButton.icon(
                   icon: const AppIcon(AppIcons.add, size: 16),
@@ -375,24 +407,26 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
               spacing: 8,
               runSpacing: 8,
               children: [
-                ..._times.map((m) => InputChip(
-                      label: Text(Fmt.minutesOfDay(m)),
-                      onPressed: () => _editTime(m),
-                      onDeleted: _times.length == 1
-                          ? null
-                          : () => setState(() => _times.remove(m)),
-                    )),
+                ..._times.map(
+                  (m) => Pill(
+                    label: Fmt.minutesOfDay(m),
+                    color: Theme.of(context).colorScheme.primary,
+                    onTap: () => _editTime(m),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               children: [1, 2, 3, 4]
-                  .map((n) => ActionChip(
-                        label: Text('${n}x daily'),
-                        onPressed: () =>
-                            setState(() => _times = _defaultTimesFor(n)),
-                      ))
+                  .map(
+                    (n) => Pill(
+                      label: '${n}x daily',
+                      color: Theme.of(context).colorScheme.primary,
+                      onTap: () => setState(() => _times = _defaultTimesFor(n)),
+                    ),
+                  )
                   .toList(),
             ),
           ],
@@ -404,15 +438,28 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
             Wrap(
               spacing: 6,
               children: List.generate(7, (i) {
-                const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                const labels = [
+                  'Mon',
+                  'Tue',
+                  'Wed',
+                  'Thu',
+                  'Fri',
+                  'Sat',
+                  'Sun',
+                ];
                 final on = (_weekdayMask & (1 << i)) != 0;
-                return FilterChip(
-                  label: Text(labels[i]),
+                return Pill(
+                  label: labels[i],
                   selected: on,
-                  onSelected: (v) => setState(() {
-                    _weekdayMask =
-                        v ? _weekdayMask | (1 << i) : _weekdayMask & ~(1 << i);
-                  }),
+                  color: Theme.of(context).colorScheme.primary,
+                  onTap: () {
+                    final v = !(on);
+                    setState(() {
+                      _weekdayMask = v
+                          ? _weekdayMask | (1 << i)
+                          : _weekdayMask & ~(1 << i);
+                    });
+                  },
                 );
               }),
             ),
@@ -424,11 +471,14 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
           Wrap(
             spacing: 8,
             children: MealRelation.values
-                .map((m) => ChoiceChip(
-                      label: Text(m == MealRelation.none ? 'Any time' : m.label),
-                      selected: _meal == m,
-                      onSelected: (_) => setState(() => _meal = m),
-                    ))
+                .map(
+                  (m) => Pill(
+                    label: m == MealRelation.none ? 'Any time' : m.label,
+                    selected: _meal == m,
+                    color: Theme.of(context).colorScheme.primary,
+                    onTap: () => setState(() => _meal = m),
+                  ),
+                )
                 .toList(),
           ),
 
@@ -436,14 +486,22 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
           Row(
             children: [
               Expanded(
-                child: _dateField('Starts', _start, (d) => setState(() {
-                      _start = d;
-                      if (_end.isBefore(_start)) _end = _start;
-                    })),
+                child: _dateField(
+                  'Starts',
+                  _start,
+                  (d) => setState(() {
+                    _start = d;
+                    if (_end.isBefore(_start)) _end = _start;
+                  }),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _dateField('Ends', _end, (d) => setState(() => _end = d)),
+                child: _dateField(
+                  'Ends',
+                  _end,
+                  (d) => setState(() => _end = d),
+                ),
               ),
             ],
           ),
@@ -451,22 +509,27 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
           Wrap(
             spacing: 8,
             children: [3, 5, 7, 10, 14, 30]
-                .map((d) => ActionChip(
-                      label: Text('$d days'),
-                      onPressed: () => setState(
-                          () => _end = _start.add(Duration(days: d - 1))),
-                    ))
+                .map(
+                  (d) => Pill(
+                    label: '$d days',
+                    color: Theme.of(context).colorScheme.primary,
+                    onTap: () => setState(
+                      () => _end = _start.add(Duration(days: d - 1)),
+                    ),
+                  ),
+                )
                 .toList(),
           ),
 
           const SizedBox(height: 12),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
+          BrandTile(
             leading: const AppIcon(AppIcons.travel),
             title: const Text('Skip dates'),
-            subtitle: Text(_skip.isEmpty
-                ? 'Travel or holiday — none set'
-                : '${_skip.length} date${_skip.length == 1 ? '' : 's'} skipped'),
+            subtitle: Text(
+              _skip.isEmpty
+                  ? 'Travel or holiday — none set'
+                  : '${_skip.length} date${_skip.length == 1 ? '' : 's'} skipped',
+            ),
             trailing: const AppIcon(AppIcons.chevronRight),
             onTap: _pickSkipDates,
           ),
@@ -475,7 +538,9 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
           TextField(
             controller: _doctor,
             decoration: const InputDecoration(
-                labelText: 'Doctor', prefixIcon: AppIcon(AppIcons.person)),
+              labelText: 'Doctor',
+              prefixIcon: AppIcon(AppIcons.person),
+            ),
           ),
           const SizedBox(height: 12),
           TextField(
@@ -486,10 +551,12 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
           ),
 
           const SizedBox(height: 24),
-          const Divider(),
+          FDivider(),
           const SizedBox(height: 8),
-          const Text('Course preview',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+          const Text(
+            'Course preview',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+          ),
           const SizedBox(height: 10),
           Row(
             children: [
@@ -510,8 +577,9 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
                       : AppColors.warningLight,
                   label: 'Stock',
                   value: runOut == null ? 'Enough' : 'Runs out',
-                  sublabel:
-                      runOut == null ? 'Covers the course' : Fmt.dayMonth(runOut),
+                  sublabel: runOut == null
+                      ? 'Covers the course'
+                      : Fmt.dayMonth(runOut),
                 ),
               ),
             ],
@@ -535,7 +603,8 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
             Padding(
               padding: const EdgeInsets.only(top: 12),
               child: _warning(
-                  'This setup generates no doses. Check the dates and days.'),
+                'This setup generates no doses. Check the dates and days.',
+              ),
             ),
         ],
       ),
@@ -543,30 +612,37 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
   }
 
   Widget _warning(String message) => Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppColors.warningLight.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-              color: AppColors.warningLight.withValues(alpha: 0.4)),
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: AppColors.warningLight.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: AppColors.warningLight.withValues(alpha: 0.4)),
+    ),
+    child: Row(
+      children: [
+        const AppIcon(
+          AppIcons.warning,
+          size: 18,
+          color: AppColors.warningLight,
         ),
-        child: Row(
-          children: [
-            const AppIcon(AppIcons.warning,
-                size: 18, color: AppColors.warningLight),
-            const SizedBox(width: 10),
-            Expanded(child: Text(message, style: const TextStyle(fontSize: 12))),
-          ],
-        ),
-      );
+        const SizedBox(width: 10),
+        Expanded(child: Text(message, style: const TextStyle(fontSize: 12))),
+      ],
+    ),
+  );
 
-  Widget _freqChip(MedFrequency f, String label) => ChoiceChip(
-        label: Text(label),
-        selected: _frequency == f,
-        onSelected: (_) => setState(() => _frequency = f),
-      );
+  Widget _freqChip(MedFrequency f, String label) => Pill(
+    label: label,
+    selected: _frequency == f,
+    color: Theme.of(context).colorScheme.primary,
+    onTap: () => setState(() => _frequency = f),
+  );
 
-  Widget _dateField(String label, DateTime value, ValueChanged<DateTime> onSet) {
+  Widget _dateField(
+    String label,
+    DateTime value,
+    ValueChanged<DateTime> onSet,
+  ) {
     return InkWell(
       onTap: () async {
         final picked = await showDatePicker(
@@ -579,7 +655,9 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
       },
       child: InputDecorator(
         decoration: InputDecoration(
-            labelText: label, prefixIcon: const AppIcon(AppIcons.calendar)),
+          labelText: label,
+          prefixIcon: const AppIcon(AppIcons.calendar),
+        ),
         child: Text(Fmt.dayMonthYear(value)),
       ),
     );
@@ -599,8 +677,7 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
   Future<void> _editTime(int existing) async {
     final time = await showTimePicker(
       context: context,
-      initialTime:
-          TimeOfDay(hour: existing ~/ 60, minute: existing % 60),
+      initialTime: TimeOfDay(hour: existing ~/ 60, minute: existing % 60),
     );
     if (time == null) return;
     final minutes = time.hour * 60 + time.minute;

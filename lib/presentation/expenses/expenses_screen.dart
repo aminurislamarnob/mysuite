@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/services/export_service.dart';
@@ -9,6 +10,7 @@ import '../../core/settings/app_settings.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/widgets/brand.dart';
 import '../../core/widgets/common.dart';
 import '../medicine/camera_scan_screen.dart';
 import 'providers/expenses_provider.dart';
@@ -44,14 +46,16 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen>
       appBar: AppBar(
         title: const Text('Expenses'),
         actions: [
-          IconButton(
+          CircleIconButton(
+            icon: AppIcons.scan,
             tooltip: 'Scan receipt',
-            icon: const AppIcon(AppIcons.scan),
+            size: 40,
             onPressed: _scanReceipt,
           ),
-          IconButton(
+          CircleIconButton(
+            icon: AppIcons.share,
             tooltip: 'Export',
-            icon: const AppIcon(AppIcons.share),
+            size: 40,
             onPressed: _showExportSheet,
           ),
         ],
@@ -101,13 +105,13 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen>
 
   void _showExportSheet() {
     final export = ref.read(exportServiceProvider);
-    showModalBottomSheet(
+    brandSheet(
       context: context,
       builder: (sheetContext) => SheetScaffold(
         title: 'Export',
         child: Column(
           children: [
-            ListTile(
+            BrandTile(
               leading: const AppIcon(AppIcons.spreadsheet),
               title: const Text('Transactions as CSV'),
               onTap: () async {
@@ -115,7 +119,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen>
                 await export.shareFile(await export.expensesCsv());
               },
             ),
-            ListTile(
+            BrandTile(
               leading: const AppIcon(AppIcons.pdf),
               title: const Text('This month as PDF'),
               onTap: () async {
@@ -138,7 +142,8 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen>
     final rows = await ref.read(monthTransactionsProvider.future);
 
     String nameFor(int? id) =>
-        categories.where((c) => c.id == id).firstOrNull?.name ?? 'Uncategorised';
+        categories.where((c) => c.id == id).firstOrNull?.name ??
+        'Uncategorised';
 
     final file = await export.expenseReportPdf(
       title: 'Expense report — ${Fmt.monthYear(month)}',
@@ -146,17 +151,19 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen>
       totalIncome: report.income,
       totalExpense: report.expense,
       byCategory: {
-        for (final e in report.byCategory.entries) nameFor(e.key): e.value
+        for (final e in report.byCategory.entries) nameFor(e.key): e.value,
       },
       rows: rows
           .where((r) => r.kind != TxKind.transfer)
-          .map((r) => (
-                date: r.date,
-                category: nameFor(r.categoryId),
-                note: r.note ?? '',
-                amount: r.amount,
-                kind: r.kind,
-              ))
+          .map(
+            (r) => (
+              date: r.date,
+              category: nameFor(r.categoryId),
+              note: r.note ?? '',
+              amount: r.amount,
+              kind: r.kind,
+            ),
+          )
           .toList(),
     );
     await export.shareFile(file);
@@ -176,8 +183,9 @@ class _OverviewTab extends ConsumerWidget {
     final recent = ref.watch(recentExpensesProvider);
     final report = ref.watch(monthReportProvider).valueOrNull;
     final budgets = ref.watch(budgetProgressProvider).valueOrNull ?? const [];
-    final overall =
-        budgets.where((b) => b.budget.categoryId == null).firstOrNull;
+    final overall = budgets
+        .where((b) => b.budget.categoryId == null)
+        .firstOrNull;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
@@ -188,42 +196,60 @@ class _OverviewTab extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Total balance',
-                    style: TextStyle(
-                        fontSize: 13,
-                        color: Theme.of(context).colorScheme.outline)),
+                Text(
+                  'Total balance',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+                ),
                 const SizedBox(height: 6),
-                Text(Fmt.money(balance, currency),
-                    style: const TextStyle(
-                        fontSize: 30, fontWeight: FontWeight.w700)),
+                Text(
+                  Fmt.money(balance, currency),
+                  style: const TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const SizedBox(height: 16),
                 Wrap(
                   spacing: 20,
                   runSpacing: 12,
                   children: accounts
-                      .map((a) => Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  AppIcon(AppIcons.account(a.type),
-                                      size: 13, color: Color(a.color)),
-                                  const SizedBox(width: 4),
-                                  Text(a.name,
-                                      style: TextStyle(
-                                          fontSize: 11,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .outline)),
-                                ],
+                      .map(
+                        (a) => Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                AppIcon(
+                                  AppIcons.account(a.type),
+                                  size: 13,
+                                  color: Color(a.color),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  a.name,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outline,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              Fmt.money(a.balance, currency),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
                               ),
-                              const SizedBox(height: 2),
-                              Text(Fmt.money(a.balance, currency),
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14)),
-                            ],
-                          ))
+                            ),
+                          ],
+                        ),
+                      )
                       .toList(),
                 ),
               ],
@@ -252,7 +278,7 @@ class _OverviewTab extends ConsumerWidget {
                   sublabel: report.changeVsPrevious == null
                       ? null
                       : '${report.changeVsPrevious! >= 0 ? '+' : ''}'
-                          '${(report.changeVsPrevious! * 100).toStringAsFixed(0)}% vs last month',
+                            '${(report.changeVsPrevious! * 100).toStringAsFixed(0)}% vs last month',
                 ),
               ),
             ],
@@ -278,9 +304,8 @@ class _OverviewTab extends ConsumerWidget {
                   title: 'No transactions yet',
                   message: 'Tap Add to record your first one.',
                 )
-              : Column(
-                  children: rows.map((e) => _TxTile(tx: e)).toList()),
-          loading: () => const Center(child: CircularProgressIndicator()),
+              : Column(children: rows.map((e) => _TxTile(tx: e)).toList()),
+          loading: () => const Center(child: FCircularProgress()),
           error: (e, _) => Text('$e'),
         ),
       ],
@@ -331,18 +356,20 @@ class _TxTile extends ConsumerWidget {
       ),
       onDismissed: (_) =>
           ref.read(expenseRepositoryProvider).deleteTransaction(tx.id),
-      child: ListTile(
-        contentPadding: EdgeInsets.zero,
+      child: BrandTile(
         leading: Container(
           padding: const EdgeInsets.all(9),
           decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.14), shape: BoxShape.circle),
+            color: color.withValues(alpha: 0.14),
+            shape: BoxShape.circle,
+          ),
           child: AppIcon(icon, color: color, size: 18),
         ),
         title: Text(
           tx.note?.isNotEmpty == true
               ? tx.note!
-              : cat?.name ?? (tx.kind == TxKind.transfer ? 'Transfer' : 'Expense'),
+              : cat?.name ??
+                    (tx.kind == TxKind.transfer ? 'Transfer' : 'Expense'),
           style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
         ),
         subtitle: Text(
@@ -353,9 +380,10 @@ class _TxTile extends ConsumerWidget {
         trailing: Text(
           '$sign${Fmt.money(tx.amount, currency)}',
           style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 15,
-              color: tx.kind == TxKind.income ? AppColors.successLight : null),
+            fontWeight: FontWeight.w700,
+            fontSize: 15,
+            color: tx.kind == TxKind.income ? AppColors.successLight : null,
+          ),
         ),
       ),
     );
@@ -380,18 +408,22 @@ class _ReportsTab extends ConsumerWidget {
       children: [
         Row(
           children: [
-            IconButton(
-              icon: const AppIcon(AppIcons.chevronLeft),
+            CircleIconButton(
+              icon: AppIcons.chevronLeft,
+              size: 40,
               onPressed: () => ref.read(reportMonthProvider.notifier).state =
                   DateTime(month.year, month.month - 1),
             ),
             Expanded(
-              child: Text(Fmt.monthYear(month),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontWeight: FontWeight.w700)),
+              child: Text(
+                Fmt.monthYear(month),
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
             ),
-            IconButton(
-              icon: const AppIcon(AppIcons.chevronRight),
+            CircleIconButton(
+              icon: AppIcons.chevronRight,
+              size: 40,
               onPressed: () => ref.read(reportMonthProvider.notifier).state =
                   DateTime(month.year, month.month + 1),
             ),
@@ -400,7 +432,7 @@ class _ReportsTab extends ConsumerWidget {
         reportAsync.when(
           loading: () => const Padding(
             padding: EdgeInsets.all(40),
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(child: FCircularProgress()),
           ),
           error: (e, _) => Text('$e'),
           data: (report) {
@@ -471,9 +503,10 @@ class _ReportsTab extends ConsumerWidget {
                             radius: 52,
                             title: share < 0.07 ? '' : Fmt.percent(share),
                             titleStyle: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
                           );
                         }).toList(),
                       ),
@@ -481,8 +514,9 @@ class _ReportsTab extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   ...slices.map((entry) {
-                    final cat =
-                        categories.where((c) => c.id == entry.key).firstOrNull;
+                    final cat = categories
+                        .where((c) => c.id == entry.key)
+                        .firstOrNull;
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: LabeledProgress(
@@ -506,11 +540,14 @@ class _ReportsTab extends ConsumerWidget {
                         borderData: FlBorderData(show: false),
                         titlesData: FlTitlesData(
                           leftTitles: const AxisTitles(
-                              sideTitles: SideTitles(showTitles: false)),
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
                           topTitles: const AxisTitles(
-                              sideTitles: SideTitles(showTitles: false)),
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
                           rightTitles: const AxisTitles(
-                              sideTitles: SideTitles(showTitles: false)),
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
                           bottomTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
@@ -523,8 +560,9 @@ class _ReportsTab extends ConsumerWidget {
                                 return Padding(
                                   padding: const EdgeInsets.only(top: 6),
                                   child: Text(
-                                    Fmt.monthYear(trend[i].month).split(' ')[0]
-                                        .substring(0, 3),
+                                    Fmt.monthYear(
+                                      trend[i].month,
+                                    ).split(' ')[0].substring(0, 3),
                                     style: const TextStyle(fontSize: 10),
                                   ),
                                 );
@@ -534,20 +572,23 @@ class _ReportsTab extends ConsumerWidget {
                         ),
                         barGroups: [
                           for (var i = 0; i < trend.length; i++)
-                            BarChartGroupData(x: i, barRods: [
-                              BarChartRodData(
-                                toY: trend[i].expense,
-                                color: AppColors.expenseAccent,
-                                width: 10,
-                                borderRadius: BorderRadius.circular(3),
-                              ),
-                              BarChartRodData(
-                                toY: trend[i].income,
-                                color: AppColors.successLight,
-                                width: 10,
-                                borderRadius: BorderRadius.circular(3),
-                              ),
-                            ]),
+                            BarChartGroupData(
+                              x: i,
+                              barRods: [
+                                BarChartRodData(
+                                  toY: trend[i].expense,
+                                  color: AppColors.expenseAccent,
+                                  width: 10,
+                                  borderRadius: BorderRadius.circular(3),
+                                ),
+                                BarChartRodData(
+                                  toY: trend[i].income,
+                                  color: AppColors.successLight,
+                                  width: 10,
+                                  borderRadius: BorderRadius.circular(3),
+                                ),
+                              ],
+                            ),
                         ],
                       ),
                     ),
@@ -570,17 +611,20 @@ class _ReportsTab extends ConsumerWidget {
   }
 
   Widget _legend(Color color, String label) => Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-              width: 10,
-              height: 10,
-              decoration:
-                  BoxDecoration(color: color, borderRadius: BorderRadius.circular(2))),
-          const SizedBox(width: 6),
-          Text(label, style: const TextStyle(fontSize: 12)),
-        ],
-      );
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(2),
+        ),
+      ),
+      const SizedBox(width: 6),
+      Text(label, style: const TextStyle(fontSize: 12)),
+    ],
+  );
 }
 
 // --- Budgets ----------------------------------------------------------------
@@ -596,7 +640,7 @@ class _BudgetsTab extends ConsumerWidget {
     return Stack(
       children: [
         progress.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const Center(child: FCircularProgress()),
           error: (e, _) => Text('$e'),
           data: (rows) => rows.isEmpty
               ? EmptyState(
@@ -634,14 +678,16 @@ class _BudgetsTab extends ConsumerWidget {
                                     ? '${Fmt.money(p.remaining, currency)} left'
                                     : '${Fmt.money(-p.remaining, currency)} over',
                                 style: TextStyle(
-                                    fontSize: 11,
-                                    color: p.remaining >= 0
-                                        ? Theme.of(context).colorScheme.outline
-                                        : AppColors.dangerLight),
+                                  fontSize: 11,
+                                  color: p.remaining >= 0
+                                      ? Theme.of(context).colorScheme.outline
+                                      : AppColors.dangerLight,
+                                ),
                               ),
                               const Spacer(),
-                              IconButton(
-                                icon: const AppIcon(AppIcons.delete, size: 18),
+                              CircleIconButton(
+                                icon: AppIcons.delete,
+                                size: 40,
                                 onPressed: () => ref
                                     .read(expenseRepositoryProvider)
                                     .deleteBudget(p.budget.id),
@@ -674,16 +720,18 @@ class _BudgetsTab extends ConsumerWidget {
     final controller = TextEditingController();
     int? categoryId;
 
-    final saved = await showModalBottomSheet<bool>(
+    final saved = await brandSheet<bool>(
       context: context,
-      isScrollControlled: true,
       builder: (_) => StatefulBuilder(
         builder: (context, setState) => SheetScaffold(
           title: 'Set budget',
           actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Save')),
+            BrandButton(
+              label: 'Save',
+              kind: BrandButtonKind.ghost,
+              expand: false,
+              onPressed: () => Navigator.pop(context, true),
+            ),
           ],
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -691,8 +739,9 @@ class _BudgetsTab extends ConsumerWidget {
               TextField(
                 controller: controller,
                 autofocus: true,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 decoration: const InputDecoration(labelText: 'Monthly amount'),
               ),
               const SizedBox(height: 16),
@@ -702,18 +751,21 @@ class _BudgetsTab extends ConsumerWidget {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  ChoiceChip(
-                    label: const Text('Overall'),
+                  Pill(
+                    label: 'Overall',
                     selected: categoryId == null,
-                    onSelected: (_) => setState(() => categoryId = null),
+                    color: Theme.of(context).colorScheme.primary,
+                    onTap: () => setState(() => categoryId = null),
                   ),
-                  ...categories.where((c) => !c.isIncome).map(
-                        (c) => ChoiceChip(
-                          avatar: AppIcon(AppIcons.category(c.icon),
-                              size: 16, color: Color(c.color)),
-                          label: Text(c.name),
+                  ...categories
+                      .where((c) => !c.isIncome)
+                      .map(
+                        (c) => Pill(
+                          label: c.name,
+                          icon: AppIcons.category(c.icon),
                           selected: categoryId == c.id,
-                          onSelected: (_) => setState(() => categoryId = c.id),
+                          color: Theme.of(context).colorScheme.primary,
+                          onTap: () => setState(() => categoryId = c.id),
                         ),
                       ),
                 ],
@@ -748,13 +800,14 @@ class _BillsTab extends ConsumerWidget {
     return Stack(
       children: [
         bills.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const Center(child: FCircularProgress()),
           error: (e, _) => Text('$e'),
           data: (rows) => rows.isEmpty
               ? EmptyState(
                   icon: AppIcons.calendarRepeat,
                   title: 'No bills or subscriptions',
-                  message: 'Track rent, internet, Netflix — anything recurring.',
+                  message:
+                      'Track rent, internet, Netflix — anything recurring.',
                   actionLabel: 'Add a bill',
                   onAction: () => _addBill(context, ref),
                 )
@@ -774,13 +827,13 @@ class _BillsTab extends ConsumerWidget {
                         ),
                       ),
                     ...rows.map((b) {
-                      final dueInDays = Fmt.dateOnly(b.nextDueDate)
-                          .difference(Fmt.dateOnly(DateTime.now()))
-                          .inDays;
+                      final dueInDays = Fmt.dateOnly(
+                        b.nextDueDate,
+                      ).difference(Fmt.dateOnly(DateTime.now())).inDays;
                       final overdue = dueInDays < 0;
                       return Card(
                         margin: const EdgeInsets.only(bottom: 10),
-                        child: ListTile(
+                        child: BrandTile(
                           leading: AppIcon(
                             b.isSubscription
                                 ? AppIcons.subscription
@@ -789,25 +842,30 @@ class _BillsTab extends ConsumerWidget {
                                 ? AppColors.dangerLight
                                 : AppColors.expenseAccent,
                           ),
-                          title: Text(b.name,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w600)),
+                          title: Text(
+                            b.name,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
                           subtitle: Text(
                             '${Fmt.money(b.amount, currency)} · ${b.period} · '
                             'due ${Fmt.relativeDay(b.nextDueDate)}',
                             style: TextStyle(
-                                fontSize: 11,
-                                color: overdue ? AppColors.dangerLight : null),
+                              fontSize: 11,
+                              color: overdue ? AppColors.dangerLight : null,
+                            ),
                           ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              TextButton(
+                              BrandButton(
+                                label: 'Pay',
+                                kind: BrandButtonKind.ghost,
+                                expand: false,
                                 onPressed: () => repo.payRecurring(b),
-                                child: const Text('Pay'),
                               ),
-                              IconButton(
-                                icon: const AppIcon(AppIcons.delete, size: 18),
+                              CircleIconButton(
+                                icon: AppIcons.delete,
+                                size: 40,
                                 onPressed: () => repo.deleteRecurring(b.id),
                               ),
                             ],
@@ -844,16 +902,18 @@ class _BillsTab extends ConsumerWidget {
     int? accountId = accounts.firstOrNull?.id;
     int? categoryId;
 
-    final saved = await showModalBottomSheet<bool>(
+    final saved = await brandSheet<bool>(
       context: context,
-      isScrollControlled: true,
       builder: (_) => StatefulBuilder(
         builder: (context, setState) => SheetScaffold(
           title: 'New recurring bill',
           actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Save')),
+            BrandButton(
+              label: 'Save',
+              kind: BrandButtonKind.ghost,
+              expand: false,
+              onPressed: () => Navigator.pop(context, true),
+            ),
           ],
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -862,13 +922,16 @@ class _BillsTab extends ConsumerWidget {
                 controller: name,
                 autofocus: true,
                 decoration: const InputDecoration(
-                    labelText: 'Name', hintText: 'Internet'),
+                  labelText: 'Name',
+                  hintText: 'Internet',
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: amount,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 decoration: const InputDecoration(labelText: 'Amount'),
               ),
               const SizedBox(height: 16),
@@ -884,13 +947,11 @@ class _BillsTab extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               SwitchListTile(
-                contentPadding: EdgeInsets.zero,
                 title: const Text('This is a subscription'),
                 value: isSubscription,
                 onChanged: (v) => setState(() => isSubscription = v),
               ),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
+              BrandTile(
                 leading: const AppIcon(AppIcons.calendar),
                 title: const Text('Next due'),
                 subtitle: Text(Fmt.dayMonthYear(due)),
@@ -910,11 +971,14 @@ class _BillsTab extends ConsumerWidget {
               Wrap(
                 spacing: 8,
                 children: accounts
-                    .map((a) => ChoiceChip(
-                          label: Text(a.name),
-                          selected: accountId == a.id,
-                          onSelected: (_) => setState(() => accountId = a.id),
-                        ))
+                    .map(
+                      (a) => Pill(
+                        label: a.name,
+                        selected: accountId == a.id,
+                        color: Theme.of(context).colorScheme.primary,
+                        onTap: () => setState(() => accountId = a.id),
+                      ),
+                    )
                     .toList(),
               ),
               const SizedBox(height: 12),
@@ -925,11 +989,14 @@ class _BillsTab extends ConsumerWidget {
                 runSpacing: 8,
                 children: categories
                     .where((c) => !c.isIncome)
-                    .map((c) => ChoiceChip(
-                          label: Text(c.name),
-                          selected: categoryId == c.id,
-                          onSelected: (_) => setState(() => categoryId = c.id),
-                        ))
+                    .map(
+                      (c) => Pill(
+                        label: c.name,
+                        selected: categoryId == c.id,
+                        color: Theme.of(context).colorScheme.primary,
+                        onTap: () => setState(() => categoryId = c.id),
+                      ),
+                    )
                     .toList(),
               ),
             ],
@@ -940,7 +1007,9 @@ class _BillsTab extends ConsumerWidget {
 
     final value = double.tryParse(amount.text.trim());
     if (saved == true && name.text.trim().isNotEmpty && value != null) {
-      await ref.read(expenseRepositoryProvider).createRecurring(
+      await ref
+          .read(expenseRepositoryProvider)
+          .createRecurring(
             RecurringExpensesCompanion.insert(
               name: name.text.trim(),
               amount: value,

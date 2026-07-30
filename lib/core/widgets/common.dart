@@ -942,6 +942,36 @@ class _BrandSliderState extends State<BrandSlider> {
   }
 }
 
+/// Picks a date, replacing `showDatePicker`.
+///
+/// forui's calendar is a widget rather than a modal, so it is hosted in the
+/// brand's sheet. Tapping a day closes the sheet, matching the one-tap feel of
+/// the Material picker rather than requiring a separate confirm.
+Future<DateTime?> brandDatePicker(
+  BuildContext context, {
+  DateTime? initial,
+  DateTime? first,
+  DateTime? last,
+  String title = 'Pick a date',
+}) {
+  final now = DateTime.now();
+  return brandSheet<DateTime>(
+    context: context,
+    builder: (sheetContext) => SheetScaffold(
+      title: title,
+      child: FCalendar.grid(
+        selectionControl: FDateSelectionControl.managedSingle(initial: initial),
+        control: FGridCalendarControl(
+          start: first ?? DateTime(now.year - 5),
+          end: last ?? DateTime(now.year + 5),
+          initial: initial ?? now,
+        ),
+        onDayPress: (day) => Navigator.of(sheetContext).pop(day),
+      ),
+    ),
+  );
+}
+
 /// Picks a time of day, returning minutes past midnight.
 ///
 /// forui's time picker is a wheel widget rather than a modal, so it is hosted in

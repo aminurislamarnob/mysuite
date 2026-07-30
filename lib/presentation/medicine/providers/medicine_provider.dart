@@ -23,8 +23,7 @@ final todayDosesProvider = StreamProvider<List<MedicineDose>>((ref) {
   return ref.watch(medicineRepositoryProvider).watchTodayDoses();
 });
 
-final medicineByIdProvider =
-    FutureProvider.family<Medicine?, int>((ref, id) {
+final medicineByIdProvider = FutureProvider.family<Medicine?, int>((ref, id) {
   return ref.watch(medicineRepositoryProvider).getMedicine(id);
 });
 
@@ -42,8 +41,7 @@ class DoseView {
   String get dosageLabel =>
       '${trimAmount(medicine.dosage)} ${medicine.dosageUnit}';
 
-  String get mealLabel =>
-      MealRelationX.fromToken(medicine.mealRelation).label;
+  String get mealLabel => MealRelationX.fromToken(medicine.mealRelation).label;
 
   /// Renders a dose amount without a trailing ".0".
   static String trimAmount(double v) =>
@@ -59,9 +57,7 @@ Stream<List<DoseView>> _joinDoses(
   final profileId = ref.watch(activeProfileProvider);
 
   await for (final list in doses) {
-    final meds = {
-      for (final m in await repo.medicines()) m.id: m,
-    };
+    final meds = {for (final m in await repo.medicines()) m.id: m};
     yield list
         .map((d) {
           final med = meds[d.medicineId];
@@ -75,24 +71,28 @@ Stream<List<DoseView>> _joinDoses(
 
 final todayDoseViewsProvider = StreamProvider<List<DoseView>>((ref) {
   return _joinDoses(
-      ref, ref.watch(medicineRepositoryProvider).watchTodayDoses());
+    ref,
+    ref.watch(medicineRepositoryProvider).watchTodayDoses(),
+  );
 });
 
 /// The month currently shown in the schedule views.
 final scheduleMonthProvider = StateProvider<DateTime>(
-    (ref) => DateTime(DateTime.now().year, DateTime.now().month));
+  (ref) => DateTime(DateTime.now().year, DateTime.now().month),
+);
 
 final monthDoseViewsProvider = StreamProvider<List<DoseView>>((ref) {
   final month = ref.watch(scheduleMonthProvider);
   final start = DateTime(month.year, month.month, 1);
   final end = DateTime(month.year, month.month + 1, 1);
   return _joinDoses(
-      ref, ref.watch(medicineRepositoryProvider).watchDosesBetween(start, end));
+    ref,
+    ref.watch(medicineRepositoryProvider).watchDosesBetween(start, end),
+  );
 });
 
 /// Month doses grouped by calendar day, for the grid and table views.
-final monthDosesByDayProvider =
-    Provider<Map<DateTime, List<DoseView>>>((ref) {
+final monthDosesByDayProvider = Provider<Map<DateTime, List<DoseView>>>((ref) {
   final views = ref.watch(monthDoseViewsProvider).valueOrNull ?? const [];
   final grouped = <DateTime, List<DoseView>>{};
   for (final v in views) {
@@ -124,8 +124,7 @@ class AdherenceStats {
     return sorted.first.key;
   }
 
-  int get totalMisses =>
-      missesByWeekday.values.fold(0, (a, b) => a + b);
+  int get totalMisses => missesByWeekday.values.fold(0, (a, b) => a + b);
 }
 
 final adherenceProvider = FutureProvider<AdherenceStats>((ref) async {
@@ -139,11 +138,17 @@ final adherenceProvider = FutureProvider<AdherenceStats>((ref) async {
   return AdherenceStats(
     daily: await repo.adherence(today, tomorrow),
     weekly: await repo.adherence(
-        today.subtract(const Duration(days: 6)), tomorrow),
+      today.subtract(const Duration(days: 6)),
+      tomorrow,
+    ),
     monthly: await repo.adherence(
-        today.subtract(const Duration(days: 29)), tomorrow),
+      today.subtract(const Duration(days: 29)),
+      tomorrow,
+    ),
     missesByWeekday: await repo.missesByWeekday(
-        today.subtract(const Duration(days: 29)), tomorrow),
+      today.subtract(const Duration(days: 29)),
+      tomorrow,
+    ),
   );
 });
 
@@ -156,25 +161,27 @@ final lowStockProvider = Provider<List<Medicine>>((ref) {
 /// Forecast of when each active medicine runs out.
 final runOutForecastProvider =
     Provider<List<({Medicine medicine, DateTime? date})>>((ref) {
-  final meds = ref.watch(medicinesProvider).valueOrNull ?? const [];
-  return meds.where((m) => m.isActive).map((m) {
-    final spec = MedicineRepository.specOf(m);
-    // Only the remainder of the course matters for the forecast.
-    final remaining = ScheduleSpec(
-      start: DateTime.now().isAfter(spec.start) ? DateTime.now() : spec.start,
-      end: spec.end,
-      frequency: spec.frequency,
-      doseMinutes: spec.doseMinutes,
-      intervalHours: spec.intervalHours,
-      weekdayMask: spec.weekdayMask,
-      skipDates: spec.skipDates,
-    );
-    return (
-      medicine: m,
-      date: ScheduleGenerator.runOutDate(remaining, m.inventory, m.dosage),
-    );
-  }).toList();
-});
+      final meds = ref.watch(medicinesProvider).valueOrNull ?? const [];
+      return meds.where((m) => m.isActive).map((m) {
+        final spec = MedicineRepository.specOf(m);
+        // Only the remainder of the course matters for the forecast.
+        final remaining = ScheduleSpec(
+          start: DateTime.now().isAfter(spec.start)
+              ? DateTime.now()
+              : spec.start,
+          end: spec.end,
+          frequency: spec.frequency,
+          doseMinutes: spec.doseMinutes,
+          intervalHours: spec.intervalHours,
+          weekdayMask: spec.weekdayMask,
+          skipDates: spec.skipDates,
+        );
+        return (
+          medicine: m,
+          date: ScheduleGenerator.runOutDate(remaining, m.inventory, m.dosage),
+        );
+      }).toList();
+    });
 
 /// Doses of different medicines scheduled close together.
 final conflictsProvider = Provider<List<DoseConflict>>((ref) {

@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/services/notification_service.dart';
@@ -8,6 +9,7 @@ import '../../core/settings/app_settings.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/utils/formatters.dart';
+import '../../core/widgets/brand.dart';
 import '../../core/widgets/common.dart';
 import 'providers/habits_provider.dart';
 import 'repository/habit_repository.dart';
@@ -27,9 +29,10 @@ class HabitsScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Habits'),
         actions: [
-          IconButton(
+          CircleIconButton(
+            icon: AppIcons.add,
             tooltip: 'Add habit',
-            icon: const AppIcon(AppIcons.add),
+            size: 40,
             onPressed: () => HabitEditorSheet.show(context),
           ),
         ],
@@ -60,7 +63,9 @@ class HabitsScreen extends ConsumerWidget {
                             color: AppColors.warningLight,
                             label: 'Caffeine today',
                             value: '${caffeine.toStringAsFixed(0)} mg',
-                            sublabel: caffeine > 400 ? 'Above 400mg guide' : null,
+                            sublabel: caffeine > 400
+                                ? 'Above 400mg guide'
+                                : null,
                           ),
                         ),
                       if (caffeine > 0 && cost > 0) const SizedBox(width: 12),
@@ -76,14 +81,16 @@ class HabitsScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-              ...habits.map((h) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _HabitCard(habit: h),
-                  )),
+              ...habits.map(
+                (h) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _HabitCard(habit: h),
+                ),
+              ),
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: FCircularProgress()),
         error: (e, _) =>
             EmptyState(icon: AppIcons.error, title: 'Error', message: '$e'),
       ),
@@ -127,25 +134,34 @@ class _HabitCard extends ConsumerWidget {
                       color: color.withValues(alpha: 0.14),
                       shape: BoxShape.circle,
                     ),
-                    child: AppIcon(AppIcons.habit(habit.icon),
-                        color: color, size: 20),
+                    child: AppIcon(
+                      AppIcons.habit(habit.icon),
+                      color: color,
+                      size: 20,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(habit.name,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w700, fontSize: 15)),
+                        Text(
+                          habit.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                          ),
+                        ),
                         const SizedBox(height: 2),
                         Row(
                           children: [
-                            AppIcon(AppIcons.streak,
-                                size: 13,
-                                color: stats.currentStreak > 0
-                                    ? AppColors.warningLight
-                                    : muted),
+                            AppIcon(
+                              AppIcons.streak,
+                              size: 13,
+                              color: stats.currentStreak > 0
+                                  ? AppColors.warningLight
+                                  : muted,
+                            ),
                             const SizedBox(width: 3),
                             Text(
                               '${stats.currentStreak} day streak',
@@ -162,21 +178,21 @@ class _HabitCard extends ConsumerWidget {
                     ),
                   ),
                   // 2-tap logging: this button is the second tap.
-                  IconButton(
+                  CircleIconButton(
+                    icon: AppIcons.addCircle,
                     tooltip: isReduce ? 'Log one' : 'Add one',
-                    icon: const AppIcon(AppIcons.addCircle),
                     color: over ? AppColors.dangerLight : color,
-                    iconSize: 34,
+                    size: 40,
                     onPressed: () async {
                       await repo.addToDay(habit.id, 1);
                       if (!context.mounted) return;
                       final next = stats.todayAmount + 1;
                       if (isReduce && next > habit.targetAmount) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text(
-                              'That is ${next.toStringAsFixed(0)} today — '
-                              'your limit is ${habit.targetAmount.toStringAsFixed(0)}.'),
-                        ));
+                        brandToast(
+                          context,
+                          'That is ${next.toStringAsFixed(0)} today — '
+                          'your limit is ${habit.targetAmount.toStringAsFixed(0)}.',
+                        );
                       }
                     },
                   ),
@@ -213,18 +229,22 @@ class _HabitCard extends ConsumerWidget {
       v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(1);
 
   void _openDetail(BuildContext context) {
-    showModalBottomSheet(
+    brandSheet(
       context: context,
-      isScrollControlled: true,
       builder: (_) => _HabitDetailSheet(habit: habit),
     );
   }
 
   /// Bulk back-fill: tapping a heatmap cell edits that day's amount.
-  Future<void> _editDay(BuildContext context, WidgetRef ref, DateTime day,
-      HabitStats stats) async {
+  Future<void> _editDay(
+    BuildContext context,
+    WidgetRef ref,
+    DateTime day,
+    HabitStats stats,
+  ) async {
     final controller = TextEditingController(
-        text: _trim(stats.byDay[Fmt.dateOnly(day)] ?? 0));
+      text: _trim(stats.byDay[Fmt.dateOnly(day)] ?? 0),
+    );
     final result = await showDialog<String>(
       context: context,
       builder: (_) => AlertDialog(
@@ -239,21 +259,24 @@ class _HabitCard extends ConsumerWidget {
           ),
         ),
         actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel')),
-          FilledButton(
-              onPressed: () => Navigator.pop(context, controller.text),
-              child: const Text('Save')),
+          BrandButton(
+            label: 'Cancel',
+            kind: BrandButtonKind.ghost,
+            expand: false,
+            onPressed: () => Navigator.pop(context),
+          ),
+          BrandButton(
+            label: 'Save',
+            expand: false,
+            onPressed: () => Navigator.pop(context, controller.text),
+          ),
         ],
       ),
     );
     if (result == null) return;
     final amount = double.tryParse(result.trim());
     if (amount == null) return;
-    await ref
-        .read(habitRepositoryProvider)
-        .setDayAmount(habit.id, day, amount);
+    await ref.read(habitRepositoryProvider).setDayAmount(habit.id, day, amount);
   }
 }
 
@@ -263,16 +286,17 @@ class _HabitDetailSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final stats = ref.watch(habitStatsProvider(habit.id)).valueOrNull ??
-        HabitStats.empty;
+    final stats =
+        ref.watch(habitStatsProvider(habit.id)).valueOrNull ?? HabitStats.empty;
     final currency = ref.watch(settingsProvider).currencySymbol;
     final color = Color(habit.color);
 
     return SheetScaffold(
       title: habit.name,
       actions: [
-        IconButton(
-          icon: const AppIcon(AppIcons.edit),
+        CircleIconButton(
+          icon: AppIcons.edit,
+          size: 40,
           onPressed: () {
             Navigator.pop(context);
             HabitEditorSheet.show(context, habit: habit);
@@ -349,11 +373,11 @@ class _HabitDetailSheet extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 20),
-          OutlinedButton.icon(
-            icon: const AppIcon(AppIcons.delete),
-            label: const Text('Delete habit'),
-            style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.dangerLight),
+          BrandButton(
+            label: 'Delete habit',
+            kind: BrandButtonKind.outline,
+            icon: AppIcons.delete,
+            expand: false,
             onPressed: () async {
               await ref.read(habitRepositoryProvider).deleteHabit(habit.id);
               await ref
@@ -374,9 +398,8 @@ class HabitEditorSheet extends ConsumerStatefulWidget {
   const HabitEditorSheet({super.key, this.habit});
 
   static Future<void> show(BuildContext context, {Habit? habit}) {
-    return showModalBottomSheet(
+    return brandSheet(
       context: context,
-      isScrollControlled: true,
       builder: (_) => HabitEditorSheet(habit: habit),
     );
   }
@@ -409,11 +432,14 @@ class _HabitEditorSheetState extends ConsumerState<HabitEditorSheet> {
     _name = TextEditingController(text: h?.name ?? '');
     _unit = TextEditingController(text: h?.unit ?? '');
     _target = TextEditingController(
-        text: h == null ? '1' : _HabitCard._trim(h.targetAmount));
+      text: h == null ? '1' : _HabitCard._trim(h.targetAmount),
+    );
     _cost = TextEditingController(
-        text: h?.costPerUnit == null ? '' : '${h!.costPerUnit}');
+      text: h?.costPerUnit == null ? '' : '${h!.costPerUnit}',
+    );
     _caffeine = TextEditingController(
-        text: h?.caffeineMgPerUnit == null ? '' : '${h!.caffeineMgPerUnit}');
+      text: h?.caffeineMgPerUnit == null ? '' : '${h!.caffeineMgPerUnit}',
+    );
     if (h != null) {
       _icon = h.icon;
       _color = h.color;
@@ -436,8 +462,17 @@ class _HabitEditorSheetState extends ConsumerState<HabitEditorSheet> {
   }
 
   void _applyPreset(
-      ({String name, String icon, int color, String unit, int goalType,
-          double target, double? caffeine}) p) {
+    ({
+      String name,
+      String icon,
+      int color,
+      String unit,
+      int goalType,
+      double target,
+      double? caffeine,
+    })
+    p,
+  ) {
     setState(() {
       _name.text = p.name;
       _icon = p.icon;
@@ -459,8 +494,7 @@ class _HabitEditorSheetState extends ConsumerState<HabitEditorSheet> {
       color: drift.Value(_color),
       unit: drift.Value(_unit.text.trim().isEmpty ? null : _unit.text.trim()),
       goalType: drift.Value(_goalType),
-      targetAmount:
-          drift.Value(double.tryParse(_target.text.trim()) ?? 1.0),
+      targetAmount: drift.Value(double.tryParse(_target.text.trim()) ?? 1.0),
       frequencyType: drift.Value(_frequencyType),
       weekdayMask: drift.Value(_weekdayMask),
       timesPerWeek: drift.Value(_timesPerWeek),
@@ -479,7 +513,10 @@ class _HabitEditorSheetState extends ConsumerState<HabitEditorSheet> {
 
     if (_reminderMinutes != null) {
       await notifier.scheduleHabitNudge(
-          habitId: id, habitName: name, minutesFromMidnight: _reminderMinutes!);
+        habitId: id,
+        habitName: name,
+        minutesFromMidnight: _reminderMinutes!,
+      );
     } else {
       await notifier.cancelHabitNudge(id);
     }
@@ -494,28 +531,39 @@ class _HabitEditorSheetState extends ConsumerState<HabitEditorSheet> {
 
     return SheetScaffold(
       title: _isEditing ? 'Edit habit' : 'New habit',
-      actions: [TextButton(onPressed: _save, child: const Text('Save'))],
+      actions: [
+        BrandButton(
+          label: 'Save',
+          kind: BrandButtonKind.ghost,
+          expand: false,
+          onPressed: _save,
+        ),
+      ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!_isEditing) ...[
-            Text('Start from a preset',
-                style: TextStyle(color: muted, fontSize: 12)),
+            Text(
+              'Start from a preset',
+              style: TextStyle(color: muted, fontSize: 12),
+            ),
             const SizedBox(height: 8),
             SizedBox(
               height: 36,
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 children: HabitRepository.presets
-                    .map((p) => Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: ActionChip(
-                            avatar: AppIcon(AppIcons.habit(p.icon),
-                                size: 16, color: Color(p.color)),
-                            label: Text(p.name),
-                            onPressed: () => _applyPreset(p),
-                          ),
-                        ))
+                    .map(
+                      (p) => Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Pill(
+                          label: p.name,
+                          icon: AppIcons.habit(p.icon),
+                          color: Theme.of(context).colorScheme.primary,
+                          onTap: () => _applyPreset(p),
+                        ),
+                      ),
+                    )
                     .toList(),
               ),
             ),
@@ -533,13 +581,15 @@ class _HabitEditorSheetState extends ConsumerState<HabitEditorSheet> {
           SegmentedButton<int>(
             segments: const [
               ButtonSegment(
-                  value: 0,
-                  label: Text('Build'),
-                  icon: AppIcon(AppIcons.trendUp, size: 16)),
+                value: 0,
+                label: Text('Build'),
+                icon: AppIcon(AppIcons.trendUp, size: 16),
+              ),
               ButtonSegment(
-                  value: 1,
-                  label: Text('Reduce'),
-                  icon: AppIcon(AppIcons.trendDown, size: 16)),
+                value: 1,
+                label: Text('Reduce'),
+                icon: AppIcon(AppIcons.trendDown, size: 16),
+              ),
             ],
             selected: {_goalType},
             showSelectedIcon: false,
@@ -551,8 +601,9 @@ class _HabitEditorSheetState extends ConsumerState<HabitEditorSheet> {
               Expanded(
                 child: TextField(
                   controller: _target,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: InputDecoration(
                     labelText: _goalType == 0 ? 'Daily goal' : 'Daily limit',
                   ),
@@ -563,7 +614,9 @@ class _HabitEditorSheetState extends ConsumerState<HabitEditorSheet> {
                 child: TextField(
                   controller: _unit,
                   decoration: const InputDecoration(
-                      labelText: 'Unit', hintText: 'cups'),
+                    labelText: 'Unit',
+                    hintText: 'cups',
+                  ),
                 ),
               ),
             ],
@@ -588,13 +641,18 @@ class _HabitEditorSheetState extends ConsumerState<HabitEditorSheet> {
               children: List.generate(7, (i) {
                 const labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
                 final on = (_weekdayMask & (1 << i)) != 0;
-                return FilterChip(
-                  label: Text(labels[i]),
+                return Pill(
+                  label: labels[i],
                   selected: on,
-                  onSelected: (v) => setState(() {
-                    _weekdayMask =
-                        v ? _weekdayMask | (1 << i) : _weekdayMask & ~(1 << i);
-                  }),
+                  color: Theme.of(context).colorScheme.primary,
+                  onTap: () {
+                    final v = !(on);
+                    setState(() {
+                      _weekdayMask = v
+                          ? _weekdayMask | (1 << i)
+                          : _weekdayMask & ~(1 << i);
+                    });
+                  },
                 );
               }),
             ),
@@ -603,8 +661,10 @@ class _HabitEditorSheetState extends ConsumerState<HabitEditorSheet> {
             const SizedBox(height: 12),
             Row(
               children: [
-                Text('$_timesPerWeek times per week',
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                Text(
+                  '$_timesPerWeek times per week',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
                 Expanded(
                   child: Slider(
                     value: _timesPerWeek.toDouble(),
@@ -612,8 +672,7 @@ class _HabitEditorSheetState extends ConsumerState<HabitEditorSheet> {
                     max: 7,
                     divisions: 6,
                     label: '$_timesPerWeek',
-                    onChanged: (v) =>
-                        setState(() => _timesPerWeek = v.round()),
+                    onChanged: (v) => setState(() => _timesPerWeek = v.round()),
                   ),
                 ),
               ],
@@ -623,7 +682,9 @@ class _HabitEditorSheetState extends ConsumerState<HabitEditorSheet> {
           Text('Appearance', style: TextStyle(color: muted, fontSize: 12)),
           const SizedBox(height: 10),
           ColorPickerRow(
-              selected: _color, onChanged: (c) => setState(() => _color = c)),
+            selected: _color,
+            onChanged: (c) => setState(() => _color = c),
+          ),
           const SizedBox(height: 12),
           IconPickerRow(
             options: AppIcons.habitIcons,
@@ -632,16 +693,19 @@ class _HabitEditorSheetState extends ConsumerState<HabitEditorSheet> {
             onChanged: (i) => setState(() => _icon = i),
           ),
           const SizedBox(height: 20),
-          Text('Optional tracking',
-              style: TextStyle(color: muted, fontSize: 12)),
+          Text(
+            'Optional tracking',
+            style: TextStyle(color: muted, fontSize: 12),
+          ),
           const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
                 child: TextField(
                   controller: _cost,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: InputDecoration(
                     labelText: 'Cost per unit',
                     prefixText: '$currency ',
@@ -652,26 +716,31 @@ class _HabitEditorSheetState extends ConsumerState<HabitEditorSheet> {
               Expanded(
                 child: TextField(
                   controller: _caffeine,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: const InputDecoration(
-                      labelText: 'Caffeine', suffixText: 'mg'),
+                    labelText: 'Caffeine',
+                    suffixText: 'mg',
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
+          BrandTile(
             leading: const AppIcon(AppIcons.notifications),
             title: const Text('Daily reminder'),
-            subtitle: Text(_reminderMinutes == null
-                ? 'Off'
-                : Fmt.minutesOfDay(_reminderMinutes!)),
+            subtitle: Text(
+              _reminderMinutes == null
+                  ? 'Off'
+                  : Fmt.minutesOfDay(_reminderMinutes!),
+            ),
             trailing: _reminderMinutes == null
                 ? const AppIcon(AppIcons.chevronRight)
-                : IconButton(
-                    icon: const AppIcon(AppIcons.close, size: 18),
+                : CircleIconButton(
+                    icon: AppIcons.close,
+                    size: 40,
                     onPressed: () => setState(() => _reminderMinutes = null),
                   ),
             onTap: () async {
@@ -681,7 +750,8 @@ class _HabitEditorSheetState extends ConsumerState<HabitEditorSheet> {
                     ? const TimeOfDay(hour: 9, minute: 0)
                     : TimeOfDay(
                         hour: _reminderMinutes! ~/ 60,
-                        minute: _reminderMinutes! % 60),
+                        minute: _reminderMinutes! % 60,
+                      ),
               );
               if (time != null) {
                 setState(() => _reminderMinutes = time.hour * 60 + time.minute);

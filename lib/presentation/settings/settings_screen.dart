@@ -31,12 +31,14 @@ class SettingsScreen extends ConsumerWidget {
             padding: EdgeInsets.zero,
             child: Column(
               children: AppModule.values
-                  .map((m) => BrandSwitchTile(
-                        title: m.label,
-                        subtitle: m.blurb,
-                        value: settings.isEnabled(m),
-                        onChanged: (v) => notifier.toggleModule(m, v),
-                      ))
+                  .map(
+                    (m) => BrandSwitchTile(
+                      title: m.label,
+                      subtitle: m.blurb,
+                      value: settings.isEnabled(m),
+                      onChanged: (v) => notifier.toggleModule(m, v),
+                    ),
+                  )
                   .toList(),
             ),
           ),
@@ -106,8 +108,7 @@ class SettingsScreen extends ConsumerWidget {
                 BrandTile(
                   leading: const AppIcon(AppIcons.language),
                   title: const Text('Language'),
-                  subtitle:
-                      Text(settings.locale == 'bn' ? 'বাংলা' : 'English'),
+                  subtitle: Text(settings.locale == 'bn' ? 'বাংলা' : 'English'),
                   trailing: BrandSegmented<String>(
                     options: const {'en': 'EN', 'bn': 'বাং'},
                     selected: settings.locale,
@@ -134,8 +135,9 @@ class SettingsScreen extends ConsumerWidget {
                   leading: const AppIcon(AppIcons.notificationsActive),
                   title: const Text('Allow notifications'),
                   subtitle: const Text(
-                      'Medicine reminders always override quiet hours',
-                      style: TextStyle(fontSize: 11)),
+                    'Medicine reminders always override quiet hours',
+                    style: TextStyle(fontSize: 11),
+                  ),
                   trailing: const AppIcon(AppIcons.chevronRight),
                   onTap: () async {
                     final granted = await ref
@@ -154,7 +156,8 @@ class SettingsScreen extends ConsumerWidget {
                 BrandSwitchTile(
                   leading: const AppIcon(AppIcons.sleep),
                   title: 'Quiet hours',
-                  subtitle: '${Fmt.minutesOfDay(settings.dndStartMinutes)} — '
+                  subtitle:
+                      '${Fmt.minutesOfDay(settings.dndStartMinutes)} — '
                       '${Fmt.minutesOfDay(settings.dndEndMinutes)}',
                   value: settings.dndEnabled,
                   onChanged: (v) => notifier.setDnd(v),
@@ -164,32 +167,48 @@ class SettingsScreen extends ConsumerWidget {
                     children: [
                       Expanded(
                         child: BrandTile(
-                          title: const Text('From',
-                              style: TextStyle(fontSize: 12)),
-                          subtitle:
-                              Text(Fmt.minutesOfDay(settings.dndStartMinutes)),
+                          title: const Text(
+                            'From',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                          subtitle: Text(
+                            Fmt.minutesOfDay(settings.dndStartMinutes),
+                          ),
                           onTap: () async {
                             final t = await _pickTime(
-                                context, settings.dndStartMinutes);
+                              context,
+                              settings.dndStartMinutes,
+                            );
                             if (t != null) {
-                              notifier.setDnd(true,
-                                  start: t, end: settings.dndEndMinutes);
+                              notifier.setDnd(
+                                true,
+                                start: t,
+                                end: settings.dndEndMinutes,
+                              );
                             }
                           },
                         ),
                       ),
                       Expanded(
                         child: BrandTile(
-                          title:
-                              const Text('To', style: TextStyle(fontSize: 12)),
-                          subtitle:
-                              Text(Fmt.minutesOfDay(settings.dndEndMinutes)),
+                          title: const Text(
+                            'To',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                          subtitle: Text(
+                            Fmt.minutesOfDay(settings.dndEndMinutes),
+                          ),
                           onTap: () async {
                             final t = await _pickTime(
-                                context, settings.dndEndMinutes);
+                              context,
+                              settings.dndEndMinutes,
+                            );
                             if (t != null) {
-                              notifier.setDnd(true,
-                                  start: settings.dndStartMinutes, end: t);
+                              notifier.setDnd(
+                                true,
+                                start: settings.dndStartMinutes,
+                                end: t,
+                              );
                             }
                           },
                         ),
@@ -212,7 +231,8 @@ class SettingsScreen extends ConsumerWidget {
                   subtitle: 'Biometric or PIN on launch',
                   value: settings.appLockEnabled,
                   onChanged: (v) async {
-                    if (v && !await security.canUseBiometrics() &&
+                    if (v &&
+                        !await security.canUseBiometrics() &&
                         !security.hasPin) {
                       if (context.mounted) {
                         final set = await _setPin(context, security);
@@ -250,13 +270,18 @@ class SettingsScreen extends ConsumerWidget {
                   children: [
                     FAccordionItem(
                       title: const Text('Lock individual modules'),
-                      child: Column(children: AppModule.values
-                      .map((m) => BrandSwitchTile(
-                            title: m.label,
-                            value: settings.lockedModules.contains(m),
-                            onChanged: (v) => notifier.toggleModuleLock(m, v),
-                          ))
-                          .toList()),
+                      child: Column(
+                        children: AppModule.values
+                            .map(
+                              (m) => BrandSwitchTile(
+                                title: m.label,
+                                value: settings.lockedModules.contains(m),
+                                onChanged: (v) =>
+                                    notifier.toggleModuleLock(m, v),
+                              ),
+                            )
+                            .toList(),
+                      ),
                     ),
                   ],
                 ),
@@ -372,7 +397,9 @@ class SettingsScreen extends ConsumerWidget {
       brandTimePicker(context, initialMinutes: current, title: 'Quiet hours');
 
   Future<void> _pickCurrency(
-      BuildContext context, SettingsNotifier notifier) async {
+    BuildContext context,
+    SettingsNotifier notifier,
+  ) async {
     const options = ['৳', '\$', '€', '₹', '£', '¥'];
     final picked = await brandSheet<String>(
       context: context,
@@ -382,11 +409,13 @@ class SettingsScreen extends ConsumerWidget {
           spacing: 12,
           runSpacing: 12,
           children: options
-              .map((s) => Pill(
-                    label: s,
-                    color: Theme.of(context).colorScheme.primary,
-                    onTap: () => Navigator.pop(context, s),
-                  ))
+              .map(
+                (s) => Pill(
+                  label: s,
+                  color: Theme.of(context).colorScheme.primary,
+                  onTap: () => Navigator.pop(context, s),
+                ),
+              )
               .toList(),
         ),
       ),
@@ -395,17 +424,21 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   Future<void> _pickAutoLock(
-      BuildContext context, SettingsNotifier notifier) async {
+    BuildContext context,
+    SettingsNotifier notifier,
+  ) async {
     final picked = await brandSheet<int>(
       context: context,
       builder: (_) => SheetScaffold(
         title: 'Auto-lock after',
         child: Column(
           children: [0, 1, 5, 15, 30]
-              .map((m) => BrandTile(
-                    title: Text(m == 0 ? 'Immediately' : '$m minutes'),
-                    onTap: () => Navigator.pop(context, m),
-                  ))
+              .map(
+                (m) => BrandTile(
+                  title: Text(m == 0 ? 'Immediately' : '$m minutes'),
+                  onTap: () => Navigator.pop(context, m),
+                ),
+              )
               .toList(),
         ),
       ),
@@ -428,8 +461,7 @@ class SettingsScreen extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Set a PIN',
-                  style: Theme.of(context).textTheme.titleLarge),
+              Text('Set a PIN', style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 16),
               BrandField(
                 controller: controller,

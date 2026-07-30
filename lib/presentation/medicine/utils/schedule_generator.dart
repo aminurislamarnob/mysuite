@@ -20,25 +20,25 @@ enum MealRelation { none, before, after, with_ }
 
 extension MealRelationX on MealRelation {
   String get token => switch (this) {
-        MealRelation.none => 'none',
-        MealRelation.before => 'before',
-        MealRelation.after => 'after',
-        MealRelation.with_ => 'with',
-      };
+    MealRelation.none => 'none',
+    MealRelation.before => 'before',
+    MealRelation.after => 'after',
+    MealRelation.with_ => 'with',
+  };
 
   String get label => switch (this) {
-        MealRelation.none => '',
-        MealRelation.before => 'Before food',
-        MealRelation.after => 'After food',
-        MealRelation.with_ => 'With food',
-      };
+    MealRelation.none => '',
+    MealRelation.before => 'Before food',
+    MealRelation.after => 'After food',
+    MealRelation.with_ => 'With food',
+  };
 
   static MealRelation fromToken(String t) => switch (t) {
-        'before' => MealRelation.before,
-        'after' => MealRelation.after,
-        'with' => MealRelation.with_,
-        _ => MealRelation.none,
-      };
+    'before' => MealRelation.before,
+    'after' => MealRelation.after,
+    'with' => MealRelation.with_,
+    _ => MealRelation.none,
+  };
 }
 
 /// A pure description of a medicine course. Deliberately free of database
@@ -98,8 +98,10 @@ class ScheduleSpec {
   }
 
   static String encodeSkipDates(Set<DateTime> dates) => dates
-      .map((d) =>
-          '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}')
+      .map(
+        (d) =>
+            '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}',
+      )
       .join(',');
 }
 
@@ -133,8 +135,7 @@ class ScheduleGenerator {
     var day = startDay;
     var dayIndex = 0;
     while (!day.isAfter(endDay)) {
-      if (_dayIsActive(spec, day, dayIndex) &&
-          !spec.skipDates.contains(day)) {
+      if (_dayIsActive(spec, day, dayIndex) && !spec.skipDates.contains(day)) {
         for (final m in times) {
           result.add(day.add(Duration(minutes: m)));
         }
@@ -199,11 +200,13 @@ class ScheduleGenerator {
         final delta = flat[j].at.difference(flat[i].at).abs();
         if (delta > window) break;
         if (flat[i].name != flat[j].name) {
-          conflicts.add(DoseConflict(
-            first: flat[i].name,
-            second: flat[j].name,
-            at: flat[i].at,
-          ));
+          conflicts.add(
+            DoseConflict(
+              first: flat[i].name,
+              second: flat[j].name,
+              at: flat[i].at,
+            ),
+          );
         }
       }
     }

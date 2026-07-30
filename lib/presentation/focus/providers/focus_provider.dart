@@ -15,33 +15,33 @@ enum FocusMode { pomodoro, fiftyTwo, deep, flow, reverse, custom }
 
 extension FocusModeX on FocusMode {
   String get label => switch (this) {
-        FocusMode.pomodoro => 'Pomodoro',
-        FocusMode.fiftyTwo => '52 / 17',
-        FocusMode.deep => 'Deep work',
-        FocusMode.flow => 'Flow',
-        FocusMode.reverse => 'Reverse',
-        FocusMode.custom => 'Custom',
-      };
+    FocusMode.pomodoro => 'Pomodoro',
+    FocusMode.fiftyTwo => '52 / 17',
+    FocusMode.deep => 'Deep work',
+    FocusMode.flow => 'Flow',
+    FocusMode.reverse => 'Reverse',
+    FocusMode.custom => 'Custom',
+  };
 
   String get token => name;
 
   int get workMinutes => switch (this) {
-        FocusMode.pomodoro => 25,
-        FocusMode.fiftyTwo => 52,
-        FocusMode.deep => 90,
-        FocusMode.flow => 0, // counts up, no fixed length
-        FocusMode.reverse => 25,
-        FocusMode.custom => 25,
-      };
+    FocusMode.pomodoro => 25,
+    FocusMode.fiftyTwo => 52,
+    FocusMode.deep => 90,
+    FocusMode.flow => 0, // counts up, no fixed length
+    FocusMode.reverse => 25,
+    FocusMode.custom => 25,
+  };
 
   int get breakMinutes => switch (this) {
-        FocusMode.pomodoro => 5,
-        FocusMode.fiftyTwo => 17,
-        FocusMode.deep => 20,
-        FocusMode.flow => 0,
-        FocusMode.reverse => 5,
-        FocusMode.custom => 5,
-      };
+    FocusMode.pomodoro => 5,
+    FocusMode.fiftyTwo => 17,
+    FocusMode.deep => 20,
+    FocusMode.flow => 0,
+    FocusMode.reverse => 5,
+    FocusMode.custom => 5,
+  };
 
   /// Long break after four work intervals, Pomodoro-style.
   int get longBreakMinutes => this == FocusMode.pomodoro ? 15 : breakMinutes;
@@ -79,12 +79,13 @@ class FocusState {
     this.customMinutes = 25,
   });
 
-  int get remainingSeconds =>
-      mode.countsUp ? elapsedSeconds : (targetSeconds - elapsedSeconds).clamp(0, 1 << 30);
+  int get remainingSeconds => mode.countsUp
+      ? elapsedSeconds
+      : (targetSeconds - elapsedSeconds).clamp(0, 1 << 30);
 
   /// What the big clock shows: counts up in flow mode, down otherwise.
-  String get display => Fmt.timerClock(
-      mode.countsUp ? elapsedSeconds : remainingSeconds);
+  String get display =>
+      Fmt.timerClock(mode.countsUp ? elapsedSeconds : remainingSeconds);
 
   double get progress => mode.countsUp || targetSeconds == 0
       ? 0
@@ -121,8 +122,8 @@ class FocusState {
 
 final focusTimerProvider =
     StateNotifierProvider<FocusTimerNotifier, FocusState>((ref) {
-  return FocusTimerNotifier(ref);
-});
+      return FocusTimerNotifier(ref);
+    });
 
 class FocusTimerNotifier extends StateNotifier<FocusState> {
   FocusTimerNotifier(this._ref) : super(const FocusState());
@@ -134,8 +135,9 @@ class FocusTimerNotifier extends StateNotifier<FocusState> {
 
   void setMode(FocusMode mode) {
     if (state.phase != TimerPhase.idle) return;
-    final minutes =
-        mode == FocusMode.custom ? state.customMinutes : mode.workMinutes;
+    final minutes = mode == FocusMode.custom
+        ? state.customMinutes
+        : mode.workMinutes;
     state = state.copyWith(
       mode: mode,
       targetSeconds: minutes * 60,
@@ -146,8 +148,9 @@ class FocusTimerNotifier extends StateNotifier<FocusState> {
   void setCustomMinutes(int minutes) {
     state = state.copyWith(
       customMinutes: minutes,
-      targetSeconds:
-          state.mode == FocusMode.custom ? minutes * 60 : state.targetSeconds,
+      targetSeconds: state.mode == FocusMode.custom
+          ? minutes * 60
+          : state.targetSeconds,
     );
   }
 
@@ -167,8 +170,8 @@ class FocusTimerNotifier extends StateNotifier<FocusState> {
       final minutes = startsWithBreak
           ? state.mode.breakMinutes
           : (state.mode == FocusMode.custom
-              ? state.customMinutes
-              : state.mode.workMinutes);
+                ? state.customMinutes
+                : state.mode.workMinutes);
 
       final id = await _repo.startSession(
         durationMinutes: minutes,
@@ -210,12 +213,16 @@ class FocusTimerNotifier extends StateNotifier<FocusState> {
     await _chime();
 
     final wasWork = state.phase == TimerPhase.work;
-    final intervals =
-        wasWork ? state.completedIntervals + 1 : state.completedIntervals;
+    final intervals = wasWork
+        ? state.completedIntervals + 1
+        : state.completedIntervals;
 
     if (state.mode == FocusMode.flow) {
       state = state.copyWith(
-          phase: TimerPhase.finished, running: false, clearSession: true);
+        phase: TimerPhase.finished,
+        running: false,
+        clearSession: true,
+      );
       return;
     }
 
@@ -227,8 +234,8 @@ class FocusTimerNotifier extends StateNotifier<FocusState> {
     final nextMinutes = nextIsBreak
         ? breakMinutes
         : (state.mode == FocusMode.custom
-            ? state.customMinutes
-            : state.mode.workMinutes);
+              ? state.customMinutes
+              : state.mode.workMinutes);
 
     state = state.copyWith(
       phase: nextIsBreak ? TimerPhase.breakTime : TimerPhase.work,
@@ -239,7 +246,9 @@ class FocusTimerNotifier extends StateNotifier<FocusState> {
       clearSession: true,
     );
 
-    await _ref.read(notificationServiceProvider).notifyNow(
+    await _ref
+        .read(notificationServiceProvider)
+        .notifyNow(
           id: 900001,
           title: nextIsBreak ? 'Time for a break' : 'Break over',
           body: nextIsBreak
@@ -293,8 +302,7 @@ class FocusTimerNotifier extends StateNotifier<FocusState> {
   }
 
   /// Attaches a note and rating to the session that just ended.
-  Future<void> annotateLast(int sessionId,
-      {String? note, int? rating}) async {
+  Future<void> annotateLast(int sessionId, {String? note, int? rating}) async {
     await _repo.annotate(sessionId, note: note, rating: rating);
   }
 
@@ -304,7 +312,8 @@ class FocusTimerNotifier extends StateNotifier<FocusState> {
       mode: state.mode,
       customMinutes: state.customMinutes,
       taskId: state.taskId,
-      targetSeconds: (state.mode == FocusMode.custom
+      targetSeconds:
+          (state.mode == FocusMode.custom
               ? state.customMinutes
               : state.mode.workMinutes) *
           60,
@@ -322,8 +331,9 @@ class FocusTimerNotifier extends StateNotifier<FocusState> {
 
 /// Looping background sound. Assets are optional: if a track is missing the
 /// selection simply reports failure rather than crashing the session.
-final ambientPlayerProvider =
-    StateNotifierProvider<AmbientNotifier, String?>((ref) {
+final ambientPlayerProvider = StateNotifierProvider<AmbientNotifier, String?>((
+  ref,
+) {
   return AmbientNotifier();
 });
 
@@ -445,7 +455,7 @@ final focusStatsProvider = StreamProvider<FocusStats>((ref) async* {
       byDay[day] = (byDay[day] ?? Duration.zero) + Duration(seconds: seconds);
       byHour[s.startTime.hour] =
           (byHour[s.startTime.hour] ?? Duration.zero) +
-              Duration(seconds: seconds);
+          Duration(seconds: seconds);
 
       if (day == today) {
         todaySeconds += seconds;

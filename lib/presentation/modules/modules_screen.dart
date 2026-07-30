@@ -27,10 +27,10 @@ class ModulesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
-    final enabled =
-        AppModule.values.where(settings.isEnabled).toList();
-    final disabled =
-        AppModule.values.where((m) => !settings.isEnabled(m)).toList();
+    final enabled = AppModule.values.where(settings.isEnabled).toList();
+    final disabled = AppModule.values
+        .where((m) => !settings.isEnabled(m))
+        .toList();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Modules')),
@@ -52,17 +52,19 @@ class ModulesScreen extends ConsumerWidget {
                   childAspectRatio: 1.0,
                   children: [
                     for (var i = 0; i < enabled.length; i++)
-                      Builder(builder: (context) {
-                        final m = enabled[i];
-                        final (icon, color) = _meta[m]!;
-                        return _ModuleCard(
-                          module: m,
-                          icon: icon,
-                          color: color,
-                          tintIndex: i,
-                          onTap: () => context.push(m.route),
-                        );
-                      }),
+                      Builder(
+                        builder: (context) {
+                          final m = enabled[i];
+                          final (icon, color) = _meta[m]!;
+                          return _ModuleCard(
+                            module: m,
+                            icon: icon,
+                            color: color,
+                            tintIndex: i,
+                            onTap: () => context.push(m.route),
+                          );
+                        },
+                      ),
                   ],
                 ),
                 if (disabled.isNotEmpty) ...[
@@ -74,19 +76,23 @@ class ModulesScreen extends ConsumerWidget {
                       padding: const EdgeInsets.only(bottom: 10),
                       child: TintCard(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 18, vertical: 4),
-                        child: ListTile(
-                          contentPadding: EdgeInsets.zero,
+                          horizontal: 18,
+                          vertical: 4,
+                        ),
+                        child: BrandTile(
                           leading: AppIcon(icon, color: context.muted),
                           title: Text(m.label),
-                          subtitle: Text(m.blurb,
-                              style: const TextStyle(fontSize: 12)),
-                          trailing: TextButton(
+                          subtitle: Text(
+                            m.blurb,
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          trailing: BrandButton(
+                            label: 'Turn on',
+                            kind: BrandButtonKind.ghost,
+                            expand: false,
                             onPressed: () => ref
                                 .read(settingsProvider.notifier)
                                 .toggleModule(m, true),
-                            style: TextButton.styleFrom(foregroundColor: color),
-                            child: const Text('Turn on'),
                           ),
                         ),
                       ),
@@ -133,18 +139,22 @@ class _ModuleCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(module.label,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleSmall
-                        ?.copyWith(fontSize: 16)),
+                Text(
+                  module.label,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontSize: 16),
+                ),
                 const SizedBox(height: 2),
                 Text(
                   module.blurb,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                      fontSize: 12, height: 1.3, color: context.muted),
+                    fontSize: 12,
+                    height: 1.3,
+                    color: context.muted,
+                  ),
                 ),
               ],
             ),

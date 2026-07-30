@@ -12,6 +12,7 @@ import 'core/settings/app_settings.dart';
 import 'core/theme/app_forui_theme.dart';
 import 'core/theme/app_icons.dart';
 import 'core/theme/app_theme.dart';
+import 'core/widgets/common.dart';
 import 'presentation/notes/repository/note_repository.dart';
 
 Future<void> main() async {
@@ -196,24 +197,28 @@ class _LockGateState extends ConsumerState<_LockGate>
             children: [
               const AppIcon(AppIcons.lock, size: 56),
               const SizedBox(height: 20),
-              const Text('mySuite is locked',
-                  style:
-                      TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+              const Text(
+                'mySuite is locked',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+              ),
               const SizedBox(height: 8),
               Text(
                 'Authenticate to continue.',
                 style: TextStyle(color: Theme.of(context).colorScheme.outline),
               ),
               const SizedBox(height: 28),
-              FilledButton.icon(
+              BrandButton(
+                label: 'Unlock',
+                icon: AppIcons.biometric,
+                expand: false,
                 onPressed: _evaluate,
-                icon: const AppIcon(AppIcons.biometric),
-                label: const Text('Unlock'),
               ),
               const SizedBox(height: 8),
-              TextButton(
+              BrandButton(
+                label: 'Use PIN instead',
+                kind: BrandButtonKind.ghost,
+                expand: false,
                 onPressed: _unlockWithPin,
-                child: const Text('Use PIN instead'),
               ),
             ],
           ),
@@ -225,9 +230,7 @@ class _LockGateState extends ConsumerState<_LockGate>
   Future<void> _unlockWithPin() async {
     final security = ref.read(securityServiceProvider);
     if (!security.hasPin) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No PIN is set on this device.')),
-      );
+      brandToast(context, 'No PIN is set on this device.');
       return;
     }
 
@@ -248,10 +251,15 @@ class _LockGateState extends ConsumerState<_LockGate>
             decoration: InputDecoration(errorText: error),
           ),
           actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel')),
-            FilledButton(
+            BrandButton(
+              label: 'Cancel',
+              kind: BrandButtonKind.ghost,
+              expand: false,
+              onPressed: () => Navigator.pop(context, false),
+            ),
+            BrandButton(
+              label: 'Unlock',
+              expand: false,
               onPressed: () {
                 if (security.verifyPin(controller.text)) {
                   Navigator.pop(context, true);
@@ -259,7 +267,6 @@ class _LockGateState extends ConsumerState<_LockGate>
                   setState(() => error = 'Incorrect PIN');
                 }
               },
-              child: const Text('Unlock'),
             ),
           ],
         ),

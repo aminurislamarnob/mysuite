@@ -32,7 +32,8 @@ final totalBalanceProvider = Provider<double>((ref) {
 
 /// The month the reports and charts are currently showing.
 final reportMonthProvider = StateProvider<DateTime>(
-    (ref) => Fmt.startOfMonth(DateTime.now()));
+  (ref) => Fmt.startOfMonth(DateTime.now()),
+);
 
 final monthTransactionsProvider = StreamProvider<List<Expense>>((ref) {
   final month = ref.watch(reportMonthProvider);
@@ -61,8 +62,9 @@ class MonthReport {
 
   /// Signed change versus last month, as a fraction. Null when there is no
   /// prior month to compare against.
-  double? get changeVsPrevious =>
-      previousExpense == 0 ? null : (expense - previousExpense) / previousExpense;
+  double? get changeVsPrevious => previousExpense == 0
+      ? null
+      : (expense - previousExpense) / previousExpense;
 }
 
 final monthReportProvider = FutureProvider<MonthReport>((ref) async {
@@ -101,12 +103,13 @@ final monthReportProvider = FutureProvider<MonthReport>((ref) async {
 
 /// Income vs expense for the trailing 6 months.
 final monthlyTrendProvider =
-    FutureProvider<List<({DateTime month, double income, double expense})>>(
-        (ref) async {
-  // Re-run whenever transactions change.
-  ref.watch(recentExpensesProvider);
-  return ref.watch(expenseRepositoryProvider).monthlyTrend(6);
-});
+    FutureProvider<List<({DateTime month, double income, double expense})>>((
+      ref,
+    ) async {
+      // Re-run whenever transactions change.
+      ref.watch(recentExpensesProvider);
+      return ref.watch(expenseRepositoryProvider).monthlyTrend(6);
+    });
 
 /// Budget progress rows for the budgets tab.
 @immutable
@@ -136,8 +139,9 @@ class BudgetProgress {
   }
 }
 
-final budgetProgressProvider =
-    FutureProvider<List<BudgetProgress>>((ref) async {
+final budgetProgressProvider = FutureProvider<List<BudgetProgress>>((
+  ref,
+) async {
   final budgets = await ref.watch(budgetsProvider.future);
   final categories = await ref.watch(categoriesProvider.future);
   final report = await ref.watch(monthReportProvider.future);

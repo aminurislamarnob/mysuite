@@ -40,12 +40,15 @@ class NoteFilter {
   int get hashCode => Object.hash(scope, folderId, tagId, label);
 }
 
-final noteFilterProvider =
-    StateProvider<NoteFilter>((ref) => const NoteFilter());
+final noteFilterProvider = StateProvider<NoteFilter>(
+  (ref) => const NoteFilter(),
+);
 
 final notesListProvider = StreamProvider<List<Note>>((ref) {
   final filter = ref.watch(noteFilterProvider);
-  return ref.watch(noteRepositoryProvider).watchNotes(
+  return ref
+      .watch(noteRepositoryProvider)
+      .watchNotes(
         scope: filter.scope,
         folderId: filter.folderId,
         tagId: filter.tagId,
@@ -60,8 +63,10 @@ final noteTagsProvider = StreamProvider<List<Tag>>((ref) {
   return ref.watch(noteRepositoryProvider).watchTags();
 });
 
-final tagsForNoteProvider =
-    FutureProvider.family<List<Tag>, int>((ref, noteId) {
+final tagsForNoteProvider = FutureProvider.family<List<Tag>, int>((
+  ref,
+  noteId,
+) {
   return ref.watch(noteRepositoryProvider).tagsForNote(noteId);
 });
 

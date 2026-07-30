@@ -23,16 +23,22 @@ class NoteTemplate {
 
   String get contentJson => jsonEncode(deltaBuilder());
 
-  static Map<String, dynamic> _h(String text, int level) =>
-      {'insert': '$text\n', 'attributes': {'header': level}};
+  static Map<String, dynamic> _h(String text, int level) => {
+    'insert': '$text\n',
+    'attributes': {'header': level},
+  };
 
   static Map<String, dynamic> _p(String text) => {'insert': '$text\n'};
 
-  static Map<String, dynamic> _bullet(String text) =>
-      {'insert': '$text\n', 'attributes': {'list': 'bullet'}};
+  static Map<String, dynamic> _bullet(String text) => {
+    'insert': '$text\n',
+    'attributes': {'list': 'bullet'},
+  };
 
-  static Map<String, dynamic> _todo(String text) =>
-      {'insert': '$text\n', 'attributes': {'list': 'unchecked'}};
+  static Map<String, dynamic> _todo(String text) => {
+    'insert': '$text\n',
+    'attributes': {'list': 'unchecked'},
+  };
 
   static final all = <NoteTemplate>[
     NoteTemplate(
@@ -41,7 +47,7 @@ class NoteTemplate {
       icon: AppIcons.document,
       titleBuilder: () => 'Untitled',
       deltaBuilder: () => [
-        {'insert': '\n'}
+        {'insert': '\n'},
       ],
     ),
     NoteTemplate(

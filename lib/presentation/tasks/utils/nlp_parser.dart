@@ -50,10 +50,30 @@ class NlpParser {
   };
 
   static const _months = <String, int>{
-    'jan': 1, 'january': 1, 'feb': 2, 'february': 2, 'mar': 3, 'march': 3,
-    'apr': 4, 'april': 4, 'may': 5, 'jun': 6, 'june': 6, 'jul': 7, 'july': 7,
-    'aug': 8, 'august': 8, 'sep': 9, 'sept': 9, 'september': 9, 'oct': 10,
-    'october': 10, 'nov': 11, 'november': 11, 'dec': 12, 'december': 12,
+    'jan': 1,
+    'january': 1,
+    'feb': 2,
+    'february': 2,
+    'mar': 3,
+    'march': 3,
+    'apr': 4,
+    'april': 4,
+    'may': 5,
+    'jun': 6,
+    'june': 6,
+    'jul': 7,
+    'july': 7,
+    'aug': 8,
+    'august': 8,
+    'sep': 9,
+    'sept': 9,
+    'september': 9,
+    'oct': 10,
+    'october': 10,
+    'nov': 11,
+    'november': 11,
+    'dec': 12,
+    'december': 12,
   };
 
   static ParsedTask parse(String input, {DateTime? now}) {
@@ -89,8 +109,10 @@ class NlpParser {
 
     // --- *recurrence -------------------------------------------------------
     text = text.replaceAllMapped(
-      RegExp(r'\*(daily|weekdays|weekly|biweekly|monthly|yearly)\b',
-          caseSensitive: false),
+      RegExp(
+        r'\*(daily|weekdays|weekly|biweekly|monthly|yearly)\b',
+        caseSensitive: false,
+      ),
       (m) {
         recurrence = m.group(1)!.toLowerCase();
         return ' ';
@@ -98,8 +120,10 @@ class NlpParser {
     );
     // Bare "every day" / "every 3 days" phrasing.
     text = text.replaceAllMapped(
-      RegExp(r'\bevery\s+(day|week|month|year|(\d+)\s+days?)\b',
-          caseSensitive: false),
+      RegExp(
+        r'\bevery\s+(day|week|month|year|(\d+)\s+days?)\b',
+        caseSensitive: false,
+      ),
       (m) {
         final whole = m.group(1)!.toLowerCase();
         final n = m.group(2);
@@ -117,8 +141,10 @@ class NlpParser {
 
     // --- ~estimate ---------------------------------------------------------
     text = text.replaceAllMapped(
-      RegExp(r'~(\d+)\s*(m|min|mins|minutes|h|hr|hrs|hours)\b',
-          caseSensitive: false),
+      RegExp(
+        r'~(\d+)\s*(m|min|mins|minutes|h|hr|hrs|hours)\b',
+        caseSensitive: false,
+      ),
       (m) {
         final n = int.parse(m.group(1)!);
         final unit = m.group(2)!.toLowerCase();
@@ -128,15 +154,18 @@ class NlpParser {
     );
 
     // --- Explicit dates: 25/12, 25-12-2026, "25 Dec", "Dec 25" -------------
-    final numericDate = RegExp(r'\b(\d{1,2})[/\-](\d{1,2})(?:[/\-](\d{2,4}))?\b')
-        .firstMatch(text);
+    final numericDate = RegExp(
+      r'\b(\d{1,2})[/\-](\d{1,2})(?:[/\-](\d{2,4}))?\b',
+    ).firstMatch(text);
     if (numericDate != null) {
       final day = int.parse(numericDate.group(1)!);
       final month = int.parse(numericDate.group(2)!);
       var year = reference.year;
       final rawYear = numericDate.group(3);
       if (rawYear != null) {
-        year = rawYear.length == 2 ? 2000 + int.parse(rawYear) : int.parse(rawYear);
+        year = rawYear.length == 2
+            ? 2000 + int.parse(rawYear)
+            : int.parse(rawYear);
       }
       if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
         var candidate = DateTime(year, month, day);
@@ -151,15 +180,17 @@ class NlpParser {
     if (date == null) {
       final monthNames = _months.keys.join('|');
       final textualDate = RegExp(
-        r'\b(?:(\d{1,2})\s+(' + monthNames + r')|(' + monthNames +
+        r'\b(?:(\d{1,2})\s+(' +
+            monthNames +
+            r')|(' +
+            monthNames +
             r')\s+(\d{1,2}))\b',
         caseSensitive: false,
       ).firstMatch(text);
       if (textualDate != null) {
-        final day = int.parse(
-            textualDate.group(1) ?? textualDate.group(4)!);
-        final monthToken =
-            (textualDate.group(2) ?? textualDate.group(3)!).toLowerCase();
+        final day = int.parse(textualDate.group(1) ?? textualDate.group(4)!);
+        final monthToken = (textualDate.group(2) ?? textualDate.group(3)!)
+            .toLowerCase();
         final month = _months[monthToken]!;
         var candidate = DateTime(reference.year, month, day);
         if (candidate.isBefore(_dateOnly(reference))) {
@@ -173,9 +204,9 @@ class NlpParser {
     // --- Relative days -----------------------------------------------------
     if (date == null) {
       final relative = RegExp(
-              r'\b(today|tonight|tomorrow|tmr|yesterday|next week|next month)\b',
-              caseSensitive: false)
-          .firstMatch(text);
+        r'\b(today|tonight|tomorrow|tmr|yesterday|next week|next month)\b',
+        caseSensitive: false,
+      ).firstMatch(text);
       if (relative != null) {
         final token = relative.group(1)!.toLowerCase();
         final base = _dateOnly(reference);
@@ -198,9 +229,10 @@ class NlpParser {
     // --- Weekday names, optionally prefixed with "next" --------------------
     if (date == null) {
       final weekdayNames = _weekdays.keys.join('|');
-      final match = RegExp(r'\b(next\s+)?(' + weekdayNames + r')\b',
-              caseSensitive: false)
-          .firstMatch(text);
+      final match = RegExp(
+        r'\b(next\s+)?(' + weekdayNames + r')\b',
+        caseSensitive: false,
+      ).firstMatch(text);
       if (match != null) {
         final target = _weekdays[match.group(2)!.toLowerCase()]!;
         final base = _dateOnly(reference);
@@ -214,17 +246,18 @@ class NlpParser {
     }
 
     // --- Times: 5pm, 5:30pm, 17:30, "at 9" --------------------------------
-    final timeMatch = RegExp(
-      r'\b(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\b',
-      caseSensitive: false,
-    ).allMatches(text).where((m) {
-      // Only treat it as a time if it has am/pm, a colon, or an "at" prefix.
-      final hasMeridiem = m.group(3) != null;
-      final hasMinutes = m.group(2) != null;
-      final hasAt = m.group(0)!.toLowerCase().startsWith('at');
-      final hour = int.parse(m.group(1)!);
-      return (hasMeridiem || hasMinutes || hasAt) && hour <= 23;
-    }).firstOrNull;
+    final timeMatch =
+        RegExp(
+          r'\b(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\b',
+          caseSensitive: false,
+        ).allMatches(text).where((m) {
+          // Only treat it as a time if it has am/pm, a colon, or an "at" prefix.
+          final hasMeridiem = m.group(3) != null;
+          final hasMinutes = m.group(2) != null;
+          final hasAt = m.group(0)!.toLowerCase().startsWith('at');
+          final hour = int.parse(m.group(1)!);
+          return (hasMeridiem || hasMinutes || hasAt) && hour <= 23;
+        }).firstOrNull;
 
     if (timeMatch != null) {
       var hour = int.parse(timeMatch.group(1)!);
