@@ -64,18 +64,16 @@ class _MedicineScreenState extends ConsumerState<MedicineScreen> {
         tooltip: 'Add medicine',
         onPressed: () => MedicineEditorSheet.show(context),
       ),
-      // FTabs owns the strip and the views together, so the strip moves out of
-      // the header into the body.
-      child: FTabs(
-        scrollable: true,
-        expands: true,
-        children: [
-          const FTabEntry(label: Text('Today'), child: _TodayTab()),
-          const FTabEntry(label: Text('Calendar'), child: _CalendarTab()),
-          const FTabEntry(label: Text('Timeline'), child: _TimelineTab()),
-          const FTabEntry(label: Text('Table'), child: _TableTab()),
-          const FTabEntry(label: Text('Medicines'), child: _MedicinesTab()),
-        ],
+      // BrandTabs owns the strip and the views together, so the strip moves out
+      // of the header into the body.
+      child: const BrandTabs(
+        tabs: {
+          'Today': _TodayTab(),
+          'Calendar': _CalendarTab(),
+          'Timeline': _TimelineTab(),
+          'Table': _TableTab(),
+          'Medicines': _MedicinesTab(),
+        },
       ),
     );
   }
@@ -867,7 +865,11 @@ class _MedicinesTab extends ConsumerWidget {
                           ),
                         ],
                       ),
-                      trailing: PopupMenuButton<String>(
+                      trailing: BrandMenuButton<String>(
+                        items: const {
+                          'refill': 'Add stock',
+                          'delete': 'Delete',
+                        },
                         onSelected: (value) async {
                           switch (value) {
                             case 'refill':
@@ -876,13 +878,6 @@ class _MedicinesTab extends ConsumerWidget {
                               await repo.deleteMedicine(m.id);
                           }
                         },
-                        itemBuilder: (_) => const [
-                          PopupMenuItem(
-                            value: 'refill',
-                            child: Text('Add stock'),
-                          ),
-                          PopupMenuItem(value: 'delete', child: Text('Delete')),
-                        ],
                       ),
                     ),
                   ),
@@ -941,6 +936,9 @@ class _ProfileDrawer extends ConsumerWidget {
     final profiles = ref.watch(profilesProvider);
     final active = ref.watch(activeProfileProvider);
 
+    // Stays a Material `Drawer` body rather than an `FSidebar` — see the note on
+    // `_NotesDrawer`. The accent `DrawerHeader` is brand chrome forui has no
+    // equivalent for.
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,

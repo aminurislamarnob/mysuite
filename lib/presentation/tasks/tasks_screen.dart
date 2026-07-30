@@ -127,44 +127,30 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
       child: Column(
         children: [
           _buildQuickAdd(),
-          // FTabs owns both the tab strip and the views, so the strip moves out
-          // of the header and into the body.
+          // BrandTabs owns both the tab strip and the views, so the strip moves
+          // out of the header and into the body.
           Expanded(
-            child: FTabs(
-              scrollable: true,
-              expands: true,
-              children: [
-                FTabEntry(
-                  label: const Text('Today'),
-                  child: _TaskListView(
-                    provider: todayTasksProvider,
-                    emptyTitle: 'Nothing due today',
-                    emptyMessage: 'Enjoy the clear runway.',
-                  ),
+            child: BrandTabs(
+              tabs: {
+                'Today': _TaskListView(
+                  provider: todayTasksProvider,
+                  emptyTitle: 'Nothing due today',
+                  emptyMessage: 'Enjoy the clear runway.',
                 ),
-                FTabEntry(
-                  label: const Text('Upcoming'),
-                  child: _TaskListView(
-                    provider: upcomingTasksProvider,
-                    emptyTitle: 'Nothing in the next 7 days',
-                    groupByDay: true,
-                  ),
+                'Upcoming': _TaskListView(
+                  provider: upcomingTasksProvider,
+                  emptyTitle: 'Nothing in the next 7 days',
+                  groupByDay: true,
                 ),
-                FTabEntry(
-                  label: const Text('Inbox'),
-                  child: _TaskListView(
-                    provider: inboxTasksProvider,
-                    emptyTitle: 'Inbox zero',
-                    emptyMessage: 'Quick captures without a date land here.',
-                  ),
+                'Inbox': _TaskListView(
+                  provider: inboxTasksProvider,
+                  emptyTitle: 'Inbox zero',
+                  emptyMessage: 'Quick captures without a date land here.',
                 ),
-                const FTabEntry(
-                  label: Text('Calendar'),
-                  child: _CalendarView(),
-                ),
-                const FTabEntry(label: Text('Kanban'), child: _KanbanView()),
-                const FTabEntry(label: Text('Matrix'), child: _MatrixView()),
-              ],
+                'Calendar': const _CalendarView(),
+                'Kanban': const _KanbanView(),
+                'Matrix': const _MatrixView(),
+              },
             ),
           ),
         ],
@@ -804,6 +790,9 @@ class _ProjectDrawer extends ConsumerWidget {
     final selected = ref.watch(taskProjectFilterProvider);
     final counts = ref.watch(openTasksProvider).valueOrNull ?? const [];
 
+    // Stays a Material `Drawer` body rather than an `FSidebar` — see the note on
+    // `_NotesDrawer`. The accent `DrawerHeader` is brand chrome forui has no
+    // equivalent for.
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,

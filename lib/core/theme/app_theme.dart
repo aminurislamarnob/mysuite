@@ -361,17 +361,8 @@ class AppTheme {
         ),
         margin: EdgeInsets.zero,
       ),
-      chipTheme: ChipThemeData(
-        backgroundColor: brand.tints.first,
-        selectedColor: primary,
-        side: highContrast ? BorderSide(color: text) : BorderSide.none,
-        shape: const StadiumBorder(),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        labelStyle: TextStyle(
-            color: text, fontSize: 13, fontWeight: FontWeight.w600),
-        secondaryLabelStyle: TextStyle(
-            color: onPrimary, fontSize: 13, fontWeight: FontWeight.w600),
-      ),
+      // No `chipTheme`: every chip is a `Pill` or `BrandChip` now, both of which
+      // draw their own stadium. Same reason `elevatedButtonTheme` went.
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: highContrast ? surface : brand.tints.first,

@@ -367,6 +367,10 @@ class _NotesDrawer extends ConsumerWidget {
       Navigator.pop(context);
     }
 
+    // Stays a Material `Drawer` body, not an `FSidebar`: the rows are already
+    // branded (`_DrawerItem`, `Pill`), and FSidebar's own item model would
+    // reimpose forui's neutral styling on them. The panel itself is a
+    // `brandSideSheet`, so nothing Material-looking reaches the screen.
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,

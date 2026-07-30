@@ -61,16 +61,15 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
         tooltip: 'Add transaction',
         onPressed: () => ExpenseEntrySheet.show(context),
       ),
-      // FTabs owns the strip and the views together, so the strip moves out of
-      // the header into the body.
-      child: FTabs(
-        expands: true,
-        children: [
-          const FTabEntry(label: Text('Overview'), child: _OverviewTab()),
-          const FTabEntry(label: Text('Reports'), child: _ReportsTab()),
-          const FTabEntry(label: Text('Budgets'), child: _BudgetsTab()),
-          const FTabEntry(label: Text('Bills'), child: _BillsTab()),
-        ],
+      // BrandTabs owns the strip and the views together, so the strip moves out
+      // of the header into the body.
+      child: const BrandTabs(
+        tabs: {
+          'Overview': _OverviewTab(),
+          'Reports': _ReportsTab(),
+          'Budgets': _BudgetsTab(),
+          'Bills': _BillsTab(),
+        },
       ),
     );
   }

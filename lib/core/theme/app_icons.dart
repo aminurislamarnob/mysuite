@@ -144,6 +144,7 @@ class AppIcons {
   static const heart = HugeIcons.strokeRoundedFavourite;
   static const tag = HugeIcons.strokeRoundedTag01;
   static const mic = HugeIcons.strokeRoundedMic01;
+  static const micOff = HugeIcons.strokeRoundedMicOff01;
   static const gallery = HugeIcons.strokeRoundedImage02;
   static const camera = HugeIcons.strokeRoundedCamera01;
   static const scan = HugeIcons.strokeRoundedScan;

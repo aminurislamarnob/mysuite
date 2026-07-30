@@ -180,7 +180,7 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
       },
       actions: [
         CircleIconButton(
-          icon: _listening ? AppIcons.mic : AppIcons.mic,
+          icon: _listening ? AppIcons.micOff : AppIcons.mic,
           tooltip: 'Voice entry',
           color: _listening ? AppColors.dangerLight : null,
           size: 40,
@@ -196,16 +196,15 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SegmentedButton<int>(
-            segments: const [
-              ButtonSegment(value: TxKind.expense, label: Text('Expense')),
-              ButtonSegment(value: TxKind.income, label: Text('Income')),
-              ButtonSegment(value: TxKind.transfer, label: Text('Transfer')),
-            ],
-            selected: {_kind},
-            showSelectedIcon: false,
-            onSelectionChanged: (s) => setState(() {
-              _kind = s.first;
+          BrandSegmented<int>(
+            options: const {
+              TxKind.expense: 'Expense',
+              TxKind.income: 'Income',
+              TxKind.transfer: 'Transfer',
+            },
+            selected: _kind,
+            onSelected: (k) => setState(() {
+              _kind = k;
               _categoryId = null;
             }),
           ),

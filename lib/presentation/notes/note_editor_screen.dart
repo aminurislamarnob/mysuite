@@ -265,7 +265,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
           leadingIcon: AppIcons.back,
           actions: [
             CircleIconButton(
-              icon: _listening ? AppIcons.mic : AppIcons.mic,
+              icon: _listening ? AppIcons.micOff : AppIcons.mic,
               tooltip: _listening ? 'Stop dictation' : 'Dictate',
               color: _listening ? AppColors.dangerLight : null,
               size: 40,

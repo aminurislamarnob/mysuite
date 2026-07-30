@@ -1000,6 +1000,73 @@ class BrandSegmented<T extends Object> extends StatelessWidget {
   }
 }
 
+/// A tab strip plus its views, replacing Material's `TabBar` + `TabBarView`.
+///
+/// Always scrollable: the strip's pills size to their labels, so a long label
+/// like "Overview" cannot be squeezed into an equal-width slot and wrapped.
+class BrandTabs extends StatelessWidget {
+  /// The tab labels, in order, mapped to the view each one shows.
+  final Map<String, Widget> tabs;
+
+  const BrandTabs({super.key, required this.tabs});
+
+  @override
+  Widget build(BuildContext context) => FTabs(
+    scrollable: true,
+    expands: true,
+    children: [
+      for (final entry in tabs.entries)
+        FTabEntry(label: Text(entry.key), child: entry.value),
+    ],
+  );
+}
+
+/// An overflow menu, replacing Material's [PopupMenuButton].
+///
+/// The trigger is the same [CircleIconButton] used for every other row action,
+/// so the affordance matches the rest of the app rather than Material's bare
+/// icon and grey card.
+class BrandMenuButton<T extends Object> extends StatelessWidget {
+  /// The menu entries, in order, keyed by the value handed to [onSelected].
+  final Map<T, String> items;
+  final ValueChanged<T> onSelected;
+  final HugeIconData icon;
+  final String tooltip;
+
+  const BrandMenuButton({
+    super.key,
+    required this.items,
+    required this.onSelected,
+    this.icon = AppIcons.moreVertical,
+    this.tooltip = 'More',
+  });
+
+  @override
+  Widget build(BuildContext context) => FPopoverMenu(
+    menuBuilder: (context, controller, _) => [
+      FItemGroup(
+        children: [
+          for (final entry in items.entries)
+            FItem(
+              title: Text(entry.value),
+              // The menu does not dismiss itself on selection.
+              onPress: () {
+                controller.hide();
+                onSelected(entry.key);
+              },
+            ),
+        ],
+      ),
+    ],
+    builder: (context, controller, _) => CircleIconButton(
+      icon: icon,
+      tooltip: tooltip,
+      size: 40,
+      onPressed: controller.toggle,
+    ),
+  );
+}
+
 /// The coral disc that floats over a list, replacing [FloatingActionButton].
 class BrandFab extends StatelessWidget {
   final HugeIconData icon;
