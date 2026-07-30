@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/settings/app_settings.dart';
@@ -34,13 +35,20 @@ class AppShell extends ConsumerWidget {
             .fadeIn(duration: 220.ms)
             .slideY(begin: 0.03, end: 0, curve: Curves.easeOutQuart);
 
-    return Scaffold(
-      // The curved bar draws its own background and floats the action button
-      // over the notch, so it is the body's bottom chrome rather than a
-      // Material NavigationBar.
-      extendBody: true,
-      body: body,
-      bottomNavigationBar: CurvedNavBar(
+    // The bar is stacked over the body rather than placed in FScaffold's footer
+    // slot: it draws its own background, floats the action button above the
+    // notch, and the body has to show through that notch. That is Material's
+    // `extendBody`, which FScaffold has no equivalent for — a footer would push
+    // the body up instead. Screens already reserve bottom padding for the bar.
+    return BrandScaffold(
+      child: Stack(
+        children: [
+          Positioned.fill(child: body),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: CurvedNavBar(
         currentIndex: navigationShell.currentIndex,
         onSelected: (i) => navigationShell.goBranch(
           i,
@@ -72,6 +80,9 @@ class AppShell extends ConsumerWidget {
           ),
         ],
       ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -85,15 +96,17 @@ class QuickAddButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
-    return Semantics(
-      button: true,
-      label: 'Quick add',
-      child: Tooltip(
-        message: 'Quick add',
-        child: Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: [
+    return FTooltip(
+      tipBuilder: (_, _) => const Text('Quick add'),
+      semanticsLabel: 'Quick add',
+      child: FTappable(
+        onPress: onPressed,
+        semanticsLabel: 'Quick add',
+        child: DecoratedBox(
+          decoration: ShapeDecoration(
+            color: primary,
+            shape: const CircleBorder(),
+            shadows: [
               BoxShadow(
                 color: primary.withValues(alpha: 0.28),
                 blurRadius: 10,
@@ -102,18 +115,10 @@ class QuickAddButton extends StatelessWidget {
               ),
             ],
           ),
-          child: Material(
-            color: primary,
-            shape: const CircleBorder(),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: onPressed,
-              child: const SizedBox(
-                width: 58,
-                height: 58,
-                child: AppIcon(AppIcons.add, color: Colors.white, size: 30),
-              ),
-            ),
+          child: const SizedBox(
+            width: 58,
+            height: 58,
+            child: AppIcon(AppIcons.add, color: Colors.white, size: 30),
           ),
         ),
       ),
@@ -126,9 +131,8 @@ class QuickAddButton extends StatelessWidget {
 Future<void> showQuickAdd(BuildContext context, WidgetRef ref) {
   final settings = ref.read(settingsProvider);
 
-  return showModalBottomSheet(
+  return brandSheet(
     context: context,
-    isScrollControlled: true,
     builder: (sheetContext) => SheetScaffold(
       title: 'Quick add',
       child: Column(
@@ -264,19 +268,17 @@ Widget _tile({
 Future<void> _showHabitPicker(BuildContext context, WidgetRef ref) async {
   final habits = ref.read(habitsListProvider).valueOrNull ?? const [];
   if (habits.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('No habits yet — add one first.')),
-    );
+    brandToast(context, 'No habits yet — add one first.');
     return;
   }
 
-  await showModalBottomSheet(
+  await brandSheet(
     context: context,
     builder: (sheetContext) => SheetScaffold(
       title: 'Log a habit',
       child: Column(
         children: habits.map((h) {
-          return ListTile(
+          return BrandTile(
             leading: AppIcon(AppIcons.habit(h.icon), color: Color(h.color)),
             title: Text(h.name),
             subtitle: h.unit == null
@@ -287,9 +289,7 @@ Future<void> _showHabitPicker(BuildContext context, WidgetRef ref) async {
               await ref.read(habitRepositoryProvider).addToDay(h.id, 1);
               if (sheetContext.mounted) Navigator.pop(sheetContext);
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Logged ${h.name}.')),
-                );
+                brandToast(context, 'Logged ${h.name}.');
               }
             },
           );
@@ -306,19 +306,17 @@ Future<void> _showDosePicker(BuildContext context, WidgetRef ref) async {
       .toList();
 
   if (doses.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('No pending doses today.')),
-    );
+    brandToast(context, 'No pending doses today.');
     return;
   }
 
-  await showModalBottomSheet(
+  await brandSheet(
     context: context,
     builder: (sheetContext) => SheetScaffold(
       title: 'Mark taken',
       child: Column(
         children: doses.map((v) {
-          return ListTile(
+          return BrandTile(
             leading: AppIcon(AppIcons.medicineForm(v.medicine.form),
                 color: AppColors.medicineAccent),
             title: Text(v.medicine.name),
@@ -333,9 +331,7 @@ Future<void> _showDosePicker(BuildContext context, WidgetRef ref) async {
                   .setDoseStatus(v.dose.id, DoseStatus.taken);
               if (sheetContext.mounted) Navigator.pop(sheetContext);
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('${v.medicine.name} marked taken.')),
-                );
+                brandToast(context, '${v.medicine.name} marked taken.');
               }
             },
           );

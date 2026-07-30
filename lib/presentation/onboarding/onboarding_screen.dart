@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/database/app_database.dart';
@@ -11,6 +12,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/brand.dart';
+import '../../core/widgets/common.dart';
 import '../habits/repository/habit_repository.dart';
 import '../modules/modules_screen.dart';
 
@@ -73,8 +75,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
+    return BrandScaffold(
+      child: SafeArea(
         child: Column(
           children: [
             Padding(
@@ -82,17 +84,30 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               child: Row(
                 children: [
                   Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(999),
-                      child: LinearProgressIndicator(
-                        value: (_index + 1) / (_lastPage + 1),
-                        minHeight: 4,
+                    child: FDeterminateProgress(
+                      value: (_index + 1) / (_lastPage + 1),
+                      semanticsLabel: 'Step ${_index + 1} of ${_lastPage + 1}',
+                      style: .delta(
+                        constraints: const BoxConstraints.tightFor(height: 4),
+                        trackDecoration: .boxDelta(
+                          color: context.brand.hairline,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        fillDecoration: .boxDelta(
+                          color: Theme.of(context).colorScheme.primary,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
                       ),
                     ),
                   ),
                   if (_index < _lastPage)
-                    TextButton(
-                        onPressed: _finish, child: const Text('Skip')),
+                    BrandButton(
+                      label: 'Skip',
+                      kind: BrandButtonKind.ghost,
+                      expand: false,
+                      small: true,
+                      onPressed: _finish,
+                    ),
                 ],
               ),
             ),
@@ -111,14 +126,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
             Padding(
               padding: const EdgeInsets.all(20),
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: _next,
-                  style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16)),
-                  child: Text(_index == _lastPage ? 'Get started' : 'Continue'),
-                ),
+              child: BrandButton(
+                label: _index == _lastPage ? 'Get started' : 'Continue',
+                onPressed: _next,
               ),
             ),
           ],
@@ -263,14 +273,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 .setThemeMode(ThemeMode.dark),
           ),
           const SizedBox(height: 20),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('High contrast'),
-            subtitle: const Text('Stronger borders and text',
-                style: TextStyle(fontSize: 12)),
+          BrandSwitchTile(
+            title: 'High contrast',
+            subtitle: 'Stronger borders and text',
             value: settings.highContrast,
-            onChanged:
-                ref.read(settingsProvider.notifier).setHighContrast,
+            onChanged: ref.read(settingsProvider.notifier).setHighContrast,
           ),
         ],
       ),
@@ -285,20 +292,29 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         children: [
           ...AppModule.values.map((m) {
             final (icon, color) = ModulesScreen.metaFor(m);
-            return CheckboxListTile(
-              contentPadding: EdgeInsets.zero,
-              secondary: AppIcon(icon, color: color),
+            final on = _modules.contains(m);
+            return BrandTile(
+              leading: AppIcon(icon, color: color),
               title: Text(m.label,
                   style: const TextStyle(fontWeight: FontWeight.w600)),
               subtitle: Text(m.blurb, style: const TextStyle(fontSize: 12)),
-              value: _modules.contains(m),
-              onChanged: (v) => setState(() {
-                v == true ? _modules.add(m) : _modules.remove(m);
+              trailing: FCheckbox(
+                value: on,
+                semanticsLabel: m.label,
+                onChange: (v) => setState(() {
+                  v ? _modules.add(m) : _modules.remove(m);
+                }),
+              ),
+              onTap: () => setState(() {
+                on ? _modules.remove(m) : _modules.add(m);
               }),
             );
           }),
           if (_modules.contains(AppModule.habits)) ...[
-            const Divider(height: 32),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: FDivider(),
+            ),
             const Align(
               alignment: Alignment.centerLeft,
               child: Text('Start tracking a few habits?',
@@ -309,13 +325,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               spacing: 8,
               runSpacing: 8,
               children: HabitRepository.presets
-                  .map((p) => FilterChip(
-                        avatar: AppIcon(AppIcons.habit(p.icon),
-                            size: 16, color: Color(p.color)),
-                        label: Text(p.name),
+                  .map((p) => Pill(
+                        icon: AppIcons.habit(p.icon),
+                        label: p.name,
+                        color: Color(p.color),
                         selected: _habits.contains(p.name),
-                        onSelected: (v) => setState(() {
-                          v ? _habits.add(p.name) : _habits.remove(p.name);
+                        onTap: () => setState(() {
+                          _habits.contains(p.name)
+                              ? _habits.remove(p.name)
+                              : _habits.add(p.name);
                         }),
                       ))
                   .toList(),
@@ -333,28 +351,22 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       subtitle: 'Two optional extras, then you are set.',
       child: Column(
         children: [
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            secondary: const AppIcon(AppIcons.lock),
-            title: const Text('Lock the app'),
-            subtitle: const Text('Use biometrics or a PIN on launch',
-                style: TextStyle(fontSize: 12)),
+          BrandSwitchTile(
+            leading: const AppIcon(AppIcons.lock),
+            title: 'Lock the app',
+            subtitle: 'Use biometrics or a PIN on launch',
             value: settings.appLockEnabled,
             onChanged: (v) async {
               final security = ref.read(securityServiceProvider);
               if (v && !await security.canUseBiometrics()) {
                 if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text(
-                          'No biometrics found — set a PIN in Settings.')),
-                );
+                brandToast(
+                    context, 'No biometrics found — set a PIN in Settings.');
               }
               ref.read(settingsProvider.notifier).setAppLock(v);
             },
           ),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
+          BrandTile(
             leading: const AppIcon(AppIcons.notificationsActive),
             title: const Text('Allow reminders'),
             subtitle: const Text('Dose times, tasks and bills',
@@ -365,11 +377,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   .read(notificationServiceProvider)
                   .requestPermissions();
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text(granted
+                brandToast(
+                  context,
+                  granted
                       ? 'Reminders enabled.'
-                      : 'You can enable these later in Settings.'),
-                ));
+                      : 'You can enable these later in Settings.',
+                );
               }
             },
           ),
@@ -412,8 +425,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           accent: selected ? primary : null,
           onTap: onTap,
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-          child: ListTile(
-            contentPadding: EdgeInsets.zero,
+          child: BrandTile(
             title: Text(label,
                 style: const TextStyle(
                     fontWeight: FontWeight.w600, fontSize: 15)),

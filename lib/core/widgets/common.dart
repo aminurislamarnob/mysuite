@@ -458,47 +458,58 @@ class SheetScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
+    // The surface is the sheet's own responsibility now. Material's
+    // bottomSheetTheme supplied the background and the 28px top corners;
+    // showFSheet does not, and without this the page shows through the sheet.
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadii.sheet),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 12),
-            Container(
-              width: 44,
-              height: 4,
-              decoration: BoxDecoration(
-                color: context.brand.hairline,
-                borderRadius: BorderRadius.circular(999),
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 44,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: context.brand.hairline,
+                  borderRadius: BorderRadius.circular(999),
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 18, 16, 10),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleLarge
-                          ?.copyWith(fontSize: 20, letterSpacing: -0.4),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 18, 16, 10),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleLarge
+                            ?.copyWith(fontSize: 20, letterSpacing: -0.4),
+                      ),
                     ),
-                  ),
-                  ...actions,
-                ],
+                    ...actions,
+                  ],
+                ),
               ),
-            ),
-            Flexible(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
-                child: child,
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
+                  child: child,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
