@@ -146,33 +146,18 @@ Future<void> newNoteFlow(
   if (context.mounted) context.push('/note_editor', extra: id);
 }
 
+/// Kept as a positional shorthand for this screen's two call sites; the dialog
+/// itself is the shared [brandConfirm].
 Future<bool> confirmDialog(
   BuildContext context,
   String title,
   String body,
-) async {
-  final result = await showDialog<bool>(
-    context: context,
-    builder: (_) => AlertDialog(
-      title: Text(title),
-      content: Text(body),
-      actions: [
-        BrandButton(
-          label: 'Cancel',
-          kind: BrandButtonKind.ghost,
-          expand: false,
-          onPressed: () => Navigator.pop(context, false),
-        ),
-        BrandButton(
-          label: 'Confirm',
-          expand: false,
-          onPressed: () => Navigator.pop(context, true),
-        ),
-      ],
-    ),
-  );
-  return result ?? false;
-}
+) => brandConfirm(
+  context,
+  title: title,
+  message: body,
+  confirmLabel: 'Confirm',
+);
 
 class _NoteCard extends ConsumerWidget {
   final Note note;
@@ -191,14 +176,12 @@ class _NoteCard extends ConsumerWidget {
 
     return TintCard(
       padding: EdgeInsets.zero,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: () {
-          if (scope == NoteScope.trash) return;
-          context.push('/note_editor', extra: note.id);
-        },
-        onLongPress: () => _showActions(context, repo),
-        child: Padding(
+      onTap: () {
+        if (scope == NoteScope.trash) return;
+        context.push('/note_editor', extra: note.id);
+      },
+      onLongPress: () => _showActions(context, repo),
+      child: Padding(
           padding: const EdgeInsets.all(14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,7 +263,6 @@ class _NoteCard extends ConsumerWidget {
               ),
             ],
           ),
-        ),
       ),
     );
   }
@@ -515,27 +497,29 @@ class _NotesDrawer extends ConsumerWidget {
 
   Future<void> _createFolder(BuildContext context, WidgetRef ref) async {
     final controller = TextEditingController();
-    final name = await showDialog<String>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('New folder'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(hintText: 'Folder name'),
-          onSubmitted: (v) => Navigator.pop(context, v),
-        ),
-        actions: [
+    final name = await brandDialog<String>(
+      context,
+      title: 'New folder',
+      builder: (dialogContext) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          BrandField(
+            controller: controller,
+            hint: 'Folder name',
+            autofocus: true,
+            onSubmit: (v) => Navigator.pop(dialogContext, v),
+          ),
+          const SizedBox(height: 20),
+          BrandButton(
+            label: 'Create',
+            onPressed: () => Navigator.pop(dialogContext, controller.text),
+          ),
+          const SizedBox(height: 8),
           BrandButton(
             label: 'Cancel',
             kind: BrandButtonKind.ghost,
-            expand: false,
-            onPressed: () => Navigator.pop(context),
-          ),
-          BrandButton(
-            label: 'Create',
-            expand: false,
-            onPressed: () => Navigator.pop(context, controller.text),
+            onPressed: () => Navigator.pop(dialogContext),
           ),
         ],
       ),

@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
@@ -248,12 +249,11 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               Expanded(
-                child: Slider(
+                child: BrandSlider(
                   value: state.customMinutes.toDouble(),
                   min: 5,
                   max: 120,
                   divisions: 23,
-                  label: '${state.customMinutes} min',
                   onChanged: (v) => notifier.setCustomMinutes(v.round()),
                 ),
               ),
@@ -355,27 +355,23 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
     final controller = TextEditingController(
       text: '${ref.read(focusGoalProvider)}',
     );
-    final result = await showDialog<String>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Daily focus goal'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(suffixText: 'minutes'),
-        ),
-        actions: [
-          BrandButton(
-            label: 'Cancel',
-            kind: BrandButtonKind.ghost,
-            expand: false,
-            onPressed: () => Navigator.pop(context),
+    final result = await brandDialog<String>(
+      context,
+      title: 'Daily focus goal',
+      builder: (dialogContext) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          BrandField(
+            controller: controller,
+            autofocus: true,
+            keyboardType: TextInputType.number,
+            suffix: const Text('minutes'),
           ),
+          const SizedBox(height: 20),
           BrandButton(
             label: 'Save',
-            expand: false,
-            onPressed: () => Navigator.pop(context, controller.text),
+            onPressed: () => Navigator.pop(dialogContext, controller.text),
           ),
         ],
       ),
@@ -416,13 +412,11 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 16),
-              TextField(
+              BrandField(
                 controller: controller,
+                label: 'What did you work on?',
                 autofocus: true,
                 textCapitalization: TextCapitalization.sentences,
-                decoration: const InputDecoration(
-                  labelText: 'What did you work on?',
-                ),
               ),
               const SizedBox(height: 20),
               const Text('Focus quality'),
@@ -481,14 +475,16 @@ class _RoundAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final button = Material(
-      color: soft
-          ? AppColors.wash(color, brightness: Theme.of(context).brightness)
-          : color,
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onPressed,
+    final button = FTappable(
+      onPress: onPressed,
+      semanticsLabel: tooltip ?? label,
+      child: DecoratedBox(
+        decoration: ShapeDecoration(
+          color: soft
+              ? AppColors.wash(color, brightness: Theme.of(context).brightness)
+              : color,
+          shape: const CircleBorder(),
+        ),
         child: SizedBox(
           width: size,
           height: size,
@@ -511,7 +507,10 @@ class _RoundAction extends StatelessWidget {
         ),
       ),
     );
-    return Tooltip(message: tooltip ?? label ?? '', child: button);
+    return FTooltip(
+      tipBuilder: (_, _) => Text(tooltip ?? label ?? ''),
+      child: button,
+    );
   }
 }
 

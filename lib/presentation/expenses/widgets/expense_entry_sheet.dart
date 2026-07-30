@@ -210,19 +210,19 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
             }),
           ),
           const SizedBox(height: 20),
-          TextField(
+          BrandField(
             controller: _amount,
+            hint: '0',
             autofocus: true,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w700),
-            decoration: InputDecoration(
-              prefixText: '$currency ',
-              prefixStyle: TextStyle(
+            textStyle: const TextStyle(fontSize: 30, fontWeight: FontWeight.w700),
+            prefix: Text(
+              currency,
+              style: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.w600,
                 color: muted,
               ),
-              hintText: '0',
             ),
           ),
           const SizedBox(height: 16),
@@ -292,13 +292,11 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
           ],
 
           const SizedBox(height: 16),
-          TextField(
+          BrandField(
             controller: _note,
+            label: 'Note',
             textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              labelText: 'Note',
-              prefixIcon: AppIcon(AppIcons.note),
-            ),
+            prefix: const AppIcon(AppIcons.note),
           ),
           const SizedBox(height: 8),
           BrandTile(
@@ -307,11 +305,12 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
             subtitle: Text(Fmt.dayMonthYear(_date)),
             trailing: const AppIcon(AppIcons.chevronRight),
             onTap: () async {
-              final picked = await showDatePicker(
-                context: context,
-                initialDate: _date,
-                firstDate: DateTime(2000),
-                lastDate: DateTime(2100),
+              final picked = await brandDatePicker(
+                context,
+                initial: _date,
+                first: DateTime(2000),
+                last: DateTime(2100),
+                title: 'Date',
               );
               if (picked != null) setState(() => _date = picked);
             },

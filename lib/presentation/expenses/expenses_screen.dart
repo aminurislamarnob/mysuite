@@ -724,13 +724,13 @@ class _BudgetsTab extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextField(
+              BrandField(
                 controller: controller,
+                label: 'Monthly amount',
                 autofocus: true,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: const InputDecoration(labelText: 'Monthly amount'),
               ),
               const SizedBox(height: 16),
               const Text('Applies to'),
@@ -911,36 +911,33 @@ class _BillsTab extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextField(
+              BrandField(
                 controller: name,
+                label: 'Name',
+                hint: 'Internet',
                 autofocus: true,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  hintText: 'Internet',
-                ),
               ),
               const SizedBox(height: 12),
-              TextField(
+              BrandField(
                 controller: amount,
+                label: 'Amount',
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: const InputDecoration(labelText: 'Amount'),
               ),
               const SizedBox(height: 16),
-              SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(value: 'weekly', label: Text('Weekly')),
-                  ButtonSegment(value: 'monthly', label: Text('Monthly')),
-                  ButtonSegment(value: 'yearly', label: Text('Yearly')),
-                ],
-                selected: {period},
-                showSelectedIcon: false,
-                onSelectionChanged: (s) => setState(() => period = s.first),
+              BrandSegmented<String>(
+                options: const {
+                  'weekly': 'Weekly',
+                  'monthly': 'Monthly',
+                  'yearly': 'Yearly',
+                },
+                selected: period,
+                onSelected: (v) => setState(() => period = v),
               ),
               const SizedBox(height: 8),
-              SwitchListTile(
-                title: const Text('This is a subscription'),
+              BrandSwitchTile(
+                title: 'This is a subscription',
                 value: isSubscription,
                 onChanged: (v) => setState(() => isSubscription = v),
               ),
@@ -949,11 +946,12 @@ class _BillsTab extends ConsumerWidget {
                 title: const Text('Next due'),
                 subtitle: Text(Fmt.dayMonthYear(due)),
                 onTap: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: due,
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime(2100),
+                  final picked = await brandDatePicker(
+                    context,
+                    initial: due,
+                    first: DateTime.now(),
+                    last: DateTime(2100),
+                    title: 'Next due',
                   );
                   if (picked != null) setState(() => due = picked);
                 },

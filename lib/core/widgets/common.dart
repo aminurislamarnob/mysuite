@@ -691,6 +691,15 @@ class BrandField extends StatelessWidget {
   final Widget? suffix;
   final FocusNode? focusNode;
 
+  /// Overrides the input text's own style, for the one field that is a display
+  /// figure rather than body copy — the expense sheet's amount.
+  final TextStyle? textStyle;
+
+  /// Drops the fill and the border, for a field that reads as a heading rather
+  /// than an input — the note editor's title, which sits flush above the Quill
+  /// body and would look boxed-in with the usual treatment.
+  final bool bare;
+
   const BrandField({
     super.key,
     this.controller,
@@ -711,6 +720,8 @@ class BrandField extends StatelessWidget {
     this.prefix,
     this.suffix,
     this.focusNode,
+    this.textStyle,
+    this.bare = false,
   });
 
   @override
@@ -740,29 +751,89 @@ class BrandField extends StatelessWidget {
       suffixBuilder: suffix == null ? null : (_, _, _) => suffix!,
       focusNode: focusNode,
       style: .delta(
+        contentTextStyle: textStyle == null
+            ? null
+            : .delta([.all(TextStyleDelta.value(textStyle!))]),
         // At high contrast the tint flattens, so the field falls back to the
         // page surface and leans on its border instead.
         color: .delta([
           .all(
-            flattened ? Theme.of(context).colorScheme.surface : brand.tint(0),
+            bare
+                ? Colors.transparent
+                : flattened
+                ? Theme.of(context).colorScheme.surface
+                : brand.tint(0),
           ),
         ]),
         // Only the resting border is replaced. forui derives the focused and
         // error borders from FColors, which are already the brand's coral and
         // danger — the same treatment the Material inputDecorationTheme gave.
         border: .delta([
-          .base(
-            OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadii.field),
-              borderSide: flattened
-                  ? BorderSide(
-                      color: Theme.of(context).colorScheme.onSurface,
-                      width: 1.2,
-                    )
-                  : BorderSide.none,
+          if (bare)
+            .all(InputBorder.none)
+          else
+            .base(
+              OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadii.field),
+                borderSide: flattened
+                    ? BorderSide(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        width: 1.2,
+                      )
+                    : BorderSide.none,
+              ),
             ),
-          ),
         ]),
+      ),
+    );
+  }
+}
+
+/// A dismissible label, replacing Material's [Chip] with `onDeleted`.
+///
+/// Shares [Pill]'s unselected look — hairline stadium on the canvas — with a
+/// trailing close glyph, so a row of these matches the filter chips elsewhere.
+class BrandChip extends StatelessWidget {
+  final String label;
+  final HugeIconData? icon;
+  final VoidCallback? onRemove;
+
+  const BrandChip({super.key, required this.label, this.icon, this.onRemove});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.primary;
+    return DecoratedBox(
+      decoration: ShapeDecoration(
+        color: context.brand.canvas,
+        shape: StadiumBorder(side: BorderSide(color: context.brand.hairline)),
+      ),
+      child: Padding(
+        padding: EdgeInsets.only(left: 12, right: onRemove == null ? 12 : 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              AppIcon(icon!, size: 13, color: color),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (onRemove != null)
+              CircleIconButton(
+                icon: AppIcons.close,
+                tooltip: 'Remove $label',
+                size: 28,
+                onPressed: onRemove,
+              ),
+          ],
+        ),
       ),
     );
   }

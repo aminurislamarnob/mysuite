@@ -289,19 +289,14 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: TextField(
+              child: BrandField(
                 controller: _titleController,
+                hint: 'Title',
+                bare: true,
                 onChanged: (_) => _dirty = true,
-                style: const TextStyle(
+                textStyle: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
-                ),
-                decoration: const InputDecoration(
-                  hintText: 'Title',
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  filled: false,
                 ),
               ),
             ),
@@ -313,21 +308,15 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
                   runSpacing: 4,
                   children: [
                     if (_reminderAt != null)
-                      Chip(
-                        avatar: const AppIcon(AppIcons.alarm, size: 14),
-                        label: Text(
-                          Fmt.due(_reminderAt!, withTime: true),
-                          style: const TextStyle(fontSize: 11),
-                        ),
-                        onDeleted: () => setState(() => _reminderAt = null),
+                      BrandChip(
+                        icon: AppIcons.alarm,
+                        label: Fmt.due(_reminderAt!, withTime: true),
+                        onRemove: () => setState(() => _reminderAt = null),
                       ),
                     ..._tags.map(
-                      (t) => Chip(
-                        label: Text(
-                          '#$t',
-                          style: const TextStyle(fontSize: 11),
-                        ),
-                        onDeleted: () => setState(() => _tags.remove(t)),
+                      (t) => BrandChip(
+                        label: '#$t',
+                        onRemove: () => setState(() => _tags.remove(t)),
                       ),
                     ),
                   ],
@@ -450,29 +439,23 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
 
   Future<void> _editTags() async {
     final controller = TextEditingController(text: _tags.join(', '));
-    final result = await showDialog<String>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Tags'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'work, ideas, urgent',
-            helperText: 'Separate with commas',
+    final result = await brandDialog<String>(
+      context,
+      title: 'Tags',
+      builder: (dialogContext) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          BrandField(
+            controller: controller,
+            hint: 'work, ideas, urgent',
+            helper: 'Separate with commas',
+            autofocus: true,
           ),
-        ),
-        actions: [
-          BrandButton(
-            label: 'Cancel',
-            kind: BrandButtonKind.ghost,
-            expand: false,
-            onPressed: () => Navigator.pop(context),
-          ),
+          const SizedBox(height: 20),
           BrandButton(
             label: 'Save',
-            expand: false,
-            onPressed: () => Navigator.pop(context, controller.text),
+            onPressed: () => Navigator.pop(dialogContext, controller.text),
           ),
         ],
       ),
@@ -523,27 +506,29 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   }
 
   Future<void> _pickReminder() async {
-    final date = await showDatePicker(
-      context: context,
-      initialDate: _reminderAt ?? DateTime.now().add(const Duration(hours: 1)),
-      firstDate: DateTime.now().subtract(const Duration(days: 1)),
-      lastDate: DateTime.now().add(const Duration(days: 3650)),
+    final fallback = DateTime.now().add(const Duration(hours: 1));
+    final date = await brandDatePicker(
+      context,
+      initial: _reminderAt ?? fallback,
+      first: DateTime.now().subtract(const Duration(days: 1)),
+      last: DateTime.now().add(const Duration(days: 3650)),
+      title: 'Reminder date',
     );
     if (date == null || !mounted) return;
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(
-        _reminderAt ?? DateTime.now().add(const Duration(hours: 1)),
-      ),
+    final at = _reminderAt ?? fallback;
+    final minutes = await brandTimePicker(
+      context,
+      initialMinutes: at.hour * 60 + at.minute,
+      title: 'Reminder time',
     );
-    if (time == null) return;
+    if (minutes == null) return;
     setState(() {
       _reminderAt = DateTime(
         date.year,
         date.month,
         date.day,
-        time.hour,
-        time.minute,
+        minutes ~/ 60,
+        minutes % 60,
       );
       _dirty = true;
     });
