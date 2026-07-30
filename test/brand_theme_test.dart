@@ -1,23 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:mysuite/core/theme/app_colors.dart';
+import 'package:mysuite/core/theme/app_forui_theme.dart';
 import 'package:mysuite/core/theme/app_icons.dart';
 import 'package:mysuite/core/theme/app_theme.dart';
 import 'package:mysuite/core/widgets/brand.dart';
+import 'package:mysuite/core/widgets/common.dart';
 
-/// Pumps [child] under a theme built by [AppTheme] so the [BrandColors]
-/// extension is registered, the way the real app supplies it.
+/// Pumps [child] the way the real app does: a Material theme carrying the
+/// [BrandColors] extension, with the forui theme layered underneath it.
+///
+/// [FTheme] is not optional. forui's [FTappable] — which every tappable brand
+/// widget now sits on — reads `FAccessibilityScope` from it and throws without
+/// one. [FToaster] and [FTooltipGroup] are hosted for the same reason: they are
+/// the ancestors `showFToast` and [FTooltip] require, and `main.dart` installs
+/// all three above the router.
 Future<void> pumpBranded(
   WidgetTester tester,
   Widget child, {
   ThemeData? theme,
+  bool highContrast = false,
 }) async {
   await tester.pumpWidget(MaterialApp(
-    theme: theme ?? AppTheme.light(),
-    home: Scaffold(body: Center(child: child)),
+    theme: theme ?? AppTheme.light(highContrast: highContrast),
+    home: FTheme(
+      data: brandForuiTheme(
+        brightness: Brightness.light,
+        highContrast: highContrast,
+      ),
+      child: FToaster(
+        child: FTooltipGroup(
+          child: Scaffold(body: Center(child: child)),
+        ),
+      ),
+    ),
   ));
 }
+
+/// The [BoxDecoration] fills painted inside [of], outermost first.
+///
+/// [FCard] paints through a [DecoratedBox] rather than a Material `Material`, so
+/// this is how a brand surface's fill is inspected now.
+List<Color?> fillsOf(WidgetTester tester, Finder of) => tester
+    .widgetList<DecoratedBox>(
+      find.descendant(of: of, matching: find.byType(DecoratedBox)),
+    )
+    .map((d) => d.decoration)
+    .whereType<BoxDecoration>()
+    .map((d) => d.color)
+    .toList();
 
 void main() {
   group('AppIcon', () {
@@ -156,13 +189,7 @@ void main() {
       ),
     );
 
-    final fills = tester
-        .widgetList<Material>(find.descendant(
-          of: find.byType(TintCard),
-          matching: find.byType(Material),
-        ))
-        .map((m) => m.color)
-        .toList();
+    final fills = fillsOf(tester, find.byType(TintCard));
 
     expect(fills, contains(AppColors.tintPeach));
     expect(fills, contains(AppColors.tintApricot));
@@ -173,16 +200,25 @@ void main() {
     await pumpBranded(
       tester,
       const TintCard(child: Text('a')),
-      theme: AppTheme.light(highContrast: true),
+      highContrast: true,
     );
 
-    final material = tester.widget<Material>(find.descendant(
-      of: find.byType(TintCard),
-      matching: find.byType(Material),
-    ));
-    final shape = material.shape! as RoundedRectangleBorder;
-    expect(shape.side.style, BorderStyle.solid);
-    expect(shape.side.width, greaterThan(0));
+    final borders = tester
+        .widgetList<DecoratedBox>(find.descendant(
+          of: find.byType(TintCard),
+          matching: find.byType(DecoratedBox),
+        ))
+        .map((d) => d.decoration)
+        .whereType<BoxDecoration>()
+        .map((d) => d.border)
+        .whereType<Border>()
+        .where((b) => b.top.width > 0)
+        .toList();
+
+    // The pastel fill is gone at high contrast, so a real outline has to appear.
+    expect(borders, isNotEmpty);
+    expect(borders.first.top.style, BorderStyle.solid);
+    expect(fillsOf(tester, find.byType(TintCard)), contains(Colors.white));
   });
 
   testWidgets('ProgressRing renders an overrun in the error colour',
@@ -235,19 +271,19 @@ void main() {
     var selected = DateTime(today.year, today.month, today.day);
     late DateTime tapped;
 
-    await tester.pumpWidget(MaterialApp(
-      theme: AppTheme.light(),
-      home: Scaffold(
-        body: DayStrip(
-          selected: selected,
-          onSelected: (d) => tapped = d,
-        ),
+    await pumpBranded(
+      tester,
+      DayStrip(
+        selected: selected,
+        onSelected: (d) => tapped = d,
       ),
-    ));
+    );
 
     final yesterday = selected.subtract(const Duration(days: 1));
     await tester.tap(find.text(yesterday.day.toString().padLeft(2, '0')));
-    await tester.pump();
+    // FTappable schedules a press-state timer; settle it before the tree is torn
+    // down or the binding reports a pending timer.
+    await tester.pumpAndSettle();
 
     expect(tapped, yesterday);
   });
@@ -257,26 +293,72 @@ void main() {
 
     await tester.pumpWidget(MaterialApp(
       theme: AppTheme.light(),
-      home: Scaffold(
-        bottomNavigationBar: CurvedNavBar(
-          currentIndex: 0,
-          onSelected: (i) => picked = i,
-          centerAction: const SizedBox(width: 58, height: 58),
-          items: const [
-            CurvedNavItem(icon: AppIcons.dashboard, label: 'Today'),
-            CurvedNavItem(icon: AppIcons.modules, label: 'Modules'),
-            CurvedNavItem(icon: AppIcons.insights, label: 'Insights'),
-            CurvedNavItem(icon: AppIcons.settings, label: 'Settings'),
-          ],
+      home: FTheme(
+        data: brandForuiTheme(brightness: Brightness.light),
+        child: FToaster(
+          child: FTooltipGroup(
+            child: Scaffold(
+              bottomNavigationBar: CurvedNavBar(
+                currentIndex: 0,
+                onSelected: (i) => picked = i,
+                centerAction: const SizedBox(width: 58, height: 58),
+                items: const [
+                  CurvedNavItem(icon: AppIcons.dashboard, label: 'Today'),
+                  CurvedNavItem(icon: AppIcons.modules, label: 'Modules'),
+                  CurvedNavItem(icon: AppIcons.insights, label: 'Insights'),
+                  CurvedNavItem(icon: AppIcons.settings, label: 'Settings'),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     ));
 
-    // The bar shows a glyph and a selection dot rather than a label, so the
-    // destination is addressed by its tooltip.
-    await tester.tap(find.byTooltip('Insights'));
-    await tester.pump();
+    // The bar shows a glyph and a sliding dot rather than a label, so the
+    // destination is addressed by the semantics label FBottomNavigationBarItem
+    // announces — which also carries its position ("Tab 3 of 4").
+    await tester.tap(find.bySemanticsLabel(RegExp('Insights')));
+    await tester.pumpAndSettle();
 
     expect(picked, 2);
+  });
+
+  group('BrandScaffold', () {
+    testWidgets('provides the Material ancestor FScaffold lacks', (tester) async {
+      // flutter_quill, flutter_slidable, Dismissible, PopupMenuButton and
+      // DataTable all assert on an ancestor Material and throw "No Material
+      // widget found" without one. FScaffold does not supply it, so this is the
+      // guard for that whole failure class.
+      await pumpBranded(
+        tester,
+        BrandScaffold(
+          child: InkWell(onTap: () {}, child: const Text('needs material')),
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('needs material'), findsOneWidget);
+    });
+
+    testWidgets('restores the 24px content icon size', (tester) async {
+      // FScaffold installs an IconTheme from FStyle.iconStyle, which is sized for
+      // forui's own chevrons and loaders (20). Content glyphs expect Material's
+      // 24, so leaving it would silently shrink icons on every page.
+      await pumpBranded(
+        tester,
+        BrandScaffold(child: AppIcon(AppIcons.star)),
+      );
+
+      // The glyph, not AppIcon's box — the scaffold hands the child a tight
+      // constraint, which AppIcon's Center fills while pinning the glyph inside.
+      expect(
+        tester.getSize(find.descendant(
+          of: find.byType(AppIcon),
+          matching: find.byType(HugeIcon),
+        )),
+        const Size(24, 24),
+      );
+    });
   });
 }

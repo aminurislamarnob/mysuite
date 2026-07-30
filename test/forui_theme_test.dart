@@ -158,8 +158,7 @@ void main() {
     // context.brand and forui-side lookups cannot disagree.
     final theme = brandForuiTheme(brightness: Brightness.light);
 
-    expect(theme.extension<BrandColors>(), isNotNull);
-    expect(theme.extension<BrandColors>()!.tints.first, AppColors.tintPeach);
-    expect(theme.colors.extension<BrandColors>(), isNotNull);
+    expect(theme.extension<BrandColors>().tints.first, AppColors.tintPeach);
+    expect(theme.colors.extension<BrandColors>().hairline, AppColors.hairlineLight);
   });
 }

@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:forui/forui.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_icons.dart';
@@ -56,21 +57,34 @@ class TintCard extends StatelessWidget {
                 ? brand.tint(0)
                 : AppColors.wash(accent!, brightness: theme.brightness)));
 
-    final shape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(radius),
-      side: flattened
-          ? BorderSide(color: theme.colorScheme.onSurface, width: 1.2)
-          : BorderSide.none,
-    );
+    final corners = BorderRadius.circular(radius);
+    final body = Padding(padding: padding, child: child);
 
-    return Material(
-      color: background,
-      shape: shape,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(padding: padding, child: child),
+    return FCard(
+      // The tint rotation, the radius and the high-contrast outline are brand
+      // decisions, so they are passed explicitly rather than inherited from
+      // forui's card style — which is a bordered, unfilled, small-radius surface.
+      style: .delta(
+        decoration: .boxDelta(
+          color: background,
+          borderRadius: corners,
+          border: flattened
+              ? Border.fromBorderSide(
+                  BorderSide(color: theme.colorScheme.onSurface, width: 1.2))
+              : const Border(),
+        ),
+        padding: .value(EdgeInsets.zero),
       ),
+      clipBehavior: Clip.antiAlias,
+      child: onTap == null
+          ? body
+          : FTappable(
+              onPress: onTap,
+              // A card is a surface, not a control; only the inner content
+              // should announce itself.
+              semanticsButton: false,
+              child: body,
+            ),
     );
   }
 }
@@ -103,19 +117,23 @@ class CircleIconButton extends StatelessWidget {
     final theme = Theme.of(context);
     final tone = color ?? theme.colorScheme.onSurface;
 
-    final button = Material(
-      color: filled ? tone : Colors.transparent,
-      shape: CircleBorder(
-        side: filled
-            ? BorderSide.none
-            : BorderSide(color: context.brand.hairline, width: 1.4),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onPressed,
+    final button = FTappable(
+      onPress: onPressed,
+      semanticsLabel: tooltip,
+      child: DecoratedBox(
+        decoration: ShapeDecoration(
+          color: filled ? tone : Colors.transparent,
+          shape: CircleBorder(
+            side: filled
+                ? BorderSide.none
+                : BorderSide(color: context.brand.hairline, width: 1.4),
+          ),
+        ),
         child: SizedBox(
           width: size,
           height: size,
+          // AppIcon centres the glyph inside these tight constraints rather than
+          // letting the SVG stretch to fill them.
           child: AppIcon(
             icon,
             size: size * 0.45,
@@ -125,7 +143,13 @@ class CircleIconButton extends StatelessWidget {
       ),
     );
 
-    return tooltip == null ? button : Tooltip(message: tooltip!, child: button);
+    return tooltip == null
+        ? button
+        : FTooltip(
+            tipBuilder: (_, _) => Text(tooltip!),
+            semanticsLabel: tooltip,
+            child: button,
+          );
   }
 }
 
@@ -155,37 +179,37 @@ class BrandTopBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final pop = onLeading ?? () => Navigator.maybePop(context);
-    return SafeArea(
-      bottom: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-        child: Row(
-          children: [
-            CircleIconButton(
-                icon: leadingIcon, onPressed: pop, tooltip: 'Back', size: 40),
-            Expanded(
-              child: Text(
-                title,
-                textAlign: TextAlign.center,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontSize: 17),
-              ),
-            ),
-            if (trailingIcon != null)
-              CircleIconButton(
-                icon: trailingIcon!,
-                onPressed: onTrailing,
-                tooltip: trailingTooltip,
-                size: 40,
-              )
-            else
-              const SizedBox(width: 40),
-          ],
-        ),
+    final titleStyle =
+        Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 17);
+
+    // FHeader.nested supplies the SafeArea, the header semantics and the
+    // prefix/suffix layout. The brand keeps its own outlined circles as the
+    // actions, a transparent background (these bars sit directly on the page)
+    // and the padding the reference screens use.
+    return FHeader.nested(
+      style: .delta(
+        padding: .value(const EdgeInsets.fromLTRB(20, 8, 20, 8)),
+        decoration: .boxDelta(color: Colors.transparent),
+        constraints: const BoxConstraints(minHeight: 40),
+        titleTextStyle: .value(titleStyle ?? const TextStyle()),
       ),
+      prefixes: [
+        CircleIconButton(
+            icon: leadingIcon, onPressed: pop, tooltip: 'Back', size: 40),
+      ],
+      suffixes: [
+        if (trailingIcon != null)
+          CircleIconButton(
+            icon: trailingIcon!,
+            onPressed: onTrailing,
+            tooltip: trailingTooltip,
+            size: 40,
+          )
+        else
+          // Balances the leading circle so the title stays optically centred.
+          const SizedBox(width: 40),
+      ],
+      title: Text(title),
     );
   }
 }
@@ -350,16 +374,19 @@ class Pill extends StatelessWidget {
   Widget build(BuildContext context) {
     final background = selected ? color : context.brand.canvas;
     final foreground = selected ? Colors.white : color;
-    return Material(
-      color: background,
-      shape: StadiumBorder(
-        side: selected
-            ? BorderSide.none
-            : BorderSide(color: context.brand.hairline),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
+    return FTappable(
+      onPress: onTap,
+      semanticsLabel: label,
+      semanticsChecked: onTap == null ? null : selected,
+      child: DecoratedBox(
+        decoration: ShapeDecoration(
+          color: background,
+          shape: StadiumBorder(
+            side: selected
+                ? BorderSide.none
+                : BorderSide(color: context.brand.hairline),
+          ),
+        ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           child: Row(
@@ -887,41 +914,40 @@ class _DayCell extends StatelessWidget {
     final theme = Theme.of(context);
     final foreground =
         selected ? Colors.white : theme.colorScheme.onSurface;
-    return Semantics(
+    return FTappable(
+      onPress: onTap,
       selected: selected,
-      button: true,
-      label: '${day.day} $weekday',
-      child: Material(
-        color: selected ? theme.colorScheme.primary : context.brand.tint(0),
-        borderRadius: BorderRadius.circular(AppRadii.field),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: SizedBox(
-            width: 48,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  day.day.toString().padLeft(2, '0'),
-                  style: TextStyle(
-                    color: foreground,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                  ),
+      semanticsLabel: '${day.day} $weekday',
+      semanticsChecked: selected,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: selected ? theme.colorScheme.primary : context.brand.tint(0),
+          borderRadius: BorderRadius.circular(AppRadii.field),
+        ),
+        child: SizedBox(
+          width: 48,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                day.day.toString().padLeft(2, '0'),
+                style: TextStyle(
+                  color: foreground,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  weekday,
-                  style: TextStyle(
-                    color: selected
-                        ? Colors.white.withValues(alpha: 0.9)
-                        : context.muted,
-                    fontSize: 12,
-                  ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                weekday,
+                style: TextStyle(
+                  color: selected
+                      ? Colors.white.withValues(alpha: 0.9)
+                      : context.muted,
+                  fontSize: 12,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -1029,8 +1055,10 @@ class CurvedNavBar extends StatelessWidget {
                   Expanded(
                     child: _NavButton(
                       item: items[i],
+                      index: i,
+                      length: items.length,
                       selected: i == currentIndex,
-                      onTap: () => onSelected(i),
+                      onSelected: onSelected,
                     ),
                   ),
                 ],
@@ -1061,54 +1089,59 @@ class CurvedNavItem {
   });
 }
 
+/// One destination, laid out by forui but coloured and shaped by the brand.
+///
+/// [FBottomNavigationBarItem] supplies the tap handling, the selected state and
+/// the positional semantics a screen reader announces ("Tab 3 of 4"). The brand
+/// keeps two things forui has no notion of: the glyph colours, passed explicitly
+/// so they win over the item style's [IconTheme], and the sliding dot, which
+/// occupies the item's label slot in place of text.
 class _NavButton extends StatelessWidget {
   final CurvedNavItem item;
+  final int index;
+  final int length;
   final bool selected;
-  final VoidCallback onTap;
+  final ValueChanged<int> onSelected;
 
   const _NavButton({
     required this.item,
+    required this.index,
+    required this.length,
     required this.selected,
-    required this.onTap,
+    required this.onSelected,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final tone = selected ? theme.colorScheme.primary : context.muted;
-    return Semantics(
+
+    return FBottomNavigationBarData(
+      itemStyle: context.theme.bottomNavigationBarStyle.itemStyle,
       selected: selected,
-      button: true,
-      label: item.label,
-      child: Tooltip(
-        message: item.label,
-        child: InkResponse(
-          onTap: onTap,
-          radius: 32,
-          child: SizedBox(
-            height: double.infinity,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                AppIcon(
-                  selected ? (item.selectedIcon ?? item.icon) : item.icon,
-                  color: tone,
-                  size: 24,
-                ),
-                const SizedBox(height: 4),
-                // A dot rather than a label keeps the bar as sparse as the
-                // reference while still marking the active tab.
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: selected ? 16 : 0,
-                  height: 3,
-                  decoration: BoxDecoration(
-                    color: tone,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ],
-            ),
+      index: index,
+      length: length,
+      onChange: onSelected,
+      child: FBottomNavigationBarItem(
+        semanticsLabel: item.label,
+        style: .delta(
+          spacing: 4,
+          padding: .value(EdgeInsets.zero),
+        ),
+        icon: AppIcon(
+          selected ? (item.selectedIcon ?? item.icon) : item.icon,
+          color: tone,
+          size: 24,
+        ),
+        // A dot rather than a label keeps the bar as sparse as the reference
+        // while still marking the active tab.
+        label: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: selected ? 16 : 0,
+          height: 3,
+          decoration: BoxDecoration(
+            color: tone,
+            borderRadius: BorderRadius.circular(2),
           ),
         ),
       ),

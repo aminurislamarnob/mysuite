@@ -1,11 +1,75 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:forui/forui.dart';
 
+import '../theme/app_colors.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 import 'brand.dart';
 
 /// Shared presentational widgets. Everything here reads its colours from the
 /// active [Theme] so light, dark and high-contrast all stay legible.
+
+/// How a [BrandButton] reads.
+enum BrandButtonKind { primary, outline, ghost, danger }
+
+/// A button in the brand's shape.
+///
+/// forui's buttons are rounded rectangles; the brand makes everything tappable a
+/// full pill. Rather than repeat that override at 50 call sites, screens use this
+/// and never touch [FButton] directly.
+class BrandButton extends StatelessWidget {
+  final String label;
+  final VoidCallback? onPressed;
+  final BrandButtonKind kind;
+  final HugeIconData? icon;
+
+  /// Whether the button stretches to its parent's width.
+  final bool expand;
+
+  final bool small;
+
+  const BrandButton({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.kind = BrandButtonKind.primary,
+    this.icon,
+    this.expand = true,
+    this.small = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Outlined buttons keep the hairline the rest of the design uses, or the text
+    // colour at high contrast where the hairline is too faint to read.
+    final side = switch (kind) {
+      BrandButtonKind.outline => BorderSide(
+          color: context.brand.tints.toSet().length == 1
+              ? Theme.of(context).colorScheme.onSurface
+              : context.brand.hairline,
+        ),
+      _ => BorderSide.none,
+    };
+
+    return FButton(
+      onPress: onPressed,
+      variant: switch (kind) {
+        BrandButtonKind.primary => .primary,
+        BrandButtonKind.outline => .outline,
+        BrandButtonKind.ghost => .ghost,
+        BrandButtonKind.danger => .destructive,
+      },
+      size: small ? .sm : .md,
+      mainAxisSize: expand ? .max : .min,
+      // Applied to the base and every interaction variant, so hover and pressed
+      // stay pills too.
+      style: .delta(decoration: .delta([.all(.shapeDelta(shape: StadiumBorder(side: side)))])),
+      prefix: icon == null ? null : AppIcon(icon!, size: 18),
+      child: Text(label),
+    );
+  }
+}
 
 /// The bold section title from the reference screens ("My Plans", "Activities"),
 /// with an optional trailing text action.
@@ -41,14 +105,20 @@ class SectionHeader extends StatelessWidget {
             ),
           ),
           if (actionLabel != null)
-            TextButton(
-              onPressed: onAction,
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            FButton(
+              onPress: onAction,
+              variant: .ghost,
+              size: .sm,
+              mainAxisSize: .min,
+              // The coral is set on the Text rather than through the style so it
+              // wins over the ghost variant's foreground, which is body colour.
+              child: Text(
+                actionLabel!,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-              child: Text(actionLabel!),
             ),
         ],
       ),
@@ -110,7 +180,11 @@ class EmptyState extends StatelessWidget {
             ],
             if (actionLabel != null) ...[
               const SizedBox(height: 24),
-              FilledButton(onPressed: onAction, child: Text(actionLabel!)),
+              BrandButton(
+                label: actionLabel!,
+                onPressed: onAction,
+                expand: false,
+              ),
             ],
           ],
         ),
@@ -138,7 +212,7 @@ class AsyncSection extends StatelessWidget {
     if (isLoading) {
       return const Padding(
         padding: EdgeInsets.all(24),
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(child: FCircularProgress()),
       );
     }
     if (error != null) {
@@ -284,8 +358,10 @@ class ContributionHeatmap extends StatelessWidget {
                 final v = intensityFor(day).clamp(0.0, 1.0);
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 3),
-                  child: Tooltip(
-                    message: '${day.year}-${day.month}-${day.day}',
+                  child: FTooltip(
+                    tipBuilder: (_, _) =>
+                        Text('${day.year}-${day.month}-${day.day}'),
+                    semanticsLabel: '${day.year}-${day.month}-${day.day}',
                     child: GestureDetector(
                       onTap: onTapDay == null ? null : () => onTapDay!(day),
                       child: Container(
@@ -345,13 +421,21 @@ class LabeledProgress extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(999),
-          child: LinearProgressIndicator(
-            value: value.clamp(0.0, 1.0),
-            backgroundColor: context.brand.hairline,
-            color: over ? Theme.of(context).colorScheme.error : color,
-            minHeight: 8,
+        FDeterminateProgress(
+          value: value.clamp(0.0, 1.0),
+          semanticsLabel: label,
+          // The 8px fully-rounded bar on a hairline track, with the fill turning
+          // to the error colour once the value overruns.
+          style: .delta(
+            constraints: const BoxConstraints.tightFor(height: 8),
+            trackDecoration: .boxDelta(
+              color: context.brand.hairline,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            fillDecoration: .boxDelta(
+              color: over ? Theme.of(context).colorScheme.error : color,
+              borderRadius: BorderRadius.circular(999),
+            ),
           ),
         ),
       ],
@@ -419,6 +503,444 @@ class SheetScaffold extends StatelessWidget {
       ),
     );
   }
+}
+
+// ---------------------------------------------------------------------------
+// forui bridges
+// ---------------------------------------------------------------------------
+//
+// Screens go through the wrappers below rather than calling forui directly, so a
+// forui default can never quietly override a brand value in one corner of the
+// app. Each one is a thin shim: forui supplies behaviour, the brand supplies the
+// colours, shapes and spacing.
+
+/// A page built on [FScaffold].
+///
+/// Adds three things [FScaffold] does not provide:
+///
+///  * **A [Material] ancestor.** `flutter_quill`, `flutter_slidable`,
+///    [Dismissible], `PopupMenuButton` and `DataTable` all assert on one and
+///    throw "No Material widget found" without it. Injecting it here once covers
+///    every page rather than every call site.
+///  * **The content icon size.** [FScaffold] installs an [IconTheme] from
+///    `FStyle.iconStyle`, which is sized for forui's own chevrons and loaders
+///    (20). Content glyphs expect Material's 24, so that default is restored.
+///  * **A floating action slot**, which forui has no equivalent for.
+class BrandScaffold extends StatelessWidget {
+  final Widget child;
+  final Widget? header;
+  final Widget? footer;
+
+  /// Rendered bottom-right over [child].
+  final Widget? floatingAction;
+
+  /// Whether [FScaffold] applies its own page padding. Off by default because
+  /// the screens already pad themselves.
+  final bool pad;
+
+  final bool resizeToAvoidBottomInset;
+
+  const BrandScaffold({
+    super.key,
+    required this.child,
+    this.header,
+    this.footer,
+    this.floatingAction,
+    this.pad = false,
+    this.resizeToAvoidBottomInset = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Widget body = child;
+
+    if (floatingAction != null) {
+      body = Stack(
+        children: [
+          Positioned.fill(child: body),
+          Positioned(right: 16, bottom: 16, child: floatingAction!),
+        ],
+      );
+    }
+
+    return FScaffold(
+      header: header,
+      footer: footer,
+      childPad: pad,
+      resizeToAvoidBottomInset: resizeToAvoidBottomInset,
+      child: IconTheme(
+        data: IconThemeData(
+          size: 24,
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: body,
+        ),
+      ),
+    );
+  }
+}
+
+/// A list row built on [FTile].
+///
+/// Mirrors the [ListTile] API the screens already use so the 60-odd call sites
+/// read the same, and keeps the brand's row radius and muted subtitle.
+class BrandTile extends StatelessWidget {
+  final Widget title;
+  final Widget? subtitle;
+  final Widget? leading;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+  final bool selected;
+  final bool enabled;
+  final String? semanticsLabel;
+
+  const BrandTile({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.leading,
+    this.trailing,
+    this.onTap,
+    this.onLongPress,
+    this.selected = false,
+    this.enabled = true,
+    this.semanticsLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return FTile(
+      title: title,
+      subtitle: subtitle,
+      prefix: leading,
+      suffix: trailing,
+      onPress: onTap,
+      onLongPress: onLongPress,
+      selected: selected,
+      enabled: enabled,
+      semanticsLabel: semanticsLabel,
+      style: .delta(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadii.field),
+        ),
+      ),
+    );
+  }
+}
+
+/// A text input built on [FTextField].
+///
+/// The brand's fields are filled with the peach tint and rounded to
+/// [AppRadii.field] rather than forui's bordered, unfilled default.
+class BrandField extends StatelessWidget {
+  final TextEditingController? controller;
+  final String? label;
+  final String? hint;
+  final String? helper;
+  final int? maxLines;
+  final int? minLines;
+  final bool obscure;
+  final bool autofocus;
+  final bool enabled;
+  final TextInputType? keyboardType;
+  final TextInputAction? textInputAction;
+  final TextCapitalization textCapitalization;
+  final List<TextInputFormatter>? inputFormatters;
+  final ValueChanged<String>? onSubmit;
+  final Widget? suffix;
+  final FocusNode? focusNode;
+
+  const BrandField({
+    super.key,
+    this.controller,
+    this.label,
+    this.hint,
+    this.helper,
+    this.maxLines = 1,
+    this.minLines,
+    this.obscure = false,
+    this.autofocus = false,
+    this.enabled = true,
+    this.keyboardType,
+    this.textInputAction,
+    this.textCapitalization = TextCapitalization.none,
+    this.inputFormatters,
+    this.onSubmit,
+    this.suffix,
+    this.focusNode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final brand = context.brand;
+    final flattened = brand.tints.toSet().length == 1;
+
+    return FTextField(
+      control: .managed(controller: controller),
+      label: label == null ? null : Text(label!),
+      hint: hint,
+      description: helper == null ? null : Text(helper!),
+      maxLines: obscure ? 1 : maxLines,
+      minLines: minLines,
+      obscureText: obscure,
+      autofocus: autofocus,
+      enabled: enabled,
+      keyboardType: keyboardType,
+      textInputAction: textInputAction,
+      textCapitalization: textCapitalization,
+      inputFormatters: inputFormatters,
+      onSubmit: onSubmit,
+      suffixBuilder: suffix == null ? null : (_, _, _) => suffix!,
+      focusNode: focusNode,
+      style: .delta(
+        // At high contrast the tint flattens, so the field falls back to the
+        // page surface and leans on its border instead.
+        color: .delta([
+          .all(flattened
+              ? Theme.of(context).colorScheme.surface
+              : brand.tint(0)),
+        ]),
+        // Only the resting border is replaced. forui derives the focused and
+        // error borders from FColors, which are already the brand's coral and
+        // danger — the same treatment the Material inputDecorationTheme gave.
+        border: .delta([
+          .base(OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadii.field),
+            borderSide: flattened
+                ? BorderSide(
+                    color: Theme.of(context).colorScheme.onSurface, width: 1.2)
+                : BorderSide.none,
+          )),
+        ]),
+      ),
+    );
+  }
+}
+
+/// A settings row with a trailing switch, replacing [SwitchListTile].
+class BrandSwitchTile extends StatelessWidget {
+  final String title;
+  final String? subtitle;
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+  final Widget? leading;
+
+  const BrandSwitchTile({
+    super.key,
+    required this.title,
+    required this.value,
+    required this.onChanged,
+    this.subtitle,
+    this.leading,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return BrandTile(
+      leading: leading,
+      title: Text(title),
+      subtitle: subtitle == null ? null : Text(subtitle!),
+      semanticsLabel: title,
+      trailing: FSwitch(
+        value: value,
+        onChange: onChanged,
+        semanticsLabel: title,
+      ),
+      onTap: onChanged == null ? null : () => onChanged!(!value),
+    );
+  }
+}
+
+/// A single-choice segmented control, replacing [SegmentedButton].
+///
+/// forui has no segmented button; [FSelectGroup] in its single-select mode is the
+/// nearest equivalent and carries the same keyboard and semantics behaviour.
+class BrandSegmented<T extends Object> extends StatelessWidget {
+  final Map<T, String> options;
+  final T selected;
+  final ValueChanged<T> onSelected;
+
+  const BrandSegmented({
+    super.key,
+    required this.options,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final entry in options.entries)
+          Pill(
+            label: entry.value,
+            color: theme.colorScheme.primary,
+            selected: entry.key == selected,
+            onTap: () => onSelected(entry.key),
+          ),
+      ],
+    );
+  }
+}
+
+/// The coral disc that floats over a list, replacing [FloatingActionButton].
+class BrandFab extends StatelessWidget {
+  final HugeIconData icon;
+  final VoidCallback? onPressed;
+  final String tooltip;
+  final double size;
+
+  const BrandFab({
+    super.key,
+    required this.icon,
+    required this.onPressed,
+    required this.tooltip,
+    this.size = 58,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return FTooltip(
+      tipBuilder: (_, _) => Text(tooltip),
+      semanticsLabel: tooltip,
+      child: FTappable(
+        onPress: onPressed,
+        semanticsLabel: tooltip,
+        child: DecoratedBox(
+          decoration: ShapeDecoration(
+            color: theme.colorScheme.primary,
+            shape: const CircleBorder(),
+            shadows: [
+              BoxShadow(
+                color: theme.colorScheme.primary.withValues(alpha: 0.32),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: SizedBox(
+            width: size,
+            height: size,
+            child: AppIcon(icon, size: size * 0.42, color: Colors.white),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Shows a bottom sheet with the brand's chrome.
+///
+/// forui caps a modal sheet at 9/16 of the screen by default; the editors here
+/// are taller than that, so the cap is lifted and height is left to the content
+/// the way `isScrollControlled` did.
+Future<T?> brandSheet<T>({
+  required BuildContext context,
+  required WidgetBuilder builder,
+  bool dismissible = true,
+}) {
+  return showFSheet<T>(
+    context: context,
+    side: .btt,
+    mainAxisMaxRatio: null,
+    barrierDismissible: dismissible,
+    builder: builder,
+  );
+}
+
+/// Shows a message. Replaces `ScaffoldMessenger.showSnackBar`.
+///
+/// Styled from the values the Material `snackBarTheme` used — a near-black slab
+/// with coral action text — and aligned to the bottom so it lands where the
+/// snack bar used to rather than in forui's default corner.
+void brandToast(
+  BuildContext context,
+  String message, {
+  String? actionLabel,
+  VoidCallback? onAction,
+  Duration duration = const Duration(seconds: 4),
+}) {
+  showFToast(
+    context: context,
+    alignment: FToastAlignment.bottomCenter,
+    duration: duration,
+    title: Text(message),
+    suffixBuilder: (actionLabel == null || onAction == null)
+        ? null
+        : (_, entry) => FButton(
+              variant: .ghost,
+              size: .sm,
+              mainAxisSize: .min,
+              onPress: () {
+                entry.dismiss();
+                onAction();
+              },
+              child: Text(
+                actionLabel,
+                style: const TextStyle(
+                  color: AppColors.coralSoft,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+  );
+}
+
+/// A confirm/cancel dialog. Replaces `showDialog` + `AlertDialog`.
+///
+/// Returns true only when the confirming action is chosen.
+Future<bool> brandConfirm(
+  BuildContext context, {
+  required String title,
+  String? message,
+  String confirmLabel = 'OK',
+  String cancelLabel = 'Cancel',
+  bool destructive = false,
+}) async {
+  final result = await showFDialog<bool>(
+    context: context,
+    builder: (context, style, animation) => FDialog(
+      animation: animation,
+      style: style,
+      builder: (context, style) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(title, style: Theme.of(context).textTheme.titleLarge),
+          if (message != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              message,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: context.muted),
+            ),
+          ],
+          const SizedBox(height: 20),
+          BrandButton(
+            label: confirmLabel,
+            kind: destructive ? BrandButtonKind.danger : BrandButtonKind.primary,
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+          const SizedBox(height: 8),
+          BrandButton(
+            label: cancelLabel,
+            kind: BrandButtonKind.ghost,
+            onPressed: () => Navigator.of(context).pop(false),
+          ),
+        ],
+      ),
+    ),
+  );
+  return result ?? false;
 }
 
 /// Small colour swatch picker used by habits, projects and categories.
