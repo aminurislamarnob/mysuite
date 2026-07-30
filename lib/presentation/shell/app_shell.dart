@@ -59,8 +59,8 @@ class AppShell extends ConsumerWidget {
               ),
               items: const [
                 CurvedNavItem(
-                  icon: AppIcons.dashboard,
-                  selectedIcon: AppIcons.dashboard,
+                  icon: AppIcons.home,
+                  selectedIcon: AppIcons.home,
                   label: 'Today',
                 ),
                 CurvedNavItem(

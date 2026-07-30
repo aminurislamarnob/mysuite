@@ -94,7 +94,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
         // The project list used to be a Scaffold drawer, opened by the AppBar's
         // implicit hamburger. FScaffold has no drawer slot and no app bar to
         // host one, so it is now an explicit button onto a left-hand sheet.
-        leadingIcon: AppIcons.modules,
+        leadingIcon: AppIcons.folder,
         onLeading: () => brandSideSheet(
           context: context,
           builder: (_) => const _ProjectDrawer(),
