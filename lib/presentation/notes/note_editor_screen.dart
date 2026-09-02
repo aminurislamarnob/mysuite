@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
-import 'package:forui/forui.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/services/export_service.dart';
@@ -255,7 +254,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading || _controller == null) {
-      return BrandScaffold(child: Center(child: FCircularProgress()));
+      return BrandScaffold(child: Center(child: BrandSpinner()));
     }
     if (_note?.isLocked == true && !_unlocked) {
       return BrandScaffold(
@@ -339,7 +338,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
                   ],
                 ),
               ),
-            FDivider(),
+            BrandDivider(),
             quill.QuillSimpleToolbar(
               controller: _controller!,
               config: const quill.QuillSimpleToolbarConfig(
@@ -359,7 +358,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
                 showLink: true,
               ),
             ),
-            FDivider(),
+            BrandDivider(),
             Expanded(
               child: quill.QuillEditor.basic(
                 controller: _controller!,
@@ -412,7 +411,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
                 _pickReminder();
               },
             ),
-            FDivider(),
+            BrandDivider(),
             BrandTile(
               leading: const AppIcon(AppIcons.checklist),
               title: const Text('Convert checklist to tasks'),

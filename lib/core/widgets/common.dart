@@ -220,7 +220,7 @@ class AsyncSection extends StatelessWidget {
     if (isLoading) {
       return const Padding(
         padding: EdgeInsets.all(24),
-        child: Center(child: FCircularProgress()),
+        child: Center(child: BrandSpinner()),
       );
     }
     if (error != null) {
@@ -437,22 +437,11 @@ class LabeledProgress extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        FDeterminateProgress(
-          value: value.clamp(0.0, 1.0),
+        // The fill turns to the error colour once the value overruns.
+        BrandProgressBar(
+          value: value,
           semanticsLabel: label,
-          // The 8px fully-rounded bar on a hairline track, with the fill turning
-          // to the error colour once the value overruns.
-          style: .delta(
-            constraints: const BoxConstraints.tightFor(height: 8),
-            trackDecoration: .boxDelta(
-              color: context.brand.hairline,
-              borderRadius: BorderRadius.circular(999),
-            ),
-            fillDecoration: .boxDelta(
-              color: over ? Theme.of(context).colorScheme.error : color,
-              borderRadius: BorderRadius.circular(999),
-            ),
-          ),
+          color: over ? Theme.of(context).colorScheme.error : color,
         ),
       ],
     );
@@ -919,6 +908,117 @@ class BrandCheckbox extends StatelessWidget {
   }
 }
 
+/// A busy indicator, replacing Material's [CircularProgressIndicator].
+///
+/// Every loading state in the app is this one ring at forui's derived size, so
+/// the wrapper carries no knobs — a change of mind lands here, not in fifteen
+/// screens.
+class BrandSpinner extends StatelessWidget {
+  const BrandSpinner({super.key});
+
+  @override
+  Widget build(BuildContext context) => const FCircularProgress();
+}
+
+/// A hairline rule, replacing Material's [Divider].
+///
+/// forui reads its colour and thickness from `FStyle`, which already carries
+/// the brand hairline, so there is nothing to override here.
+class BrandDivider extends StatelessWidget {
+  const BrandDivider({super.key});
+
+  @override
+  Widget build(BuildContext context) => const FDivider();
+}
+
+/// A tap target, replacing [InkWell] and [GestureDetector].
+///
+/// forui supplies the hit test, focus ring and press haptics. Nothing is
+/// restyled; this exists so a screen never has to reach for forui to make an
+/// arbitrary widget tappable.
+class BrandTappable extends StatelessWidget {
+  final VoidCallback? onPressed;
+  final String? semanticsLabel;
+  final Widget child;
+
+  const BrandTappable({
+    super.key,
+    required this.onPressed,
+    required this.child,
+    this.semanticsLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) => FTappable(
+    onPress: onPressed,
+    semanticsLabel: semanticsLabel,
+    child: child,
+  );
+}
+
+/// A tooltip, replacing Material's [Tooltip].
+///
+/// Takes a message rather than forui's builder: every tip in the app is one
+/// line of text. The `FTooltipGroup` in `main.dart` already keeps only one of
+/// these open at a time.
+class BrandTooltip extends StatelessWidget {
+  final String message;
+  final String? semanticsLabel;
+  final Widget child;
+
+  const BrandTooltip({
+    super.key,
+    required this.message,
+    required this.child,
+    this.semanticsLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) => FTooltip(
+    tipBuilder: (_, _) => Text(message),
+    semanticsLabel: semanticsLabel,
+    child: child,
+  );
+}
+
+/// A progress bar, replacing Material's [LinearProgressIndicator].
+///
+/// forui's own bar is a squared-off fill on a filled track; the brand's is a
+/// fully-rounded fill on a hairline one. [LabeledProgress] and the onboarding
+/// step indicator differ only in height, so both come through here rather than
+/// repeating the same three deltas.
+class BrandProgressBar extends StatelessWidget {
+  final double value; // 0..1; anything above is clamped
+  final Color color;
+  final double height;
+  final String? semanticsLabel;
+
+  const BrandProgressBar({
+    super.key,
+    required this.value,
+    required this.color,
+    this.height = 8,
+    this.semanticsLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) => FDeterminateProgress(
+    value: value.clamp(0.0, 1.0),
+    semanticsLabel: semanticsLabel,
+    style: .delta(
+      constraints: BoxConstraints.tightFor(height: height),
+      trackDecoration: .boxDelta(
+        color: context.brand.hairline,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      fillDecoration: .boxDelta(
+        color: color,
+        borderRadius: BorderRadius.circular(999),
+      ),
+    ),
+  );
+}
+
 /// A settings row with a trailing switch, replacing [SwitchListTile].
 class BrandSwitchTile extends StatelessWidget {
   final String title;
@@ -1009,7 +1109,7 @@ class BrandSegmented<T extends Object> extends StatelessWidget {
 /// the row lines up with the ones above it. The inset is 14, not 10: `FItem`
 /// puts its content inside a 4px `FItemStyle.padding` before the content's own
 /// 10px, and the accordion has no equivalent outer padding of its own.
-class BrandAccordion extends StatelessWidget {
+class BrandAccordion extends StatefulWidget {
   final String title;
   final HugeIconData? leading;
   final Widget child;
@@ -1022,7 +1122,23 @@ class BrandAccordion extends StatelessWidget {
   });
 
   @override
+  State<BrandAccordion> createState() => _BrandAccordionState();
+}
+
+class _BrandAccordionState extends State<BrandAccordion> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) => FAccordion(
+    // Lifted rather than managed. A managed `FAccordionItem` resets its reveal
+    // animation to `initiallyExpanded` in `didChangeDependencies`, so anything
+    // that changes an inherited widget above it snaps the panel shut —
+    // flipping a switch *inside* the panel closed it under the user's finger.
+    // With lifted state the item follows this flag instead of resetting.
+    control: .lifted(
+      expanded: (_) => _expanded,
+      onChange: (_, expanded) => setState(() => _expanded = expanded),
+    ),
     style: .delta(
       titlePadding: EdgeInsetsGeometryDelta.value(
         const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
@@ -1035,14 +1151,14 @@ class BrandAccordion extends StatelessWidget {
       FAccordionItem(
         title: Row(
           children: [
-            if (leading != null) ...[
-              AppIcon(leading!, size: 24, color: context.muted),
+            if (widget.leading != null) ...[
+              AppIcon(widget.leading!, size: 24, color: context.muted),
               const SizedBox(width: 8),
             ],
-            Expanded(child: Text(title)),
+            Expanded(child: Text(widget.title)),
           ],
         ),
-        child: child,
+        child: widget.child,
       ),
     ],
   );

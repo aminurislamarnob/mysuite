@@ -1,7 +1,6 @@
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:forui/forui.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/services/notification_service.dart';
@@ -551,7 +550,7 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
           ),
 
           const SizedBox(height: 24),
-          FDivider(),
+          BrandDivider(),
           const SizedBox(height: 8),
           const Text(
             'Course preview',

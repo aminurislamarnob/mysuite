@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:forui/forui.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/services/notification_service.dart';
@@ -278,7 +277,7 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
 
           if (_isEditing) ...[
             const SizedBox(height: 20),
-            FDivider(),
+            BrandDivider(),
             const SizedBox(height: 8),
             Text('Subtasks', style: TextStyle(color: muted, fontSize: 12)),
             _SubtaskList(parentId: widget.task!.id),

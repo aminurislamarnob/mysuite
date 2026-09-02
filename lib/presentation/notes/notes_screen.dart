@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:go_router/go_router.dart';
-import 'package:forui/forui.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/theme/app_colors.dart';
@@ -100,7 +99,7 @@ class NotesScreen extends ConsumerWidget {
                 _NoteCard(note: notes[i], scope: filter.scope),
           );
         },
-        loading: () => const Center(child: FCircularProgress()),
+        loading: () => const Center(child: BrandSpinner()),
         error: (e, _) => EmptyState(
           icon: AppIcons.error,
           title: 'Could not load notes',
@@ -414,7 +413,7 @@ class _NotesDrawer extends ConsumerWidget {
             selected: filter.scope == NoteScope.trash,
             onTap: () => apply(const NoteFilter(scope: NoteScope.trash)),
           ),
-          FDivider(),
+          BrandDivider(),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
             child: Row(
@@ -462,7 +461,7 @@ class _NotesDrawer extends ConsumerWidget {
             ),
             orElse: () => const SizedBox.shrink(),
           ),
-          FDivider(),
+          BrandDivider(),
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 12, 16, 4),
             child: Text('Tags', style: TextStyle(fontWeight: FontWeight.w700)),

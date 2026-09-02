@@ -135,6 +135,15 @@ class _LockGateState extends ConsumerState<_LockGate>
   bool _prompting = false;
   DateTime? _backgroundedAt;
 
+  // The PIN is entered on the gate itself rather than in a dialog. `_LockGate`
+  // is mounted in `MaterialApp.builder`, above the router's Navigator, so
+  // `showFDialog` from here throws "Navigator operation requested with a
+  // context that does not include a Navigator". `ModuleLockGate` sits inside a
+  // route and can still use `promptForPin`; this one cannot.
+  final TextEditingController _pin = TextEditingController();
+  bool _pinMode = false;
+  String? _pinError;
+
   @override
   void initState() {
     super.initState();
@@ -144,6 +153,7 @@ class _LockGateState extends ConsumerState<_LockGate>
 
   @override
   void dispose() {
+    _pin.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -163,7 +173,12 @@ class _LockGateState extends ConsumerState<_LockGate>
       final away = DateTime.now().difference(_backgroundedAt!);
       _backgroundedAt = null;
       if (away.inMinutes >= settings.autoLockMinutes) {
-        setState(() => _unlocked = false);
+        setState(() {
+          _unlocked = false;
+          _pinMode = false;
+          _pinError = null;
+          _pin.clear();
+        });
         _evaluate();
       }
     }
@@ -207,19 +222,7 @@ class _LockGateState extends ConsumerState<_LockGate>
                 style: TextStyle(color: Theme.of(context).colorScheme.outline),
               ),
               const SizedBox(height: 28),
-              BrandButton(
-                label: 'Unlock',
-                icon: AppIcons.biometric,
-                expand: false,
-                onPressed: _evaluate,
-              ),
-              const SizedBox(height: 8),
-              BrandButton(
-                label: 'Use PIN instead',
-                kind: BrandButtonKind.ghost,
-                expand: false,
-                onPressed: _unlockWithPin,
-              ),
+              if (_pinMode) ..._pinEntry() else ..._authButtons(),
             ],
           ),
         ),
@@ -227,14 +230,64 @@ class _LockGateState extends ConsumerState<_LockGate>
     );
   }
 
-  Future<void> _unlockWithPin() async {
-    final security = ref.read(securityServiceProvider);
-    if (!security.hasPin) {
+  List<Widget> _authButtons() => [
+    BrandButton(
+      label: 'Unlock',
+      icon: AppIcons.biometric,
+      expand: false,
+      onPressed: _evaluate,
+    ),
+    const SizedBox(height: 8),
+    BrandButton(
+      label: 'Use PIN instead',
+      kind: BrandButtonKind.ghost,
+      expand: false,
+      onPressed: _startPinEntry,
+    ),
+  ];
+
+  List<Widget> _pinEntry() => [
+    BrandField(
+      controller: _pin,
+      label: 'PIN',
+      error: _pinError,
+      autofocus: true,
+      obscure: true,
+      keyboardType: TextInputType.number,
+      textInputAction: TextInputAction.done,
+      onSubmit: (_) => _submitPin(),
+    ),
+    const SizedBox(height: 16),
+    BrandButton(label: 'Unlock', expand: false, onPressed: _submitPin),
+    const SizedBox(height: 8),
+    BrandButton(
+      label: 'Use biometrics instead',
+      kind: BrandButtonKind.ghost,
+      expand: false,
+      onPressed: () => setState(() {
+        _pinMode = false;
+        _pinError = null;
+        _pin.clear();
+      }),
+    ),
+  ];
+
+  void _startPinEntry() {
+    if (!ref.read(securityServiceProvider).hasPin) {
       brandToast(context, 'No PIN is set on this device.');
       return;
     }
+    setState(() => _pinMode = true);
+  }
 
-    final ok = await promptForPin(context, security.verifyPin);
-    if (ok && mounted) setState(() => _unlocked = true);
+  void _submitPin() {
+    if (ref.read(securityServiceProvider).verifyPin(_pin.text)) {
+      setState(() => _unlocked = true);
+      return;
+    }
+    setState(() {
+      _pinError = 'Incorrect PIN';
+      _pin.clear();
+    });
   }
 }

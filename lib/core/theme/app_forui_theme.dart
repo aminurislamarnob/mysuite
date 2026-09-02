@@ -22,14 +22,32 @@ FThemeData brandForuiTheme({
   bool compact = false,
   String locale = 'en',
 }) {
-  final t = AppTheme.tokens(
-    brightness: brightness,
-    highContrast: highContrast,
-    compact: compact,
-    locale: locale,
+  // Memoised on the four inputs. `MaterialApp.builder` rebuilds this on every
+  // settings change, and forui's styles hold `Tween`s, which have no value
+  // equality — so a freshly built theme never compares equal to the last one.
+  // Widgets that watch their inherited style for change then treat every
+  // rebuild as a real one: `FAccordion` re-collapses its items, because
+  // `FAccordionItem.didChangeDependencies` resets the reveal animation to
+  // `initiallyExpanded`. Flipping any switch in Settings closed the "Lock
+  // individual modules" list under itself.
+  final key = (brightness, highContrast, compact, locale);
+  if (_cacheKey == key) return _cached!;
+
+  final theme = brandForuiThemeFrom(
+    AppTheme.tokens(
+      brightness: brightness,
+      highContrast: highContrast,
+      compact: compact,
+      locale: locale,
+    ),
   );
-  return brandForuiThemeFrom(t);
+  _cacheKey = key;
+  _cached = theme;
+  return theme;
 }
+
+(Brightness, bool, bool, String)? _cacheKey;
+FThemeData? _cached;
 
 /// Builds the forui theme from already-resolved [BrandTokens].
 FThemeData brandForuiThemeFrom(BrandTokens t) {

@@ -12,8 +12,29 @@ final securityServiceProvider = Provider<SecurityService>((ref) {
   return SecurityService(ref.watch(sharedPrefsProvider));
 });
 
-/// Whether the app is currently showing its lock screen.
-final appLockedProvider = StateProvider<bool>((ref) => false);
+/// Whether a PIN is stored, as something a widget can watch.
+///
+/// [SecurityService.hasPin] reads SharedPreferences on the spot, so a screen
+/// that calls it does not rebuild when the PIN changes — the settings row kept
+/// reading "Set a PIN" until an unrelated rebuild. Anything that *displays* PIN
+/// state watches this; the gates, which only need the value at the moment they
+/// prompt, keep calling the service directly.
+final pinStatusProvider = NotifierProvider<PinStatus, bool>(PinStatus.new);
+
+class PinStatus extends Notifier<bool> {
+  @override
+  bool build() => ref.watch(securityServiceProvider).hasPin;
+
+  Future<void> set(String pin) async {
+    await ref.read(securityServiceProvider).setPin(pin);
+    state = true;
+  }
+
+  Future<void> clear() async {
+    await ref.read(securityServiceProvider).clearPin();
+    state = false;
+  }
+}
 
 /// Biometric and PIN gate for the app and for individual modules.
 class SecurityService {
@@ -76,10 +97,17 @@ class SecurityService {
     await _prefs.remove(_kPinSalt);
   }
 
+  /// Checks a PIN against the stored digest.
+  ///
+  /// Fails closed when nothing is stored: with no PIN there is nothing to
+  /// verify, so any answer would be the right one. Every caller already gates
+  /// on [hasPin] and shows the biometric path instead, so this branch is
+  /// unreachable — it stays a `false` so it cannot become an unlock if some
+  /// future caller forgets that guard.
   bool verifyPin(String pin) {
     final hash = _prefs.getString(_kPinHash);
     final salt = _prefs.getString(_kPinSalt);
-    if (hash == null || salt == null) return true;
+    if (hash == null || salt == null) return false;
     return _hash(pin, salt) == hash;
   }
 

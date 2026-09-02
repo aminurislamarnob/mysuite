@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:forui/forui.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
@@ -121,7 +120,7 @@ class _CameraScanScreenState extends State<CameraScanScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    FCircularProgress(),
+                    BrandSpinner(),
                     SizedBox(height: 16),
                     Text('Reading the image…'),
                   ],

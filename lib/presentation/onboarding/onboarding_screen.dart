@@ -1,7 +1,6 @@
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/database/app_database.dart';
@@ -89,20 +88,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               child: Row(
                 children: [
                   Expanded(
-                    child: FDeterminateProgress(
+                    child: BrandProgressBar(
                       value: (_index + 1) / (_lastPage + 1),
                       semanticsLabel: 'Step ${_index + 1} of ${_lastPage + 1}',
-                      style: .delta(
-                        constraints: const BoxConstraints.tightFor(height: 4),
-                        trackDecoration: .boxDelta(
-                          color: context.brand.hairline,
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        fillDecoration: .boxDelta(
-                          color: Theme.of(context).colorScheme.primary,
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                      ),
+                      color: Theme.of(context).colorScheme.primary,
+                      height: 4,
                     ),
                   ),
                   if (_index < _lastPage)
@@ -320,10 +310,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               subtitle: Text(m.blurb, style: const TextStyle(fontSize: 12)),
-              trailing: FCheckbox(
+              trailing: BrandCheckbox(
                 value: on,
                 semanticsLabel: m.label,
-                onChange: (v) => setState(() {
+                onChanged: (v) => setState(() {
                   v ? _modules.add(m) : _modules.remove(m);
                 }),
               ),
@@ -335,7 +325,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           if (_modules.contains(AppModule.habits)) ...[
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
-              child: FDivider(),
+              child: BrandDivider(),
             ),
             const Align(
               alignment: Alignment.centerLeft,

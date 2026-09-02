@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
-import 'package:forui/forui.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/theme/app_colors.dart';
@@ -260,7 +259,7 @@ class _TaskListView extends ConsumerWidget {
           },
         );
       },
-      loading: () => const Center(child: FCircularProgress()),
+      loading: () => const Center(child: BrandSpinner()),
       error: (e, _) =>
           EmptyState(icon: AppIcons.error, title: 'Error', message: '$e'),
     );
@@ -413,7 +412,7 @@ class _CalendarView extends ConsumerWidget {
             },
           ),
         ),
-        FDivider(),
+        BrandDivider(),
         Expanded(
           child: selectedTasks.isEmpty
               ? EmptyState(
@@ -575,7 +574,7 @@ class _KanbanView extends ConsumerWidget {
           ),
         );
       },
-      loading: () => const Center(child: FCircularProgress()),
+      loading: () => const Center(child: BrandSpinner()),
       error: (e, _) =>
           EmptyState(icon: AppIcons.error, title: 'Error', message: '$e'),
     );
@@ -729,8 +728,8 @@ class _MatrixView extends ConsumerWidget {
                               padding: EdgeInsets.zero,
                               children: items
                                   .map(
-                                    (t) => FTappable(
-                                      onPress: () => TaskEditorSheet.show(
+                                    (t) => BrandTappable(
+                                      onPressed: () => TaskEditorSheet.show(
                                         context,
                                         task: t,
                                       ),
@@ -772,7 +771,7 @@ class _MatrixView extends ConsumerWidget {
           }).toList(),
         );
       },
-      loading: () => const Center(child: FCircularProgress()),
+      loading: () => const Center(child: BrandSpinner()),
       error: (e, _) =>
           EmptyState(icon: AppIcons.error, title: 'Error', message: '$e'),
     );
@@ -820,7 +819,7 @@ class _ProjectDrawer extends ConsumerWidget {
               Navigator.pop(context);
             },
           ),
-          FDivider(),
+          BrandDivider(),
           projects.maybeWhen(
             data: (list) => Column(
               children: list.map((p) {
@@ -849,7 +848,7 @@ class _ProjectDrawer extends ConsumerWidget {
             ),
             orElse: () => const SizedBox.shrink(),
           ),
-          FDivider(),
+          BrandDivider(),
           BrandTile(
             leading: const AppIcon(AppIcons.add, size: 20),
             title: const Text('New project'),

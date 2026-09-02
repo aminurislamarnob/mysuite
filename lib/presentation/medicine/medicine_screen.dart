@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:forui/forui.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/services/export_service.dart';
@@ -269,7 +268,7 @@ class _TodayTab extends ConsumerWidget {
                   message: 'Add a medicine to generate its schedule.',
                 )
               : Column(children: list.map((v) => DoseTile(view: v)).toList()),
-          loading: () => const Center(child: FCircularProgress()),
+          loading: () => const Center(child: BrandSpinner()),
           error: (e, _) => Text('$e'),
         ),
       ],
@@ -522,7 +521,7 @@ class _CalendarTab extends ConsumerWidget {
             },
           ),
         ),
-        FDivider(),
+        BrandDivider(),
         Expanded(
           child: selectedDoses.isEmpty
               ? EmptyState(
@@ -734,8 +733,8 @@ class _TableTab extends ConsumerWidget {
                             children: atSlot.map((v) {
                               final taken = v.status == DoseStatus.taken;
                               final skipped = v.status == DoseStatus.skipped;
-                              return FTappable(
-                                onPress: () => repo.setDoseStatus(
+                              return BrandTappable(
+                                onPressed: () => repo.setDoseStatus(
                                   v.dose.id,
                                   taken ? DoseStatus.pending : DoseStatus.taken,
                                 ),
@@ -885,7 +884,7 @@ class _MedicinesTab extends ConsumerWidget {
                 );
               }).toList(),
             ),
-      loading: () => const Center(child: FCircularProgress()),
+      loading: () => const Center(child: BrandSpinner()),
       error: (e, _) => Text('$e'),
     );
   }
@@ -967,7 +966,7 @@ class _ProfileDrawer extends ConsumerWidget {
               Navigator.pop(context);
             },
           ),
-          FDivider(),
+          BrandDivider(),
           profiles.maybeWhen(
             data: (list) => Column(
               children: list
@@ -1006,7 +1005,7 @@ class _ProfileDrawer extends ConsumerWidget {
             ),
             orElse: () => const SizedBox.shrink(),
           ),
-          FDivider(),
+          BrandDivider(),
           BrandTile(
             leading: const AppIcon(AppIcons.personAdd, size: 20),
             title: const Text('Add profile'),

@@ -19,6 +19,8 @@ class SettingsScreen extends ConsumerWidget {
     final settings = ref.watch(settingsProvider);
     final notifier = ref.read(settingsProvider.notifier);
     final security = ref.read(securityServiceProvider);
+    // Watched, not read: the PIN rows relabel the moment one is saved.
+    final hasPin = ref.watch(pinStatusProvider);
 
     return BrandScaffold(
       header: const BrandTopBar(title: 'Settings', leadingIcon: null),
@@ -234,7 +236,7 @@ class SettingsScreen extends ConsumerWidget {
                         !await security.canUseBiometrics() &&
                         !security.hasPin) {
                       if (context.mounted) {
-                        final set = await _setPin(context, security);
+                        final set = await _setPin(context, ref);
                         if (!set) return;
                       }
                     }
@@ -243,21 +245,21 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 BrandTile(
                   leading: const AppIcon(AppIcons.pin),
-                  title: Text(security.hasPin ? 'Change PIN' : 'Set a PIN'),
-                  trailing: security.hasPin
+                  title: Text(hasPin ? 'Change PIN' : 'Set a PIN'),
+                  trailing: hasPin
                       ? CircleIconButton(
                           icon: AppIcons.delete,
                           tooltip: 'Remove PIN',
                           size: 36,
                           onPressed: () async {
-                            await security.clearPin();
+                            await ref.read(pinStatusProvider.notifier).clear();
                             if (context.mounted) {
                               brandToast(context, 'PIN removed.');
                             }
                           },
                         )
                       : const AppIcon(AppIcons.chevronRight),
-                  onTap: () => _setPin(context, security),
+                  onTap: () => _setPin(context, ref),
                 ),
                 BrandTile(
                   leading: const AppIcon(AppIcons.focus),
@@ -281,7 +283,7 @@ class SettingsScreen extends ConsumerWidget {
                                   !await security.canUseBiometrics() &&
                                   !security.hasPin) {
                                 if (context.mounted) {
-                                  final set = await _setPin(context, security);
+                                  final set = await _setPin(context, ref);
                                   if (!set) return;
                                 }
                               }
@@ -453,7 +455,7 @@ class SettingsScreen extends ConsumerWidget {
     if (picked != null) notifier.setAutoLockMinutes(picked);
   }
 
-  Future<bool> _setPin(BuildContext context, SecurityService security) async {
+  Future<bool> _setPin(BuildContext context, WidgetRef ref) async {
     final controller = TextEditingController();
     final confirm = TextEditingController();
     String? lengthError;
@@ -513,7 +515,7 @@ class SettingsScreen extends ConsumerWidget {
     );
 
     if (result == true) {
-      await security.setPin(controller.text);
+      await ref.read(pinStatusProvider.notifier).set(controller.text);
       if (context.mounted) {
         brandToast(context, 'PIN saved.');
       }

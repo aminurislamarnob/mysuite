@@ -58,6 +58,42 @@ void main() {
     });
   });
 
+  group('brandForuiTheme identity', () {
+    testWidgets('the same inputs hand back the same instance', (tester) async {
+      // `MaterialApp.builder` rebuilds the theme on every settings change, and
+      // forui's styles hold `Tween`s, which have no value equality — so a
+      // rebuilt theme never compares equal to the last one. Widgets that watch
+      // their inherited style then see every rebuild as a real change:
+      // `FAccordionItem` resets its reveal animation, which closed the
+      // "Lock individual modules" list every time a switch inside it moved.
+      final a = brandForuiTheme(brightness: Brightness.light);
+      final b = brandForuiTheme(brightness: Brightness.light);
+
+      expect(identical(a, b), isTrue);
+      expect(identical(a.accordionStyle, b.accordionStyle), isTrue);
+    });
+
+    testWidgets('a changed input still builds a fresh theme', (tester) async {
+      final light = brandForuiTheme(brightness: Brightness.light);
+      final dark = brandForuiTheme(brightness: Brightness.dark);
+
+      expect(identical(light, dark), isFalse);
+      expect(dark.colors.brightness, Brightness.dark);
+      // And switching back does not hand out the cached dark one.
+      expect(
+        brandForuiTheme(brightness: Brightness.light).colors.brightness,
+        Brightness.light,
+      );
+      expect(
+        brandForuiTheme(brightness: Brightness.light, compact: true)
+            .style
+            .sizes
+            .tile,
+        lessThan(light.style.sizes.tile),
+      );
+    });
+  });
+
   group('brandForuiTheme dialogs', () {
     testWidgets('sit on the page background, not the card tint', (tester) async {
       // A BrandField fills with the same tint forui's dialogs default to, so on

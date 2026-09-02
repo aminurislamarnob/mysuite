@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:forui/forui.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
@@ -475,8 +474,8 @@ class _RoundAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final button = FTappable(
-      onPress: onPressed,
+    final button = BrandTappable(
+      onPressed: onPressed,
       semanticsLabel: tooltip ?? label,
       child: DecoratedBox(
         decoration: ShapeDecoration(
@@ -507,10 +506,7 @@ class _RoundAction extends StatelessWidget {
         ),
       ),
     );
-    return FTooltip(
-      tipBuilder: (_, _) => Text(tooltip ?? label ?? ''),
-      child: button,
-    );
+    return BrandTooltip(message: tooltip ?? label ?? '', child: button);
   }
 }
 

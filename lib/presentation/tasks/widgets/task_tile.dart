@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/database/app_database.dart';
@@ -118,10 +117,10 @@ class TaskTile extends ConsumerWidget {
           padding: EdgeInsets.zero,
           child: BrandTile(
             onTap: () => TaskEditorSheet.show(context, task: task),
-            leading: FCheckbox(
+            leading: BrandCheckbox(
               value: task.isCompleted,
               semanticsLabel: task.title,
-              onChange: (v) async {
+              onChanged: (v) async {
                 final spawned = await repo.setCompleted(task.id, v);
                 if (spawned != null && context.mounted) {
                   brandToast(context, 'Next occurrence scheduled');

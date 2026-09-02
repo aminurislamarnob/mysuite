@@ -2,7 +2,6 @@ import 'package:drift/drift.dart' as drift;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:forui/forui.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/services/export_service.dart';
@@ -292,7 +291,7 @@ class _OverviewTab extends ConsumerWidget {
                   message: 'Tap Add to record your first one.',
                 )
               : Column(children: rows.map((e) => _TxTile(tx: e)).toList()),
-          loading: () => const Center(child: FCircularProgress()),
+          loading: () => const Center(child: BrandSpinner()),
           error: (e, _) => Text('$e'),
         ),
       ],
@@ -419,7 +418,7 @@ class _ReportsTab extends ConsumerWidget {
         reportAsync.when(
           loading: () => const Padding(
             padding: EdgeInsets.all(40),
-            child: Center(child: FCircularProgress()),
+            child: Center(child: BrandSpinner()),
           ),
           error: (e, _) => Text('$e'),
           data: (report) {
@@ -627,7 +626,7 @@ class _BudgetsTab extends ConsumerWidget {
     return Stack(
       children: [
         progress.when(
-          loading: () => const Center(child: FCircularProgress()),
+          loading: () => const Center(child: BrandSpinner()),
           error: (e, _) => Text('$e'),
           data: (rows) => rows.isEmpty
               ? EmptyState(
@@ -787,7 +786,7 @@ class _BillsTab extends ConsumerWidget {
     return Stack(
       children: [
         bills.when(
-          loading: () => const Center(child: FCircularProgress()),
+          loading: () => const Center(child: BrandSpinner()),
           error: (e, _) => Text('$e'),
           data: (rows) => rows.isEmpty
               ? EmptyState(

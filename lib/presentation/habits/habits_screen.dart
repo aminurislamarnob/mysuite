@@ -1,7 +1,6 @@
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:forui/forui.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/services/notification_service.dart';
@@ -91,7 +90,7 @@ class HabitsScreen extends ConsumerWidget {
             ],
           );
         },
-        loading: () => const Center(child: FCircularProgress()),
+        loading: () => const Center(child: BrandSpinner()),
         error: (e, _) =>
             EmptyState(icon: AppIcons.error, title: 'Error', message: '$e'),
       ),

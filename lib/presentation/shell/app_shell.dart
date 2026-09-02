@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/settings/app_settings.dart';
@@ -96,11 +95,11 @@ class QuickAddButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
-    return FTooltip(
-      tipBuilder: (_, _) => const Text('Quick add'),
+    return BrandTooltip(
+      message: 'Quick add',
       semanticsLabel: 'Quick add',
-      child: FTappable(
-        onPress: onPressed,
+      child: BrandTappable(
+        onPressed: onPressed,
         semanticsLabel: 'Quick add',
         child: DecoratedBox(
           decoration: ShapeDecoration(
