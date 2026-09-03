@@ -5,8 +5,14 @@ import '../../../core/database/app_database.dart';
 import '../../../core/utils/formatters.dart';
 import '../repository/expense_repository.dart';
 
+/// Accounts money can still move through.
 final accountsProvider = StreamProvider<List<Account>>((ref) {
   return ref.watch(expenseRepositoryProvider).watchAccounts();
+});
+
+/// Every account, archived ones included, so old rows keep their label.
+final allAccountsProvider = StreamProvider<List<Account>>((ref) {
+  return ref.watch(expenseRepositoryProvider).watchAllAccounts();
 });
 
 final categoriesProvider = StreamProvider<List<ExpenseCategory>>((ref) {

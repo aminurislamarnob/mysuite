@@ -610,6 +610,11 @@ class BrandTile extends StatelessWidget {
   final bool enabled;
   final String? semanticsLabel;
 
+  /// Tightens the row for long lists. forui gives every tile 14.5px above
+  /// and below its content, so a stack of them reads as a column of islands;
+  /// dense rows keep the horizontal inset and halve the vertical.
+  final bool dense;
+
   const BrandTile({
     super.key,
     required this.title,
@@ -621,10 +626,17 @@ class BrandTile extends StatelessWidget {
     this.selected = false,
     this.enabled = true,
     this.semanticsLabel,
+    this.dense = false,
   });
+
+  /// The content inset of a dense row; see [dense].
+  static const densePadding = EdgeInsets.symmetric(horizontal: 15, vertical: 7);
 
   @override
   Widget build(BuildContext context) {
+    final padding = dense
+        ? const EdgeInsetsGeometryDelta.value(densePadding)
+        : null;
     return FTile(
       title: title,
       subtitle: subtitle,
@@ -640,6 +652,8 @@ class BrandTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadii.field),
         ),
         contentStyle: .delta(
+          suffixedPadding: padding,
+          unsuffixedPadding: padding,
           // forui tints a row's leading glyph with the primary colour. The brand
           // keeps them muted — the Material listTileTheme used `iconColor: muted`
           // — so a row of settings does not read as a column of coral. An
