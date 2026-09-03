@@ -20,6 +20,7 @@ class ReportsTab extends ConsumerWidget {
     final reportAsync = ref.watch(monthReportProvider);
     final categories = ref.watch(categoriesProvider).valueOrNull ?? const [];
     final trend = ref.watch(monthlyTrendProvider).valueOrNull ?? const [];
+    final byPerson = ref.watch(spendByPersonProvider).valueOrNull ?? const [];
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
@@ -145,6 +146,23 @@ class ReportsTab extends ConsumerWidget {
                       ),
                     );
                   }),
+                ],
+                if (byPerson.length > 1) ...[
+                  const SizedBox(height: 24),
+                  const SectionHeader('Spending by person'),
+                  ...byPerson.map(
+                    (e) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: LabeledProgress(
+                        label: e.person.isSelf ? 'Me' : e.person.name,
+                        trailing: Fmt.money(e.amount, currency),
+                        value: report.expense == 0
+                            ? 0
+                            : e.amount / report.expense,
+                        color: Color(e.person.color),
+                      ),
+                    ),
+                  ),
                 ],
                 const SizedBox(height: 24),
                 const SectionHeader('Last 6 months'),

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/people/people_repository.dart';
 import '../../../core/utils/formatters.dart';
 import '../repository/expense_repository.dart';
 
@@ -108,6 +109,25 @@ final monthReportProvider = FutureProvider<MonthReport>((ref) async {
     previousExpense: prev.expense,
   );
 });
+
+/// This month's spending per person, biggest first. Self is included: it is
+/// where most of the money goes and the shares only read correctly with it.
+final spendByPersonProvider =
+    FutureProvider<List<({Person person, double amount})>>((ref) async {
+      final rows = await ref.watch(monthTransactionsProvider.future);
+      final people = await ref.watch(peopleProvider.future);
+
+      final totals = <int, double>{};
+      for (final r in rows.where((r) => r.kind == TxKind.expense)) {
+        totals[r.personId] = (totals[r.personId] ?? 0) + r.amount;
+      }
+
+      final result = [
+        for (final p in people)
+          if (totals[p.id] != null) (person: p, amount: totals[p.id]!),
+      ]..sort((a, b) => b.amount.compareTo(a.amount));
+      return result;
+    });
 
 /// Income vs expense for the trailing 6 months.
 final monthlyTrendProvider =

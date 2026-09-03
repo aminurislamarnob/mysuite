@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/people/people_repository.dart';
 import '../../../core/settings/app_settings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_icons.dart';
@@ -235,6 +236,8 @@ class _TxTile extends ConsumerWidget {
     final accounts = ref.watch(allAccountsProvider).valueOrNull ?? const [];
     final cat = categories.where((c) => c.id == tx.categoryId).firstOrNull;
     final account = accounts.where((a) => a.id == tx.accountId).firstOrNull;
+    final people = ref.watch(peopleProvider).valueOrNull ?? const [];
+    final person = people.where((p) => p.id == tx.personId).firstOrNull;
     final muted = Theme.of(context).colorScheme.outline;
 
     final color = switch (tx.kind) {
@@ -286,7 +289,9 @@ class _TxTile extends ConsumerWidget {
         ),
         subtitle: Text(
           '${Fmt.relativeDay(tx.date)}'
-          '${account == null ? '' : ' · ${account.name}'}',
+          '${account == null ? '' : ' · ${account.name}'}'
+          // Self is the default, so saying so on every row is noise.
+          '${person == null || person.isSelf ? '' : ' · ${person.name}'}',
           style: TextStyle(fontSize: 11, color: muted),
         ),
         trailing: Text(

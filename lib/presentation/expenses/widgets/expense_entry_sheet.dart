@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
+import '../../../core/people/people_repository.dart';
 import '../../../core/settings/app_settings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_icons.dart';
@@ -10,6 +11,7 @@ import '../../../core/widgets/brand.dart';
 import '../../../core/widgets/common.dart';
 import '../providers/expenses_provider.dart';
 import '../repository/expense_repository.dart';
+import '../../settings/people_screen.dart';
 import '../categories_screen.dart';
 import '../utils/expense_voice_parser.dart';
 
@@ -60,6 +62,7 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
   int? _categoryId;
   int? _accountId;
   int? _transferAccountId;
+  int? _personId;
   DateTime _date = DateTime.now();
   bool _listening = false;
 
@@ -133,6 +136,12 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
     if (id != null && mounted) setState(() => _categoryId = id);
   }
 
+  /// Adds a household member without leaving the sheet, and selects them.
+  Future<void> _newPerson() async {
+    final id = await PersonEditor.show(context, ref);
+    if (id != null && mounted) setState(() => _personId = id);
+  }
+
   void _toast(String m) {
     if (!mounted) return;
     brandToast(context, m);
@@ -163,6 +172,7 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
           categoryId: _kind == TxKind.transfer ? null : _categoryId,
           kind: _kind,
           transferAccountId: _transferAccountId,
+          personId: _kind == TxKind.transfer ? null : _personId,
           note: _note.text.trim().isEmpty ? null : _note.text.trim(),
           receiptPath: widget.receiptPath,
           date: _date,
@@ -179,6 +189,8 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
     final categories = allCategories
         .where((c) => c.isIncome == (_kind == TxKind.income))
         .toList();
+    final household = ref.watch(householdProvider).valueOrNull ?? const [];
+    final self = household.where((p) => p.isSelf).firstOrNull;
     final muted = Theme.of(context).colorScheme.outline;
 
     _accountId ??= accounts.firstOrNull?.id;
@@ -310,6 +322,32 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
                     ),
                   )
                   .toList(),
+            ),
+          ],
+
+          if (_kind != TxKind.transfer) ...[
+            const SizedBox(height: 16),
+            Text('For', style: TextStyle(color: muted, fontSize: 12)),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final p in household)
+                  Pill(
+                    label: p.isSelf ? 'Me' : p.name,
+                    icon: AppIcons.person,
+                    selected: (_personId ?? self?.id) == p.id,
+                    color: Theme.of(context).colorScheme.primary,
+                    onTap: () => setState(() => _personId = p.id),
+                  ),
+                Pill(
+                  label: 'New',
+                  icon: AppIcons.personAdd,
+                  color: muted,
+                  onTap: _newPerson,
+                ),
+              ],
             ),
           ],
 

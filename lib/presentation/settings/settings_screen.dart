@@ -10,6 +10,7 @@ import '../../core/theme/app_icons.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/brand.dart';
 import '../../core/widgets/common.dart';
+import 'people_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -41,6 +42,23 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                   )
                   .toList(),
+            ),
+          ),
+
+          const SizedBox(height: 24),
+          const SectionHeader('People'),
+          TintCard(
+            padding: EdgeInsets.zero,
+            child: BrandTile(
+              leading: const AppIcon(AppIcons.people),
+              title: const Text('Household & contacts'),
+              subtitle: const Text(
+                'Medicine profiles, who an expense was for, who owes what',
+              ),
+              trailing: const AppIcon(AppIcons.chevronRight),
+              onTap: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const PeopleScreen())),
             ),
           ),
 
