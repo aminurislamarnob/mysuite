@@ -2,11 +2,15 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/people/people_repository.dart';
 import '../../../core/providers/database_provider.dart';
 import '../../../core/utils/formatters.dart';
 
 final expenseRepositoryProvider = Provider<ExpenseRepository>((ref) {
-  return ExpenseRepository(ref.watch(databaseProvider));
+  return ExpenseRepository(
+    ref.watch(databaseProvider),
+    ref.watch(peopleRepositoryProvider),
+  );
 });
 
 /// Transaction kinds, mirroring `Expenses.kind`.
@@ -14,18 +18,42 @@ class TxKind {
   static const expense = 0;
   static const income = 1;
   static const transfer = 2;
+  static const lend = 3;
+  static const borrow = 4;
+  static const repayment = 5;
+
+  /// Lending, borrowing and repaying move money but are neither spending nor
+  /// earning, so reports and budgets leave them out.
+  static bool isLoan(int kind) =>
+      kind == lend || kind == borrow || kind == repayment;
+
+  /// The principal row of a loan, which lives and dies with the loan itself.
+  static bool isLoanPrincipal(int kind) => kind == lend || kind == borrow;
+}
+
+/// `Loans.direction` values.
+class LoanDirection {
+  /// They owe me.
+  static const lent = 0;
+
+  /// I owe them.
+  static const borrowed = 1;
 }
 
 class ExpenseRepository {
   final AppDatabase _db;
+  final PeopleRepository _people;
 
-  ExpenseRepository(this._db);
+  ExpenseRepository(this._db, this._people);
 
   // --- Accounts ------------------------------------------------------------
 
   Stream<List<Account>> watchAccounts() => (_db.select(
     _db.accounts,
   )..where((t) => t.isArchived.equals(false))).watch();
+
+  /// Archived accounts included, so old rows can still name their account.
+  Stream<List<Account>> watchAllAccounts() => _db.select(_db.accounts).watch();
 
   Future<List<Account>> accounts() => (_db.select(
     _db.accounts,
@@ -47,38 +75,126 @@ class ExpenseRepository {
         ),
       );
 
+  Future<void> updateAccount(
+    int id, {
+    String? name,
+    String? type,
+    int? color,
+  }) => (_db.update(_db.accounts)..where((t) => t.id.equals(id))).write(
+    AccountsCompanion(
+      name: name == null ? const Value.absent() : Value(name),
+      type: type == null ? const Value.absent() : Value(type),
+      color: color == null ? const Value.absent() : Value(color),
+    ),
+  );
+
+  /// Archiving keeps the account's history; its balance simply stops counting
+  /// towards the total.
+  Future<void> setAccountArchived(int id, bool archived) =>
+      (_db.update(_db.accounts)..where((t) => t.id.equals(id))).write(
+        AccountsCompanion(isArchived: Value(archived)),
+      );
+
   Future<void> deleteAccount(int id) =>
       (_db.delete(_db.accounts)..where((t) => t.id.equals(id))).go();
 
   // --- Categories ----------------------------------------------------------
 
   Stream<List<ExpenseCategory>> watchCategories({bool? income}) {
-    final q = _db.select(_db.expenseCategories);
+    final q = _db.select(_db.expenseCategories)
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.sortOrder),
+        (t) => OrderingTerm(expression: t.id),
+      ]);
     if (income != null) q.where((t) => t.isIncome.equals(income));
     return q.watch();
   }
 
   Future<List<ExpenseCategory>> categories() =>
-      _db.select(_db.expenseCategories).get();
+      (_db.select(_db.expenseCategories)..orderBy([
+            (t) => OrderingTerm(expression: t.sortOrder),
+            (t) => OrderingTerm(expression: t.id),
+          ]))
+          .get();
 
   Future<int> createCategory(
     String name,
     String icon,
     int color, {
     bool isIncome = false,
-  }) => _db
-      .into(_db.expenseCategories)
-      .insert(
-        ExpenseCategoriesCompanion.insert(
-          name: name,
-          icon: Value(icon),
-          color: Value(color),
-          isIncome: Value(isIncome),
+  }) async {
+    final last = _db.expenseCategories.sortOrder.max();
+    final q = _db.selectOnly(_db.expenseCategories)..addColumns([last]);
+    final next = ((await q.getSingle()).read(last) ?? -1) + 1;
+    return _db
+        .into(_db.expenseCategories)
+        .insert(
+          ExpenseCategoriesCompanion.insert(
+            name: name,
+            icon: Value(icon),
+            color: Value(color),
+            isIncome: Value(isIncome),
+            sortOrder: Value(next),
+          ),
+        );
+  }
+
+  Future<void> updateCategory(
+    int id, {
+    String? name,
+    String? icon,
+    int? color,
+  }) =>
+      (_db.update(_db.expenseCategories)..where((t) => t.id.equals(id))).write(
+        ExpenseCategoriesCompanion(
+          name: name == null ? const Value.absent() : Value(name),
+          icon: icon == null ? const Value.absent() : Value(icon),
+          color: color == null ? const Value.absent() : Value(color),
         ),
       );
 
-  Future<void> deleteCategory(int id) =>
-      (_db.delete(_db.expenseCategories)..where((t) => t.id.equals(id))).go();
+  /// Persists a new order; [ids] is the full list in display order.
+  Future<void> reorderCategories(List<int> ids) => _db.batch((b) {
+    for (var i = 0; i < ids.length; i++) {
+      b.update(
+        _db.expenseCategories,
+        ExpenseCategoriesCompanion(sortOrder: Value(i)),
+        where: (t) => t.id.equals(ids[i]),
+      );
+    }
+  });
+
+  Future<int> categoryTransactionCount(int categoryId) async {
+    final q = _db.selectOnly(_db.expenses)
+      ..addColumns([countAll()])
+      ..where(_db.expenses.categoryId.equals(categoryId));
+    return (await q.getSingle()).read(countAll()) ?? 0;
+  }
+
+  /// Deletes a category. Its transactions and recurring bills move to
+  /// [reassignTo]; its budgets are dropped, since they capped something that
+  /// no longer exists. A category with history cannot be deleted without a
+  /// destination.
+  Future<void> deleteCategory(int id, {int? reassignTo}) async {
+    await _db.transaction(() async {
+      if (reassignTo == null && await categoryTransactionCount(id) > 0) {
+        throw StateError('Category $id has transactions; reassign them.');
+      }
+      if (reassignTo != null) {
+        await (_db.update(_db.expenses)..where((t) => t.categoryId.equals(id)))
+            .write(ExpensesCompanion(categoryId: Value(reassignTo)));
+        await (_db.update(_db.recurringExpenses)
+              ..where((t) => t.categoryId.equals(id)))
+            .write(RecurringExpensesCompanion(categoryId: Value(reassignTo)));
+      }
+      await (_db.delete(
+        _db.budgets,
+      )..where((t) => t.categoryId.equals(id))).go();
+      await (_db.delete(
+        _db.expenseCategories,
+      )..where((t) => t.id.equals(id))).go();
+    });
+  }
 
   // --- Transactions --------------------------------------------------------
 
@@ -110,6 +226,10 @@ class ExpenseRepository {
           ))
           .get();
 
+  Future<Expense?> transaction(int id) => (_db.select(
+    _db.expenses,
+  )..where((t) => t.id.equals(id))).getSingleOrNull();
+
   /// Records a transaction and moves the money, in one transaction so a
   /// failure can never leave a balance out of step with its ledger.
   Future<int> addTransaction({
@@ -118,6 +238,8 @@ class ExpenseRepository {
     int? categoryId,
     int kind = TxKind.expense,
     int? transferAccountId,
+    int? personId,
+    int? loanId,
     String? note,
     String? receiptPath,
     DateTime? date,
@@ -132,18 +254,110 @@ class ExpenseRepository {
               categoryId: Value(categoryId),
               kind: Value(kind),
               transferAccountId: Value(transferAccountId),
+              personId: personId ?? await _people.selfId(),
+              loanId: Value(loanId),
               note: Value(note),
               receiptPath: Value(receiptPath),
               date: Value(date ?? DateTime.now()),
             ),
           );
-
-      await _applyBalance(accountId, kind == TxKind.income ? amount : -amount);
-      if (kind == TxKind.transfer && transferAccountId != null) {
-        await _applyBalance(transferAccountId, amount);
-      }
+      await _apply(await _row(id), 1);
+      if (loanId != null) await _refreshSettled(loanId);
       return id;
     });
+  }
+
+  /// Rewrites a transaction, undoing the old row's effect on the balances
+  /// before applying the new one. Absent arguments keep their value.
+  Future<void> updateTransaction(
+    int id, {
+    double? amount,
+    int? accountId,
+    Value<int?> categoryId = const Value.absent(),
+    int? kind,
+    Value<int?> transferAccountId = const Value.absent(),
+    int? personId,
+    Value<String?> note = const Value.absent(),
+    DateTime? date,
+  }) async {
+    await _db.transaction(() async {
+      final old = await _row(id);
+      await _apply(old, -1);
+      await (_db.update(_db.expenses)..where((t) => t.id.equals(id))).write(
+        ExpensesCompanion(
+          amount: amount == null ? const Value.absent() : Value(amount),
+          accountId: accountId == null
+              ? const Value.absent()
+              : Value(accountId),
+          categoryId: categoryId,
+          kind: kind == null ? const Value.absent() : Value(kind),
+          transferAccountId: transferAccountId,
+          personId: personId == null ? const Value.absent() : Value(personId),
+          note: note,
+          date: date == null ? const Value.absent() : Value(date),
+        ),
+      );
+      final fresh = await _row(id);
+      await _apply(fresh, 1);
+      if (fresh.loanId != null) await _refreshSettled(fresh.loanId!);
+    });
+  }
+
+  /// Deletes a transaction and reverses its effect on the account balances.
+  /// Returns the row so the caller can offer to [restoreTransaction] it.
+  /// Deleting a loan's principal removes the loan and its repayments too.
+  Future<Expense?> deleteTransaction(int id) async {
+    return _db.transaction(() async {
+      final tx = await transaction(id);
+      if (tx == null) return null;
+      if (tx.loanId != null && TxKind.isLoanPrincipal(tx.kind)) {
+        await deleteLoan(tx.loanId!);
+        return tx;
+      }
+      await _apply(tx, -1);
+      await (_db.delete(_db.expenses)..where((t) => t.id.equals(id))).go();
+      if (tx.loanId != null) await _refreshSettled(tx.loanId!);
+      return tx;
+    });
+  }
+
+  /// Puts back a row handed out by [deleteTransaction], id and all, so any
+  /// receipt or loan link it carried still holds.
+  Future<void> restoreTransaction(Expense tx) async {
+    await _db.transaction(() async {
+      await _db.into(_db.expenses).insert(tx.toCompanion(false));
+      await _apply(tx, 1);
+      if (tx.loanId != null) await _refreshSettled(tx.loanId!);
+    });
+  }
+
+  Future<Expense> _row(int id) =>
+      (_db.select(_db.expenses)..where((t) => t.id.equals(id))).getSingle();
+
+  /// Moves the money for [tx]; [sign] is 1 to apply it and -1 to reverse it.
+  Future<void> _apply(Expense tx, int sign) async {
+    final delta = await _sourceDelta(tx);
+    await _applyBalance(tx.accountId, sign * delta);
+    if (tx.kind == TxKind.transfer && tx.transferAccountId != null) {
+      await _applyBalance(tx.transferAccountId!, sign * tx.amount);
+    }
+  }
+
+  /// What [tx] does to its own account. A repayment's direction depends on
+  /// whose loan it settles.
+  Future<double> _sourceDelta(Expense tx) async {
+    switch (tx.kind) {
+      case TxKind.income:
+      case TxKind.borrow:
+        return tx.amount;
+      case TxKind.repayment:
+        final loan = tx.loanId == null ? null : await _loan(tx.loanId!);
+        return loan?.direction == LoanDirection.borrowed
+            ? -tx.amount
+            : tx.amount;
+      default:
+        return -tx.amount;
+    }
   }
 
   Future<void> _applyBalance(int accountId, double delta) async {
@@ -155,48 +369,176 @@ class ExpenseRepository {
         .write(AccountsCompanion(balance: Value(account.balance + delta)));
   }
 
-  /// Deletes a transaction and reverses its effect on the account balances.
-  Future<void> deleteTransaction(int id) async {
-    await _db.transaction(() async {
-      final tx = await (_db.select(
-        _db.expenses,
-      )..where((t) => t.id.equals(id))).getSingleOrNull();
-      if (tx == null) return;
+  // --- Loans ---------------------------------------------------------------
 
-      await _applyBalance(
-        tx.accountId,
-        tx.kind == TxKind.income ? -tx.amount : tx.amount,
+  Stream<List<Loan>> watchLoans() =>
+      (_db.select(_db.loans)..orderBy([
+            (t) => OrderingTerm(
+              expression: t.settledAt.isNull(),
+              mode: OrderingMode.desc,
+            ),
+            (t) => OrderingTerm(expression: t.dueDate),
+            (t) =>
+                OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+          ]))
+          .watch();
+
+  /// Every repayment row, for deriving what each loan still owes.
+  Stream<List<Expense>> watchRepayments() => (_db.select(
+    _db.expenses,
+  )..where((t) => t.kind.equals(TxKind.repayment))).watch();
+
+  Future<Loan?> _loan(int id) =>
+      (_db.select(_db.loans)..where((t) => t.id.equals(id))).getSingleOrNull();
+
+  Future<Loan?> loan(int id) => _loan(id);
+
+  Future<double> repaid(int loanId) async {
+    final sum = _db.expenses.amount.sum();
+    final q = _db.selectOnly(_db.expenses)
+      ..addColumns([sum])
+      ..where(
+        _db.expenses.loanId.equals(loanId) &
+            _db.expenses.kind.equals(TxKind.repayment),
       );
-      if (tx.kind == TxKind.transfer && tx.transferAccountId != null) {
-        await _applyBalance(tx.transferAccountId!, -tx.amount);
+    return (await q.getSingle()).read(sum) ?? 0;
+  }
+
+  Future<double> outstanding(int loanId) async {
+    final l = await _loan(loanId);
+    if (l == null) return 0;
+    return l.principal - await repaid(loanId);
+  }
+
+  /// Opens a loan and books its principal against [accountId].
+  Future<int> createLoan({
+    required int personId,
+    required int direction,
+    required double principal,
+    required int accountId,
+    String? note,
+    DateTime? dueDate,
+    DateTime? date,
+  }) async {
+    return _db.transaction(() async {
+      final id = await _db
+          .into(_db.loans)
+          .insert(
+            LoansCompanion.insert(
+              personId: personId,
+              direction: Value(direction),
+              principal: principal,
+              note: Value(note),
+              dueDate: Value(dueDate),
+              createdAt: Value(date ?? DateTime.now()),
+            ),
+          );
+      await addTransaction(
+        amount: principal,
+        accountId: accountId,
+        kind: direction == LoanDirection.borrowed ? TxKind.borrow : TxKind.lend,
+        personId: personId,
+        loanId: id,
+        note: note,
+        date: date,
+      );
+      return id;
+    });
+  }
+
+  Future<void> updateLoan(
+    int id, {
+    Value<String?> note = const Value.absent(),
+    Value<DateTime?> dueDate = const Value.absent(),
+  }) => (_db.update(_db.loans)..where((t) => t.id.equals(id))).write(
+    LoansCompanion(note: note, dueDate: dueDate),
+  );
+
+  /// Books a partial or full repayment; the loan settles itself once the
+  /// repayments cover the principal.
+  Future<int> repay(
+    int loanId, {
+    required double amount,
+    required int accountId,
+    String? note,
+    DateTime? date,
+  }) async {
+    final l = await _loan(loanId);
+    if (l == null) throw StateError('Loan $loanId does not exist.');
+    return addTransaction(
+      amount: amount,
+      accountId: accountId,
+      kind: TxKind.repayment,
+      personId: l.personId,
+      loanId: loanId,
+      note: note,
+      date: date,
+    );
+  }
+
+  Future<void> _refreshSettled(int loanId) async {
+    final l = await _loan(loanId);
+    if (l == null) return;
+    final done = await repaid(loanId) >= l.principal;
+    if (done == (l.settledAt != null)) return;
+    await (_db.update(_db.loans)..where((t) => t.id.equals(loanId))).write(
+      LoansCompanion(settledAt: Value(done ? DateTime.now() : null)),
+    );
+  }
+
+  /// Removes a loan and every ledger row it produced, giving the money back
+  /// to the accounts it moved through.
+  Future<void> deleteLoan(int id) async {
+    await _db.transaction(() async {
+      final rows = await (_db.select(
+        _db.expenses,
+      )..where((t) => t.loanId.equals(id))).get();
+      for (final tx in rows) {
+        await _apply(tx, -1);
       }
-      await (_db.delete(_db.expenses)..where((t) => t.id.equals(id))).go();
+      await (_db.delete(_db.expenses)..where((t) => t.loanId.equals(id))).go();
+      await (_db.delete(_db.loans)..where((t) => t.id.equals(id))).go();
     });
   }
 
   // --- Budgets -------------------------------------------------------------
 
-  Stream<List<Budget>> watchBudgets() => _db.select(_db.budgets).watch();
+  Stream<List<Budget>> watchBudgets(DateTime month) =>
+      (_db.select(_db.budgets)
+            ..where((t) => t.monthStart.equals(Fmt.startOfMonth(month)))
+            ..orderBy([
+              (t) => OrderingTerm(
+                expression: t.categoryId.isNull(),
+                mode: OrderingMode.desc,
+              ),
+              (t) => OrderingTerm(expression: t.id),
+            ]))
+          .watch();
 
+  Future<List<Budget>> budgets(DateTime month) => (_db.select(
+    _db.budgets,
+  )..where((t) => t.monthStart.equals(Fmt.startOfMonth(month)))).get();
+
+  /// Creates or replaces the cap for a category (null = overall) in a month.
   Future<int> setBudget({
     required double amount,
     int? categoryId,
-    String period = 'monthly',
+    required DateTime month,
   }) async {
+    final start = Fmt.startOfMonth(month);
     final existing =
         await (_db.select(_db.budgets)..where(
-              (t) => categoryId == null
-                  ? t.categoryId.isNull()
-                  : t.categoryId.equals(categoryId),
+              (t) =>
+                  t.monthStart.equals(start) &
+                  (categoryId == null
+                      ? t.categoryId.isNull()
+                      : t.categoryId.equals(categoryId)),
             ))
             .getSingleOrNull();
 
     if (existing != null) {
-      await (_db.update(
-        _db.budgets,
-      )..where((t) => t.id.equals(existing.id))).write(
-        BudgetsCompanion(amount: Value(amount), period: Value(period)),
-      );
+      await (_db.update(_db.budgets)..where((t) => t.id.equals(existing.id)))
+          .write(BudgetsCompanion(amount: Value(amount)));
       return existing.id;
     }
     return _db
@@ -205,13 +547,61 @@ class ExpenseRepository {
           BudgetsCompanion.insert(
             amount: amount,
             categoryId: Value(categoryId),
-            period: Value(period),
+            monthStart: start,
           ),
         );
   }
 
+  Future<void> updateBudget(int id, {required double amount}) =>
+      (_db.update(_db.budgets)..where((t) => t.id.equals(id))).write(
+        BudgetsCompanion(amount: Value(amount)),
+      );
+
   Future<void> deleteBudget(int id) =>
       (_db.delete(_db.budgets)..where((t) => t.id.equals(id))).go();
+
+  /// The most recent month before [month] that has any budgets, or null.
+  Future<DateTime?> latestBudgetMonthBefore(DateTime month) async {
+    final start = Fmt.startOfMonth(month);
+    final row =
+        await (_db.select(_db.budgets)
+              ..where((t) => t.monthStart.isSmallerThanValue(start))
+              ..orderBy([
+                (t) => OrderingTerm(
+                  expression: t.monthStart,
+                  mode: OrderingMode.desc,
+                ),
+              ])
+              ..limit(1))
+            .getSingleOrNull();
+    return row?.monthStart;
+  }
+
+  /// Copies [from]'s budgets into [to], leaving any caps [to] already has.
+  Future<int> copyBudgets({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    final source = await budgets(from);
+    final existing = await budgets(to);
+    final taken = existing.map((b) => b.categoryId).toSet();
+    var copied = 0;
+    await _db.batch((b) {
+      for (final budget in source) {
+        if (taken.contains(budget.categoryId)) continue;
+        copied++;
+        b.insert(
+          _db.budgets,
+          BudgetsCompanion.insert(
+            amount: budget.amount,
+            categoryId: Value(budget.categoryId),
+            monthStart: Fmt.startOfMonth(to),
+          ),
+        );
+      }
+    });
+    return copied;
+  }
 
   // --- Recurring bills & subscriptions -------------------------------------
 

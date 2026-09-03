@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/people/people_repository.dart';
 import '../../../core/providers/database_provider.dart';
 import '../../../core/utils/formatters.dart';
 import '../utils/schedule_generator.dart';
@@ -23,25 +24,19 @@ class MedicineRepository {
   MedicineRepository(this._db);
 
   // --- Profiles ------------------------------------------------------------
+  // A profile is a household member from the shared People table.
 
-  Stream<List<MedicineProfile>> watchProfiles() =>
-      _db.select(_db.medicineProfiles).watch();
+  PeopleRepository get _people => PeopleRepository(_db);
 
-  Future<List<MedicineProfile>> profiles() =>
-      _db.select(_db.medicineProfiles).get();
+  Stream<List<Person>> watchProfiles() =>
+      _people.watchPeople(type: PersonType.household);
 
-  Future<int> createProfile(String name, String relation, int color) => _db
-      .into(_db.medicineProfiles)
-      .insert(
-        MedicineProfilesCompanion.insert(
-          name: name,
-          relation: Value(relation),
-          color: Value(color),
-        ),
-      );
+  Future<List<Person>> profiles() => _people.people(type: PersonType.household);
 
-  Future<void> deleteProfile(int id) =>
-      (_db.delete(_db.medicineProfiles)..where((t) => t.id.equals(id))).go();
+  Future<int> createProfile(String name, String relation, int color) =>
+      _people.createPerson(name: name, relation: relation, color: color);
+
+  Future<void> deleteProfile(int id) => _people.deletePerson(id);
 
   // --- Medicines -----------------------------------------------------------
 

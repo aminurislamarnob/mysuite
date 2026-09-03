@@ -9,7 +9,7 @@ import '../utils/schedule_generator.dart';
 /// The caregiver profile currently being viewed.
 final activeProfileProvider = StateProvider<int?>((ref) => null);
 
-final profilesProvider = StreamProvider<List<MedicineProfile>>((ref) {
+final profilesProvider = StreamProvider<List<Person>>((ref) {
   return ref.watch(medicineRepositoryProvider).watchProfiles();
 });
 

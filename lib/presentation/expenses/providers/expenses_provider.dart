@@ -17,8 +17,10 @@ final recentExpensesProvider = StreamProvider<List<Expense>>((ref) {
   return ref.watch(expenseRepositoryProvider).watchRecent();
 });
 
+/// The budgets for the month the reports are showing.
 final budgetsProvider = StreamProvider<List<Budget>>((ref) {
-  return ref.watch(expenseRepositoryProvider).watchBudgets();
+  final month = ref.watch(reportMonthProvider);
+  return ref.watch(expenseRepositoryProvider).watchBudgets(month);
 });
 
 final recurringProvider = StreamProvider<List<RecurringExpense>>((ref) {

@@ -36,14 +36,16 @@ void main() {
     );
   }
 
-  test('seeds the default accounts, categories and profile on first open',
-      () async {
-    // Touching any table forces `beforeOpen` to run.
-    expect((await db.select(db.accounts).get()).length, 4);
-    expect((await db.select(db.expenseCategories).get()).length, 12);
-    expect((await db.select(db.projects).get()).length, 3);
-    expect((await db.select(db.medicineProfiles).get()).length, 1);
-  });
+  test(
+    'seeds the default accounts, categories and profile on first open',
+    () async {
+      // Touching any table forces `beforeOpen` to run.
+      expect((await db.select(db.accounts).get()).length, 4);
+      expect((await db.select(db.expenseCategories).get()).length, 12);
+      expect((await db.select(db.projects).get()).length, 3);
+      expect((await db.select(db.people).get()).length, 1);
+    },
+  );
 
   test('creating a medicine materialises its whole course', () async {
     final start = DateTime(2026, 3, 1);
@@ -125,8 +127,11 @@ void main() {
   test('regenerating twice does not duplicate the course', () async {
     final start = DateTime(2026, 3, 1);
     final end = DateTime(2026, 3, 5);
-    final spec =
-        ScheduleSpec(start: start, end: end, doseMinutes: const [480, 1200]);
+    final spec = ScheduleSpec(
+      start: start,
+      end: end,
+      doseMinutes: const [480, 1200],
+    );
 
     final id = await repo.createMedicineWithSchedule(
       medicine: medicine(start: start, end: end),
@@ -144,11 +149,7 @@ void main() {
 
     final id = await repo.createMedicineWithSchedule(
       medicine: medicine(start: start, end: end, doseTimes: '480'),
-      spec: ScheduleSpec(
-        start: start,
-        end: end,
-        doseMinutes: const [480],
-      ),
+      spec: ScheduleSpec(start: start, end: end, doseMinutes: const [480]),
     );
 
     final doses = await repo.dosesFor(id);
@@ -171,7 +172,10 @@ void main() {
     final id = await repo.createMedicineWithSchedule(
       medicine: medicine(start: start, end: DateTime(2026, 3, 5)),
       spec: ScheduleSpec(
-          start: start, end: DateTime(2026, 3, 5), doseMinutes: const [480]),
+        start: start,
+        end: DateTime(2026, 3, 5),
+        doseMinutes: const [480],
+      ),
     );
     expect((await repo.dosesFor(id)), isNotEmpty);
 

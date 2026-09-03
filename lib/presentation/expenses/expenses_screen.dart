@@ -139,7 +139,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
         for (final e in report.byCategory.entries) nameFor(e.key): e.value,
       },
       rows: rows
-          .where((r) => r.kind != TxKind.transfer)
+          .where((r) => r.kind == TxKind.expense || r.kind == TxKind.income)
           .map(
             (r) => (
               date: r.date,
@@ -766,7 +766,11 @@ class _BudgetsTab extends ConsumerWidget {
     if (saved == true && amount != null && amount > 0) {
       await ref
           .read(expenseRepositoryProvider)
-          .setBudget(amount: amount, categoryId: categoryId);
+          .setBudget(
+            amount: amount,
+            categoryId: categoryId,
+            month: ref.read(reportMonthProvider),
+          );
     }
   }
 }
