@@ -81,7 +81,43 @@ final monthReportProvider = FutureProvider<MonthReport>((ref) async {
   final month = ref.watch(reportMonthProvider);
   // Depend on the stream so the report refreshes as transactions land.
   final rows = await ref.watch(monthTransactionsProvider.future);
+  return _buildReport(repo, month, rows);
+});
 
+/// The calendar month's report, for the overview. The reports and budgets
+/// tabs step through months; the overview always says what is happening
+/// now, so it must not follow them.
+final currentMonthReportProvider = FutureProvider<MonthReport>((ref) async {
+  final repo = ref.watch(expenseRepositoryProvider);
+  // Any new row may fall in this month; re-run when the ledger changes.
+  ref.watch(recentExpensesProvider);
+  final month = Fmt.startOfMonth(DateTime.now());
+  final rows = await repo.between(month, DateTime(month.year, month.month + 1));
+  return _buildReport(repo, month, rows);
+});
+
+/// The calendar month's overall cap with its spend, or null when none is set.
+final currentOverallBudgetProvider = FutureProvider<BudgetProgress?>((
+  ref,
+) async {
+  final repo = ref.watch(expenseRepositoryProvider);
+  final report = await ref.watch(currentMonthReportProvider.future);
+  final budgets = await repo.budgets(DateTime.now());
+  final overall = budgets.where((b) => b.categoryId == null).firstOrNull;
+  if (overall == null) return null;
+  return BudgetProgress(
+    budget: overall,
+    label: 'Overall',
+    color: 0xFF5B7CE0,
+    spent: report.expense,
+  );
+});
+
+Future<MonthReport> _buildReport(
+  ExpenseRepository repo,
+  DateTime month,
+  List<Expense> rows,
+) async {
   final byCategory = <int?, double>{};
   final byDay = <DateTime, double>{};
   var income = 0.0;
@@ -108,7 +144,7 @@ final monthReportProvider = FutureProvider<MonthReport>((ref) async {
     byDay: byDay,
     previousExpense: prev.expense,
   );
-});
+}
 
 /// This month's spending per person, biggest first. Self is included: it is
 /// where most of the money goes and the shares only read correctly with it.

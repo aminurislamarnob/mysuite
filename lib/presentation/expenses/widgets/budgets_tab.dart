@@ -68,7 +68,7 @@ class BudgetsTab extends ConsumerWidget {
     final month = ref.read(reportMonthProvider);
     final categories = ref.read(categoriesProvider).valueOrNull ?? const [];
     final controller = TextEditingController(
-      text: existing == null ? '' : existing.budget.amount.toStringAsFixed(0),
+      text: existing == null ? '' : Fmt.amountInput(existing.budget.amount),
     );
     int? categoryId = existing?.budget.categoryId;
 

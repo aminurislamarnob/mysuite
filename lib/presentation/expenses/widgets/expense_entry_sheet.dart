@@ -235,6 +235,9 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
     final repo = ref.read(expenseRepositoryProvider);
     final note = _note.text.trim().isEmpty ? null : _note.text.trim();
     final categoryId = _kind == TxKind.transfer ? null : _categoryId;
+    final transferAccountId = _kind == TxKind.transfer
+        ? _transferAccountId
+        : null;
 
     final existing = _existing;
     if (existing == null) {
@@ -243,7 +246,7 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
         accountId: accountId,
         categoryId: categoryId,
         kind: _kind,
-        transferAccountId: _transferAccountId,
+        transferAccountId: transferAccountId,
         personId: _kind == TxKind.transfer ? null : _personId,
         note: note,
         receiptPath: widget.receiptPath,
@@ -256,7 +259,7 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
         accountId: accountId,
         categoryId: drift.Value(categoryId),
         kind: _kind,
-        transferAccountId: drift.Value(_transferAccountId),
+        transferAccountId: drift.Value(transferAccountId),
         personId: _kind == TxKind.transfer ? null : _personId,
         note: drift.Value(note),
         date: _date,

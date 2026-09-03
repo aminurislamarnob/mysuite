@@ -83,6 +83,25 @@ void main() {
       expect(await balance(bank), -500);
     });
 
+    test('turning a transfer into an expense drops the far end', () async {
+      final id = await repo.addTransaction(
+        amount: 500,
+        accountId: cash,
+        kind: TxKind.transfer,
+        transferAccountId: bank,
+      );
+
+      await repo.updateTransaction(
+        id,
+        kind: TxKind.expense,
+        categoryId: Value(food),
+        transferAccountId: const Value(null),
+      );
+      expect(await balance(cash), -500);
+      expect(await balance(bank), 0);
+      expect((await repo.transaction(id))!.transferAccountId, isNull);
+    });
+
     test('delete then restore leaves the balance where it started', () async {
       final id = await repo.addTransaction(
         amount: 100,

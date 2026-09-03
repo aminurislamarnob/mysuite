@@ -21,10 +21,7 @@ class OverviewTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currency = ref.watch(settingsProvider).currencySymbol;
     final recent = ref.watch(recentExpensesProvider);
-    final budgets = ref.watch(budgetProgressProvider).valueOrNull ?? const [];
-    final overall = budgets
-        .where((b) => b.budget.categoryId == null)
-        .firstOrNull;
+    final overall = ref.watch(currentOverallBudgetProvider).valueOrNull;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
@@ -71,7 +68,7 @@ class _SummaryCard extends ConsumerWidget {
     final currency = ref.watch(settingsProvider).currencySymbol;
     final balance = ref.watch(totalBalanceProvider);
     final accounts = ref.watch(accountsProvider).valueOrNull ?? const [];
-    final report = ref.watch(monthReportProvider).valueOrNull;
+    final report = ref.watch(currentMonthReportProvider).valueOrNull;
     final muted = Theme.of(context).colorScheme.outline;
 
     final change = report?.changeVsPrevious;
@@ -239,22 +236,39 @@ class _TxTile extends ConsumerWidget {
     final account = accounts.where((a) => a.id == tx.accountId).firstOrNull;
     final people = ref.watch(peopleProvider).valueOrNull ?? const [];
     final person = people.where((p) => p.id == tx.personId).firstOrNull;
+    final loans = ref.watch(loansProvider).valueOrNull ?? const [];
+    final loan = loans.where((l) => l.id == tx.loanId).firstOrNull;
     final muted = Theme.of(context).colorScheme.outline;
+
+    // Money coming in: income, a loan taken, or a lent loan being repaid.
+    final inbound = switch (tx.kind) {
+      TxKind.income || TxKind.borrow => true,
+      TxKind.repayment => loan?.direction != LoanDirection.borrowed,
+      _ => false,
+    };
+    final isLoan = TxKind.isLoan(tx.kind);
 
     final color = switch (tx.kind) {
       TxKind.income => AppColors.successLight,
       TxKind.transfer => AppColors.primaryLight,
+      _ when isLoan => AppColors.primaryLight,
       _ => Color(cat?.color ?? 0xFF6C6C6C),
     };
     final icon = switch (tx.kind) {
       TxKind.income => AppIcons.arrowDown,
       TxKind.transfer => AppIcons.transfer,
+      TxKind.lend => AppIcons.arrowUp,
+      TxKind.borrow => AppIcons.arrowDown,
+      TxKind.repayment => inbound ? AppIcons.arrowDown : AppIcons.arrowUp,
       _ => AppIcons.category(cat?.icon ?? 'other'),
     };
-    final sign = switch (tx.kind) {
-      TxKind.income => '+',
-      TxKind.transfer => '',
-      _ => '-',
+    final sign = tx.kind == TxKind.transfer ? '' : (inbound ? '+' : '-');
+    final fallbackTitle = switch (tx.kind) {
+      TxKind.transfer => 'Transfer',
+      TxKind.lend => 'Lent',
+      TxKind.borrow => 'Borrowed',
+      TxKind.repayment => inbound ? 'Repayment received' : 'Repayment made',
+      _ => cat?.name ?? 'Expense',
     };
 
     // A loan's principal is the loan; removing it here would leave the loan
@@ -291,11 +305,10 @@ class _TxTile extends ConsumerWidget {
           ),
           child: AppIcon(icon, color: color, size: 18),
         ),
+        // A loan row's note is the loan's own, so the row says what it is
+        // and leaves the note to the Loans tab.
         title: Text(
-          tx.note?.isNotEmpty == true
-              ? tx.note!
-              : cat?.name ??
-                    (tx.kind == TxKind.transfer ? 'Transfer' : 'Expense'),
+          tx.note?.isNotEmpty == true && !isLoan ? tx.note! : fallbackTitle,
           style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
         ),
         subtitle: Text(
@@ -310,7 +323,7 @@ class _TxTile extends ConsumerWidget {
           style: TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: 15,
-            color: tx.kind == TxKind.income ? AppColors.successLight : null,
+            color: inbound ? AppColors.successLight : null,
           ),
         ),
       ),
