@@ -12,6 +12,7 @@ import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/brand.dart';
 import '../../core/widgets/common.dart';
+import '../../core/people/people_repository.dart';
 import '../habits/repository/habit_repository.dart';
 import '../modules/modules_screen.dart';
 
@@ -29,8 +30,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   final Set<AppModule> _modules = AppModule.values.toSet();
   final Set<String> _habits = {};
+  final _name = TextEditingController();
 
-  static const _lastPage = 4;
+  static const _lastPage = 5;
 
   void _next() {
     if (_index < _lastPage) {
@@ -46,6 +48,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Future<void> _finish() async {
     final notifier = ref.read(settingsProvider.notifier);
     notifier.setEnabledModules(_modules);
+
+    // Left blank when skipped, which is what the settings profile card watches
+    // for, so skipping here costs nothing but a later prompt.
+    final name = _name.text.trim();
+    if (name.isNotEmpty) {
+      final people = ref.read(peopleRepositoryProvider);
+      await people.updatePerson(await people.selfId(), name: name);
+    }
 
     // Seed whichever starter habits were picked.
     if (_modules.contains(AppModule.habits) && _habits.isNotEmpty) {
@@ -74,6 +84,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   void dispose() {
     _pages.dispose();
+    _name.dispose();
     super.dispose();
   }
 
@@ -112,6 +123,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 onPageChanged: (i) => setState(() => _index = i),
                 children: [
                   _welcomePage(),
+                  _namePage(),
                   _languagePage(),
                   _themePage(),
                   _modulesPage(),
@@ -226,6 +238,26 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               },
             ),
         ],
+      ),
+    );
+  }
+
+  /// Asked once, here, because nothing else in the app ever prompts for it —
+  /// Self is seeded unnamed, and a user who skips this is nudged from the
+  /// settings profile card instead.
+  Widget _namePage() {
+    return _shell(
+      title: 'What should we call you?',
+      subtitle:
+          'Used for your profile and to tell your records apart from anyone '
+          'else in the household. You can change it later, or skip it.',
+      child: BrandField(
+        controller: _name,
+        label: 'Your name',
+        hint: 'Aminur',
+        textCapitalization: TextCapitalization.words,
+        textInputAction: TextInputAction.next,
+        onSubmit: (_) => _next(),
       ),
     );
   }

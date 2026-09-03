@@ -149,9 +149,19 @@ class ExportService {
 
   // --- JSON (full backup) --------------------------------------------------
 
-  /// A complete, restorable snapshot of every table.
-  Future<File> fullJsonBackup() async {
-    final data = <String, dynamic>{
+  /// A complete, restorable snapshot of every table, written to a file.
+  Future<File> fullJsonBackup() async => _write(
+    'mysuite_backup_${Fmt.iso(DateTime.now())}.json',
+    const JsonEncoder.withIndent('  ').convert(await fullBackupData()),
+  );
+
+  /// What a backup contains, separate from where it is written.
+  ///
+  /// This is the shape a future restore has to read, so it is kept apart from
+  /// the file writing — which needs a documents directory, and with it a
+  /// platform channel the tests have no business standing up.
+  Future<Map<String, dynamic>> fullBackupData() async {
+    return <String, dynamic>{
       'version': _db.schemaVersion,
       'exportedAt': DateTime.now().toIso8601String(),
       'folders': (await _db.select(_db.folders).get()).map(_json).toList(),
@@ -172,7 +182,7 @@ class ExportService {
       'recurringExpenses': (await _db.select(_db.recurringExpenses).get())
           .map(_json)
           .toList(),
-      'people': (await _db.select(_db.people).get()).map(_json).toList(),
+      'people': await _peopleJson(),
       'loans': (await _db.select(_db.loans).get()).map(_json).toList(),
       'medicines': (await _db.select(_db.medicines).get()).map(_json).toList(),
       'medicineDoses': (await _db.select(_db.medicineDoses).get())
@@ -185,13 +195,42 @@ class ExportService {
           .map(_json)
           .toList(),
     };
-    return _write(
-      'mysuite_backup_${Fmt.iso(DateTime.now())}.json',
-      const JsonEncoder.withIndent('  ').convert(data),
-    );
   }
 
   Map<String, dynamic> _json(DataClass row) => row.toJson();
+
+  /// People, with each avatar carried as base64 rather than the path it lives
+  /// at.
+  ///
+  /// A stored path is meaningless once restored: it names a directory on the
+  /// device that wrote it, and iOS rewrites that directory on every reinstall,
+  /// so even the same phone would not find the file. Embedding the bytes keeps
+  /// the backup true to its own label. A 512px avatar is around 50KB, which is
+  /// nothing beside the note and expense history alongside it.
+  Future<List<Map<String, dynamic>>> _peopleJson() async {
+    final rows = await _db.select(_db.people).get();
+    return [
+      for (final row in rows)
+        {
+          ..._json(row),
+          'photoPath': null,
+          'photoData': await _photoData(row.photoPath),
+        },
+    ];
+  }
+
+  /// The avatar's bytes, or null when there is none or it has gone missing —
+  /// an unreadable file should cost the backup a photo, not the whole export.
+  Future<String?> _photoData(String? path) async {
+    if (path == null) return null;
+    final file = File(path);
+    if (!await file.exists()) return null;
+    try {
+      return base64Encode(await file.readAsBytes());
+    } on IOException {
+      return null;
+    }
+  }
 
   // --- PDF -----------------------------------------------------------------
 
