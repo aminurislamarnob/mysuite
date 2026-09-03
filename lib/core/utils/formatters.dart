@@ -39,7 +39,10 @@ class Fmt {
       1 => 'Tomorrow',
       -1 => 'Yesterday',
       _ when diff > 1 && diff < 7 => _weekday.format(d),
-      _ => target.year == today.year ? _dayMonth.format(d) : _dayMonthYear.format(d),
+      _ =>
+        target.year == today.year
+            ? _dayMonth.format(d)
+            : _dayMonthYear.format(d),
     };
   }
 
@@ -54,6 +57,15 @@ class Fmt {
     );
     return f.format(amount);
   }
+
+  /// An amount for a text field: no symbol and no grouping, with decimals
+  /// only when the amount has them. [double.toString] gives the shortest
+  /// string that parses back to the same number, so prefilling a field with
+  /// this and reading it back cannot change the figure.
+  static String amountInput(double amount) =>
+      amount.truncateToDouble() == amount
+      ? amount.toStringAsFixed(0)
+      : amount.toString();
 
   static String compactMoney(double amount, String symbol) {
     if (amount.abs() >= 1000000) {

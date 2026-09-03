@@ -258,8 +258,12 @@ class _TxTile extends ConsumerWidget {
     };
 
     // A loan's principal is the loan; removing it here would leave the loan
-    // with no money behind it, so that lives in the Loans tab.
+    // with no money behind it, so that lives in the Loans tab. Repayments can
+    // still be swiped away — the loan reopens itself — but neither can be
+    // edited here, since the sheet only knows how to write the three ordinary
+    // kinds and would turn a repayment into an expense still tied to a loan.
     final isLoanPrincipal = TxKind.isLoanPrincipal(tx.kind);
+    final isLoanRow = tx.loanId != null;
 
     return Dismissible(
       key: ValueKey('tx-${tx.id}'),
@@ -278,9 +282,7 @@ class _TxTile extends ConsumerWidget {
       onDismissed: (_) => _delete(context, ref),
       child: BrandTile(
         dense: true,
-        onTap: isLoanPrincipal
-            ? null
-            : () => ExpenseEntrySheet.edit(context, tx),
+        onTap: isLoanRow ? null : () => ExpenseEntrySheet.edit(context, tx),
         leading: Container(
           padding: const EdgeInsets.all(9),
           decoration: BoxDecoration(

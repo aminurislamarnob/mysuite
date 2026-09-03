@@ -3,6 +3,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mysuite/core/database/app_database.dart';
 import 'package:mysuite/core/people/people_repository.dart';
+import 'package:mysuite/core/utils/formatters.dart';
 import 'package:mysuite/presentation/expenses/repository/expense_repository.dart';
 
 void main() {
@@ -285,6 +286,16 @@ void main() {
       final rows = await repo.budgets(sep);
       expect(rows.firstWhere((b) => b.categoryId == food).amount, 600);
       expect(rows.firstWhere((b) => b.categoryId == null).amount, 9000);
+    });
+  });
+
+  group('amount input', () {
+    test('prefilling a field never changes the figure', () {
+      for (final amount in [100.0, 12.5, 0.05, 1234.56, 3000.99]) {
+        expect(double.parse(Fmt.amountInput(amount)), amount);
+      }
+      expect(Fmt.amountInput(100), '100');
+      expect(Fmt.amountInput(12.5), '12.5');
     });
   });
 

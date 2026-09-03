@@ -77,8 +77,11 @@ class _LoanSheetState extends ConsumerState<LoanSheet> {
   Widget build(BuildContext context) {
     final currency = ref.watch(settingsProvider).currencySymbol;
     final accounts = ref.watch(accountsProvider).valueOrNull ?? const [];
-    // Anyone can be on the other side of a loan, household or not.
-    final people = ref.watch(peopleProvider).valueOrNull ?? const [];
+    // Anyone can be on the other side of a loan, household or not — except
+    // me, since I cannot owe myself.
+    final people = (ref.watch(peopleProvider).valueOrNull ?? const [])
+        .where((p) => !p.isSelf)
+        .toList();
     final muted = Theme.of(context).colorScheme.outline;
 
     _accountId ??= accounts.firstOrNull?.id;
@@ -136,7 +139,7 @@ class _LoanSheetState extends ConsumerState<LoanSheet> {
             children: [
               for (final p in people)
                 Pill(
-                  label: p.isSelf ? 'Me' : p.name,
+                  label: p.name,
                   icon: AppIcons.person,
                   selected: _personId == p.id,
                   color: Theme.of(context).colorScheme.primary,
@@ -238,7 +241,7 @@ class _RepaySheetState extends ConsumerState<RepaySheet> {
     // The whole remaining balance is the common case; a partial payment is
     // a matter of editing the figure down.
     _amount = TextEditingController(
-      text: widget.row.outstanding.toStringAsFixed(0),
+      text: Fmt.amountInput(widget.row.outstanding),
     );
   }
 

@@ -109,7 +109,7 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
     _amount = TextEditingController(
       text: widget.initialAmount == null
           ? ''
-          : widget.initialAmount!.toStringAsFixed(0),
+          : Fmt.amountInput(widget.initialAmount!),
     );
     _note = TextEditingController(text: widget.initialNote ?? '');
     _name = TextEditingController();
