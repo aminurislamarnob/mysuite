@@ -19,6 +19,15 @@ final peopleProvider = StreamProvider<List<Person>>((ref) {
   return ref.watch(peopleRepositoryProvider).watchPeople();
 });
 
+/// The app user's own row. Watched by the dashboard's avatar and the settings
+/// profile card, which both want the photo and the name the moment either
+/// changes.
+final selfProvider = Provider<Person?>((ref) {
+  final people = ref.watch(peopleProvider).valueOrNull;
+  // watchPeople orders Self first, so this is the head of the list in practice.
+  return people?.where((p) => p.isSelf).firstOrNull;
+});
+
 /// The household only: medicine profiles and who an expense was for.
 final householdProvider = StreamProvider<List<Person>>((ref) {
   return ref

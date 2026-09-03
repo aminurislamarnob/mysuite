@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/people/people_repository.dart';
 import '../../core/settings/app_settings.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
@@ -18,6 +19,7 @@ import '../medicine/providers/medicine_provider.dart';
 import '../medicine/repository/medicine_repository.dart';
 import '../notes/providers/notes_provider.dart';
 import '../notes/repository/note_repository.dart';
+import '../settings/people_screen.dart';
 import '../tasks/providers/tasks_provider.dart';
 import '../tasks/widgets/task_tile.dart';
 
@@ -30,6 +32,7 @@ class DashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
+    final self = ref.watch(selfProvider);
 
     // Widgets are keyed by module name so the order is user-configurable.
     final builders = <String, Widget Function()>{
@@ -55,7 +58,12 @@ class DashboardScreen extends ConsumerWidget {
             GreetingHeader(
               greeting: '${Fmt.greeting()},',
               subtitle: Fmt.fullDate(DateTime.now()),
-              initials: 'mS',
+              // Falls back to the app's mark while Self is still unnamed.
+              initials: Fmt.initials(self?.name ?? ''),
+              photoPath: self?.photoPath,
+              onAvatarTap: self == null
+                  ? null
+                  : () => PersonEditor.show(context, ref, person: self),
               actions: [
                 CircleIconButton(
                   icon: AppIcons.search,

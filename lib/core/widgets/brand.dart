@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -238,7 +239,14 @@ class BrandTopBar extends StatelessWidget implements PreferredSizeWidget {
 class GreetingHeader extends StatelessWidget {
   final String greeting;
   final String subtitle;
+
+  /// Drawn on the gradient when there is no [photoPath]. Empty falls back to
+  /// the app's own mark, for a user who has set neither photo nor name.
   final String initials;
+
+  /// The user's photo, which replaces the gradient circle entirely.
+  final String? photoPath;
+
   final List<Widget> actions;
   final VoidCallback? onAvatarTap;
 
@@ -247,38 +255,60 @@ class GreetingHeader extends StatelessWidget {
     required this.greeting,
     required this.subtitle,
     this.initials = 'M',
+    this.photoPath,
     this.actions = const [],
     this.onAvatarTap,
   });
 
+  /// The coral circle, standing in for a photo that is absent or unreadable.
+  Widget _gradient() => Container(
+    width: 50,
+    height: 50,
+    alignment: Alignment.center,
+    decoration: const BoxDecoration(
+      shape: BoxShape.circle,
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [AppColors.coralSoft, AppColors.coral],
+      ),
+    ),
+    child: Text(
+      initials.isEmpty ? 'mS' : initials,
+      style: const TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.w700,
+        fontSize: 18,
+      ),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Resolved once: a path pointing at a file that is gone must fall back
+    // rather than throw mid-build.
+    final path = photoPath;
+    final photo = path != null && File(path).existsSync() ? File(path) : null;
     return Row(
       children: [
         GestureDetector(
           onTap: onAvatarTap,
-          child: Container(
-            width: 50,
-            height: 50,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [AppColors.coralSoft, AppColors.coral],
-              ),
-            ),
-            child: Text(
-              initials,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-                fontSize: 18,
-              ),
-            ),
-          ),
+          // The photo is drawn edge to edge; without one the gradient stays,
+          // carrying the initials or the app's mark.
+          child: photo != null
+              ? ClipOval(
+                  child: Image.file(
+                    photo,
+                    width: 50,
+                    height: 50,
+                    fit: BoxFit.cover,
+                    cacheWidth:
+                        (50 * MediaQuery.devicePixelRatioOf(context)).round(),
+                    errorBuilder: (context, _, _) => _gradient(),
+                  ),
+                )
+              : _gradient(),
         ),
         const SizedBox(width: 14),
         Expanded(

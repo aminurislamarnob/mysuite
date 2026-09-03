@@ -118,4 +118,21 @@ class Fmt {
     if (h < 17) return 'Good afternoon';
     return 'Good evening';
   }
+
+  /// Up to two letters standing in for a name on an avatar. Empty for a name
+  /// that is blank or has no letters in it, which the caller shows a glyph for
+  /// rather than an empty circle.
+  static String initials(String name) {
+    final words = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((w) => w.isNotEmpty)
+        .toList();
+    if (words.isEmpty) return '';
+    // First and last, so "Md. Aminur Islam" reads as MI rather than MA.
+    final letters = words.length == 1
+        ? [words.first[0]]
+        : [words.first[0], words.last[0]];
+    return letters.join().toUpperCase();
+  }
 }

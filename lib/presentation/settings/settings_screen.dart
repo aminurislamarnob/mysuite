@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/people/people_repository.dart';
+import '../../core/people/person_avatar.dart';
 import '../../core/services/export_service.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/security_service.dart';
@@ -28,6 +30,8 @@ class SettingsScreen extends ConsumerWidget {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 140),
         children: [
+          const _ProfileCard(),
+          const SizedBox(height: 24),
           const SectionHeader('Modules'),
           TintCard(
             padding: EdgeInsets.zero,
@@ -540,6 +544,59 @@ class SettingsScreen extends ConsumerWidget {
       return true;
     }
     return false;
+  }
+}
+
+/// The user's own row, lifted to the top of Settings where people look for
+/// their profile, rather than left buried among the household.
+class _ProfileCard extends ConsumerWidget {
+  const _ProfileCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final self = ref.watch(selfProvider);
+    if (self == null) return const SizedBox.shrink();
+
+    final muted = Theme.of(context).colorScheme.outline;
+    // Self is seeded unnamed and nothing else in the app asks for a name, so
+    // this card is where it gets requested.
+    final named = self.name.trim().isNotEmpty;
+    final initials = Fmt.initials(self.name);
+
+    return TintCard(
+      padding: EdgeInsets.zero,
+      child: BrandTile(
+        leading: PersonAvatar(
+          photoPath: self.photoPath,
+          color: Color(self.color),
+          size: 52,
+          fallback: initials.isEmpty
+              ? null
+              : Text(
+                  initials,
+                  style: TextStyle(
+                    color: Color(self.color),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 18,
+                  ),
+                ),
+        ),
+        title: Text(
+          named ? self.name : 'Add your name',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
+            color: named ? null : Theme.of(context).colorScheme.primary,
+          ),
+        ),
+        subtitle: Text(
+          named ? self.relation : 'So the app knows what to call you',
+          style: TextStyle(fontSize: 12, color: muted),
+        ),
+        trailing: const AppIcon(AppIcons.chevronRight),
+        onTap: () => PersonEditor.show(context, ref, person: self),
+      ),
+    );
   }
 }
 
