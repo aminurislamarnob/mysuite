@@ -1534,6 +1534,9 @@ Future<T?> brandSheet<T>({
 }) {
   return showFSheet<T>(
     context: context,
+    // The shell's tab bar lives above the tab navigators, so a modal opened
+    // in one would sit under it. The root navigator covers the whole screen.
+    useRootNavigator: true,
     side: .btt,
     mainAxisMaxRatio: null,
     barrierDismissible: dismissible,
@@ -1553,6 +1556,7 @@ Future<T?> brandSideSheet<T>({
 }) {
   return showFSheet<T>(
     context: context,
+    useRootNavigator: true,
     side: .ltr,
     mainAxisMaxRatio: null,
     builder: builder,
@@ -1610,13 +1614,16 @@ Future<T?> brandDialog<T>(
   bool barrierDismissible = true,
 }) => showFDialog<T>(
   context: context,
+  useRootNavigator: true,
   barrierDismissible: barrierDismissible,
   builder: (context, style, animation) => FDialog(
     animation: animation,
     style: style,
     // FDialog hands over the bare surface — the content inset is the caller's
     // job, and forui's own `insetPadding` is the margin from the screen edge.
-    builder: (context, _) => Padding(
+    // The dialog shrinks to clear the keyboard, so a form taller than what
+    // is left scrolls inside the card rather than spilling out under it.
+    builder: (context, _) => SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1705,6 +1712,7 @@ Future<bool> brandConfirm(
 }) async {
   final result = await showFDialog<bool>(
     context: context,
+    useRootNavigator: true,
     builder: (context, style, animation) => FDialog(
       animation: animation,
       style: style,
