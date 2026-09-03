@@ -462,7 +462,7 @@ class SettingsScreen extends ConsumerWidget {
       context: context,
       builder: (_) => SheetScaffold(
         title: 'Auto-lock after',
-        child: Column(
+        child: TileColumn(
           children: [0, 1, 5, 15, 30]
               .map(
                 (m) => BrandTile(

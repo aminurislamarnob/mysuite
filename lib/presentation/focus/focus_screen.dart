@@ -327,7 +327,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
       context: context,
       builder: (_) => SheetScaffold(
         title: 'Link a task',
-        child: Column(
+        child: TileColumn(
           children: tasks
               .map(
                 (t) => BrandTile(
@@ -647,43 +647,46 @@ class _FocusStatsSheet extends ConsumerWidget {
             ...sessions
                 .take(12)
                 .map(
-                  (s) => BrandTile(
-                    leading: AppIcon(
-                      s.isCompleted ? AppIcons.checkCircle : AppIcons.session,
-                      color: s.isCompleted ? AppColors.successLight : muted,
-                      size: 20,
-                    ),
-                    title: Text(
-                      s.note?.isNotEmpty == true ? s.note! : 'Focus session',
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                    subtitle: Text(
-                      '${Fmt.relativeDay(s.startTime)} · ${Fmt.time(s.startTime)}',
-                      style: TextStyle(fontSize: 11, color: muted),
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (s.rating != null) ...[
-                          const AppIcon(
-                            AppIcons.star,
-                            size: 12,
-                            color: AppColors.warningLight,
-                          ),
+                  (s) => Padding(
+                    padding: const EdgeInsets.only(bottom: cardGap),
+                    child: BrandTile(
+                      leading: AppIcon(
+                        s.isCompleted ? AppIcons.checkCircle : AppIcons.session,
+                        color: s.isCompleted ? AppColors.successLight : muted,
+                        size: 20,
+                      ),
+                      title: Text(
+                        s.note?.isNotEmpty == true ? s.note! : 'Focus session',
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                      subtitle: Text(
+                        '${Fmt.relativeDay(s.startTime)} · ${Fmt.time(s.startTime)}',
+                        style: TextStyle(fontSize: 11, color: muted),
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (s.rating != null) ...[
+                            const AppIcon(
+                              AppIcons.star,
+                              size: 12,
+                              color: AppColors.warningLight,
+                            ),
+                            Text(
+                              '${s.rating}',
+                              style: const TextStyle(fontSize: 11),
+                            ),
+                            const SizedBox(width: 8),
+                          ],
                           Text(
-                            '${s.rating}',
-                            style: const TextStyle(fontSize: 11),
+                            Fmt.duration(Duration(seconds: s.actualSeconds)),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
                           ),
-                          const SizedBox(width: 8),
                         ],
-                        Text(
-                          Fmt.duration(Duration(seconds: s.actualSeconds)),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),

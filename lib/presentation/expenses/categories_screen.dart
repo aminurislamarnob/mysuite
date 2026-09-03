@@ -177,43 +177,46 @@ class _CategoryRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final color = Color(category.color);
-    return BrandTile(
-      dense: true,
-      leading: Container(
-        padding: const EdgeInsets.all(9),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.14),
-          shape: BoxShape.circle,
-        ),
-        child: AppIcon(
-          AppIcons.category(category.icon),
-          color: color,
-          size: 18,
-        ),
-      ),
-      title: Text(
-        category.name,
-        style: const TextStyle(fontWeight: FontWeight.w600),
-      ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CircleIconButton(
-            icon: AppIcons.delete,
-            tooltip: 'Delete',
-            size: 40,
-            onPressed: onDelete,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: cardGap),
+      child: BrandTile(
+        dense: true,
+        leading: Container(
+          padding: const EdgeInsets.all(9),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.14),
+            shape: BoxShape.circle,
           ),
-          ReorderableDragStartListener(
-            index: index,
-            child: const Padding(
-              padding: EdgeInsets.all(8),
-              child: AppIcon(AppIcons.gripVertical),
+          child: AppIcon(
+            AppIcons.category(category.icon),
+            color: color,
+            size: 18,
+          ),
+        ),
+        title: Text(
+          category.name,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleIconButton(
+              icon: AppIcons.delete,
+              tooltip: 'Delete',
+              size: 40,
+              onPressed: onDelete,
             ),
-          ),
-        ],
+            ReorderableDragStartListener(
+              index: index,
+              child: const Padding(
+                padding: EdgeInsets.all(8),
+                child: AppIcon(AppIcons.gripVertical),
+              ),
+            ),
+          ],
+        ),
+        onTap: () => CategoryEditor.show(context, ref, category: category),
       ),
-      onTap: () => CategoryEditor.show(context, ref, category: category),
     );
   }
 }

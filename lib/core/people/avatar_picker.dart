@@ -38,7 +38,7 @@ Future<AvatarChoice?> pickAvatar(
     context: context,
     builder: (sheetContext) => SheetScaffold(
       title: 'Photo',
-      child: Column(
+      child: TileColumn(
         children: [
           BrandTile(
             leading: const AppIcon(AppIcons.camera),

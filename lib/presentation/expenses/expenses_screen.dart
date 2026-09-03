@@ -103,7 +103,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
       context: context,
       builder: (sheetContext) => SheetScaffold(
         title: 'Export',
-        child: Column(
+        child: TileColumn(
           children: [
             BrandTile(
               leading: const AppIcon(AppIcons.spreadsheet),

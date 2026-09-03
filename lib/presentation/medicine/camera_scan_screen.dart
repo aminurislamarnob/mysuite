@@ -215,15 +215,18 @@ class _CameraScanScreenState extends State<CameraScanScreen> {
         ),
         const SizedBox(height: 12),
         ...rows.map(
-          (row) => BrandTile(
-            title: Text(row.$1),
-            trailing: Text(
-              row.$2 ?? 'not detected',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: row.$2 == null
-                    ? Theme.of(context).colorScheme.outline
-                    : null,
+          (row) => Padding(
+            padding: const EdgeInsets.only(bottom: cardGap),
+            child: BrandTile(
+              title: Text(row.$1),
+              trailing: Text(
+                row.$2 ?? 'not detected',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: row.$2 == null
+                      ? Theme.of(context).colorScheme.outline
+                      : null,
+                ),
               ),
             ),
           ),

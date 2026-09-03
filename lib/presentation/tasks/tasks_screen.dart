@@ -821,7 +821,8 @@ class _ProjectDrawer extends ConsumerWidget {
           ),
           BrandDivider(),
           projects.maybeWhen(
-            data: (list) => Column(
+            data: (list) => TileColumn(
+              mainAxisSize: MainAxisSize.min,
               children: list.map((p) {
                 final open = counts.where((t) => t.projectId == p.id).length;
                 return BrandTile(

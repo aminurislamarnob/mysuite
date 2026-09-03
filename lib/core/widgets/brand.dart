@@ -160,6 +160,14 @@ class CircleIconButton extends StatelessWidget {
 /// The gap between adjacent [CircleIconButton]s in a header's action row.
 const double actionGap = 8;
 
+/// The gap between two cards stacked in a list.
+///
+/// A [TintCard] and a bare `BrandTile` both draw their own surface, so a column
+/// of them with nothing between reads as one block rather than a list of rows.
+/// The Bills, Loans and Reports lists arrived at 10 by hand; this is that
+/// number, named, so every other list can agree with them.
+const double cardGap = 10;
+
 /// The centred title bar used on the detail screens: a close/back circle, a
 /// bold centred title and an optional trailing circle.
 class BrandTopBar extends StatelessWidget implements PreferredSizeWidget {

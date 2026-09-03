@@ -279,7 +279,7 @@ Future<void> _showHabitPicker(BuildContext context, WidgetRef ref) async {
     context: context,
     builder: (sheetContext) => SheetScaffold(
       title: 'Log a habit',
-      child: Column(
+      child: TileColumn(
         children: habits.map((h) {
           return BrandTile(
             leading: AppIcon(AppIcons.habit(h.icon), color: Color(h.color)),
@@ -317,7 +317,7 @@ Future<void> _showDosePicker(BuildContext context, WidgetRef ref) async {
     context: context,
     builder: (sheetContext) => SheetScaffold(
       title: 'Mark taken',
-      child: Column(
+      child: TileColumn(
         children: doses.map((v) {
           return BrandTile(
             leading: AppIcon(

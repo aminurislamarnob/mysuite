@@ -120,7 +120,7 @@ Future<void> newNoteFlow(
     context: context,
     builder: (_) => SheetScaffold(
       title: 'New note',
-      child: Column(
+      child: TileColumn(
         children: NoteTemplate.all
             .map(
               (t) => BrandTile(
@@ -271,7 +271,7 @@ class _NoteCard extends ConsumerWidget {
       context: context,
       builder: (_) => SheetScaffold(
         title: note.title,
-        child: Column(
+        child: TileColumn(
           children: scope == NoteScope.trash
               ? [
                   BrandTile(
@@ -554,15 +554,18 @@ class _DrawerItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BrandTile(
-      selected: selected,
-      leading: AppIcon(icon, size: 20, color: iconColor),
-      title: Text(label, overflow: TextOverflow.ellipsis),
-      trailing: trailing == null
-          ? null
-          : Text(trailing!, style: const TextStyle(fontSize: 12)),
-      onTap: onTap,
-      onLongPress: onLongPress,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: cardGap),
+      child: BrandTile(
+        selected: selected,
+        leading: AppIcon(icon, size: 20, color: iconColor),
+        title: Text(label, overflow: TextOverflow.ellipsis),
+        trailing: trailing == null
+            ? null
+            : Text(trailing!, style: const TextStyle(fontSize: 12)),
+        onTap: onTap,
+        onLongPress: onLongPress,
+      ),
     );
   }
 }

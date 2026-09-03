@@ -502,12 +502,14 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
               if (picked != null) setState(() => _date = picked);
             },
           ),
-          if (widget.receiptPath != null)
+          if (widget.receiptPath != null) ...[
+            const SizedBox(height: cardGap),
             BrandTile(
               leading: const AppIcon(AppIcons.bills),
               title: const Text('Receipt attached'),
               subtitle: Text(widget.receiptPath!.split('/').last),
             ),
+          ],
         ],
       ),
     );

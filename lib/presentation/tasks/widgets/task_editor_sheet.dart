@@ -413,7 +413,7 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
       context: context,
       builder: (_) => SheetScaffold(
         title: 'Repeat',
-        child: Column(
+        child: TileColumn(
           children: [
             BrandTile(
               title: const Text('Does not repeat'),
@@ -439,7 +439,7 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
       context: context,
       builder: (_) => SheetScaffold(
         title: 'Time estimate',
-        child: Column(
+        child: TileColumn(
           children: [15, 25, 30, 45, 60, 90, 120]
               .map(
                 (m) => BrandTile(
@@ -465,7 +465,7 @@ class _SubtaskList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final subtasks = ref.watch(subtasksProvider(parentId));
     return subtasks.maybeWhen(
-      data: (list) => Column(
+      data: (list) => TileColumn(
         children: list
             .map(
               (s) => BrandTile(

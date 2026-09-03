@@ -134,34 +134,37 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             itemCount: hits.length,
             itemBuilder: (_, i) {
               final hit = hits[i];
-              return BrandTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: hit.kind.color.withValues(alpha: 0.13),
-                    shape: BoxShape.circle,
+              return Padding(
+                padding: const EdgeInsets.only(bottom: cardGap),
+                child: BrandTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: hit.kind.color.withValues(alpha: 0.13),
+                      shape: BoxShape.circle,
+                    ),
+                    child: AppIcon(
+                      hit.kind.icon,
+                      size: 18,
+                      color: hit.kind.color,
+                    ),
                   ),
-                  child: AppIcon(
-                    hit.kind.icon,
-                    size: 18,
-                    color: hit.kind.color,
+                  title: Text(
+                    hit.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
+                  subtitle: Text(
+                    hit.subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  trailing: Text(
+                    hit.kind.label,
+                    style: TextStyle(fontSize: 10, color: hit.kind.color),
+                  ),
+                  onTap: () => _open(hit),
                 ),
-                title: Text(
-                  hit.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                subtitle: Text(
-                  hit.subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                trailing: Text(
-                  hit.kind.label,
-                  style: TextStyle(fontSize: 10, color: hit.kind.color),
-                ),
-                onTap: () => _open(hit),
               );
             },
           );

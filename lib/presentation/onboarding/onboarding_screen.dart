@@ -338,23 +338,26 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ...AppModule.values.map((m) {
             final (icon, color) = ModulesScreen.metaFor(m);
             final on = _modules.contains(m);
-            return BrandTile(
-              leading: AppIcon(icon, color: color),
-              title: Text(
-                m.label,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              subtitle: Text(m.blurb, style: const TextStyle(fontSize: 12)),
-              trailing: BrandCheckbox(
-                value: on,
-                semanticsLabel: m.label,
-                onChanged: (v) => setState(() {
-                  v ? _modules.add(m) : _modules.remove(m);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: cardGap),
+              child: BrandTile(
+                leading: AppIcon(icon, color: color),
+                title: Text(
+                  m.label,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(m.blurb, style: const TextStyle(fontSize: 12)),
+                trailing: BrandCheckbox(
+                  value: on,
+                  semanticsLabel: m.label,
+                  onChanged: (v) => setState(() {
+                    v ? _modules.add(m) : _modules.remove(m);
+                  }),
+                ),
+                onTap: () => setState(() {
+                  on ? _modules.remove(m) : _modules.add(m);
                 }),
               ),
-              onTap: () => setState(() {
-                on ? _modules.remove(m) : _modules.add(m);
-              }),
             );
           }),
           if (_modules.contains(AppModule.habits)) ...[
@@ -419,6 +422,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               ref.read(settingsProvider.notifier).setAppLock(v);
             },
           ),
+          const SizedBox(height: cardGap),
           BrandTile(
             leading: const AppIcon(AppIcons.notificationsActive),
             title: const Text('Allow reminders'),

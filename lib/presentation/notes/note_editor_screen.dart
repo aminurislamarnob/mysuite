@@ -381,7 +381,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
       context: context,
       builder: (sheetContext) => SheetScaffold(
         title: 'Note options',
-        child: Column(
+        child: TileColumn(
           children: [
             BrandTile(
               leading: const AppIcon(AppIcons.tag),
@@ -495,7 +495,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
       context: context,
       builder: (_) => SheetScaffold(
         title: 'Move to folder',
-        child: Column(
+        child: TileColumn(
           children: [
             BrandTile(
               leading: const AppIcon(AppIcons.clear),

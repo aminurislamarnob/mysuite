@@ -968,7 +968,8 @@ class _ProfileDrawer extends ConsumerWidget {
           ),
           BrandDivider(),
           profiles.maybeWhen(
-            data: (list) => Column(
+            data: (list) => TileColumn(
+              mainAxisSize: MainAxisSize.min,
               children: list
                   .map(
                     (p) => BrandTile(

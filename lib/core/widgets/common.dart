@@ -674,6 +674,38 @@ class BrandTile extends StatelessWidget {
   }
 }
 
+/// A column of [BrandTile]s with [cardGap] between them.
+///
+/// A bare tile draws its own card, so a plain `Column` of them reads as one
+/// block — the bug the Bills and Loans lists fixed by hand, repeated at every
+/// menu sheet, picker and drawer in the app. Tiles grouped inside a [TintCard]
+/// are a different thing: those are rows of one card and stay flush, so this is
+/// for the stacks that are not.
+class TileColumn extends StatelessWidget {
+  final List<Widget> children;
+  final CrossAxisAlignment crossAxisAlignment;
+  final MainAxisSize mainAxisSize;
+
+  const TileColumn({
+    super.key,
+    required this.children,
+    this.crossAxisAlignment = CrossAxisAlignment.center,
+    this.mainAxisSize = MainAxisSize.max,
+  });
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: crossAxisAlignment,
+    mainAxisSize: mainAxisSize,
+    children: [
+      for (final (i, child) in children.indexed) ...[
+        if (i > 0) const SizedBox(height: cardGap),
+        child,
+      ],
+    ],
+  );
+}
+
 /// A text input built on [FTextField].
 ///
 /// The brand's fields are filled with the peach tint and rounded to
