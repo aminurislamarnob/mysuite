@@ -10,6 +10,7 @@ import '../../../core/widgets/brand.dart';
 import '../../../core/widgets/common.dart';
 import '../providers/expenses_provider.dart';
 import '../repository/expense_repository.dart';
+import '../categories_screen.dart';
 import '../utils/expense_voice_parser.dart';
 
 /// Two-tap entry: amount is prefilled and focused, category and account are
@@ -122,6 +123,16 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
     });
   }
 
+  /// Creates a category without leaving the sheet, and selects it.
+  Future<void> _newCategory() async {
+    final id = await CategoryEditor.show(
+      context,
+      ref,
+      isIncome: _kind == TxKind.income,
+    );
+    if (id != null && mounted) setState(() => _categoryId = id);
+  }
+
   void _toast(String m) {
     if (!mounted) return;
     brandToast(context, m);
@@ -214,7 +225,10 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
             hint: '0',
             autofocus: true,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            textStyle: const TextStyle(fontSize: 30, fontWeight: FontWeight.w700),
+            textStyle: const TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.w700,
+            ),
             // The field centres its prefix on the input's full height while the
             // amount itself sits on a baseline. The two only line up when the
             // symbol's line box matches the amount's, so this size tracks the
@@ -236,17 +250,22 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: categories
-                  .map(
-                    (c) => Pill(
-                      label: c.name,
-                      icon: AppIcons.category(c.icon),
-                      selected: _categoryId == c.id,
-                      color: Theme.of(context).colorScheme.primary,
-                      onTap: () => setState(() => _categoryId = c.id),
-                    ),
-                  )
-                  .toList(),
+              children: [
+                for (final c in categories)
+                  Pill(
+                    label: c.name,
+                    icon: AppIcons.category(c.icon),
+                    selected: _categoryId == c.id,
+                    color: Theme.of(context).colorScheme.primary,
+                    onTap: () => setState(() => _categoryId = c.id),
+                  ),
+                Pill(
+                  label: 'New',
+                  icon: AppIcons.add,
+                  color: muted,
+                  onTap: _newCategory,
+                ),
+              ],
             ),
             const SizedBox(height: 16),
           ],

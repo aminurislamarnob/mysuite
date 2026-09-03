@@ -8,6 +8,7 @@ import '../../core/utils/formatters.dart';
 import '../../core/widgets/brand.dart';
 import '../../core/widgets/common.dart';
 import '../medicine/camera_scan_screen.dart';
+import 'categories_screen.dart';
 import 'providers/expenses_provider.dart';
 import 'repository/expense_repository.dart';
 import 'widgets/bills_tab.dart';
@@ -52,6 +53,12 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
             tooltip: 'Export',
             size: 40,
             onPressed: _showExportSheet,
+          ),
+          BrandMenuButton<String>(
+            items: const {'categories': 'Categories'},
+            onSelected: (_) => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const CategoriesScreen())),
           ),
         ],
       ),

@@ -19,7 +19,13 @@ typedef HugeIconData = List<List<dynamic>>;
 ///    stretches it to fill rather than leaving it at its own size. Centring it
 ///    the way [Icon] does keeps a 20px glyph 20px inside a 44px button.
 class AppIcon extends StatelessWidget {
-  const AppIcon(this.icon, {super.key, this.size, this.color, this.semanticsLabel});
+  const AppIcon(
+    this.icon, {
+    super.key,
+    this.size,
+    this.color,
+    this.semanticsLabel,
+  });
 
   final HugeIconData icon;
   final double? size;
@@ -202,6 +208,33 @@ class AppIcons {
   static const phone = HugeIcons.strokeRoundedSmartPhone01;
   static const otherCategory = HugeIcons.strokeRoundedGrid;
 
+  // Further category glyphs, so a custom category can look like itself.
+  static const coffee = HugeIcons.strokeRoundedCoffee02;
+  static const sports = HugeIcons.strokeRoundedFootball;
+  static const car = HugeIcons.strokeRoundedCar01;
+  static const fuel = HugeIcons.strokeRoundedFuelStation;
+  static const taxi = HugeIcons.strokeRoundedTaxi;
+  static const house = HugeIcons.strokeRoundedHouse01;
+  static const utilities = HugeIcons.strokeRoundedPlugSocket;
+  static const electricity = HugeIcons.strokeRoundedFlash;
+  static const internet = HugeIcons.strokeRoundedWifi01;
+  static const laptop = HugeIcons.strokeRoundedLaptop;
+  static const gift = HugeIcons.strokeRoundedGift;
+  static const baby = HugeIcons.strokeRoundedBaby01;
+  static const beauty = HugeIcons.strokeRoundedHairDryer;
+  static const clothing = HugeIcons.strokeRoundedTShirt;
+  static const insurance = HugeIcons.strokeRoundedShield01;
+  static const tax = HugeIcons.strokeRoundedTaxes;
+  static const investment = HugeIcons.strokeRoundedChartIncrease;
+  static const charity = HugeIcons.strokeRoundedCharity;
+  static const mosque = HugeIcons.strokeRoundedMosque01;
+  static const games = HugeIcons.strokeRoundedGameController01;
+  static const repairs = HugeIcons.strokeRoundedWrench01;
+  static const laundry = HugeIcons.strokeRoundedWashingMachine;
+  static const furniture = HugeIcons.strokeRoundedSofa01;
+  static const stethoscope = HugeIcons.strokeRoundedStethoscope;
+  static const moneyIn = HugeIcons.strokeRoundedMoneyReceive01;
+
   // medicine
   static const medicine = HugeIcons.strokeRoundedMedicine02;
   static const capsule = HugeIcons.strokeRoundedPill;
@@ -262,17 +295,53 @@ class AppIcons {
 
   static const categoryIcons = <String, HugeIconData>{
     'food': food,
-    'transport': transport,
-    'bills': bills,
+    'dining': dining,
+    'coffee': coffee,
     'groceries': groceries,
-    'entertainment': entertainment,
-    'health': heart,
-    'education': study,
+    'transport': transport,
+    'car': car,
+    'fuel': fuel,
+    'taxi': taxi,
+    'travel': travel,
+    'bills': bills,
+    'rent': house,
+    'utilities': utilities,
+    'electricity': electricity,
+    'internet': internet,
+    'phone': phone,
+    'subscription': subscription,
     'shopping': shopping,
+    'clothing': clothing,
+    'gadgets': laptop,
+    'furniture': furniture,
+    'entertainment': entertainment,
+    'games': games,
+    'music': music,
+    'sports': sports,
+    'gym': exercise,
+    'health': heart,
+    'medical': stethoscope,
+    'beauty': beauty,
+    'education': study,
+    'books': reading,
     'family': family,
+    'kids': baby,
+    'gift': gift,
+    'charity': charity,
+    'religion': mosque,
+    'home': home,
+    'repairs': repairs,
+    'laundry': laundry,
+    'insurance': insurance,
+    'tax': tax,
+    'savings': savings,
+    'investment': investment,
     'other': otherCategory,
     'salary': cash,
     'freelance': work,
+    'business': work,
+    'bonus': moneyIn,
+    'refund': moneyIn,
   };
 
   static const accountIcons = <String, HugeIconData>{
