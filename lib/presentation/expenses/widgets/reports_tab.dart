@@ -6,16 +6,15 @@ import '../../../core/settings/app_settings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/utils/formatters.dart';
-import '../../../core/widgets/brand.dart';
 import '../../../core/widgets/common.dart';
 import '../providers/expenses_provider.dart';
+import 'month_stepper.dart';
 
 class ReportsTab extends ConsumerWidget {
   const ReportsTab({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final month = ref.watch(reportMonthProvider);
     final currency = ref.watch(settingsProvider).currencySymbol;
     final reportAsync = ref.watch(monthReportProvider);
     final categories = ref.watch(categoriesProvider).valueOrNull ?? const [];
@@ -25,29 +24,7 @@ class ReportsTab extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
       children: [
-        Row(
-          children: [
-            CircleIconButton(
-              icon: AppIcons.chevronLeft,
-              size: 40,
-              onPressed: () => ref.read(reportMonthProvider.notifier).state =
-                  DateTime(month.year, month.month - 1),
-            ),
-            Expanded(
-              child: Text(
-                Fmt.monthYear(month),
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-            ),
-            CircleIconButton(
-              icon: AppIcons.chevronRight,
-              size: 40,
-              onPressed: () => ref.read(reportMonthProvider.notifier).state =
-                  DateTime(month.year, month.month + 1),
-            ),
-          ],
-        ),
+        const MonthStepper(),
         reportAsync.when(
           loading: () => const Padding(
             padding: EdgeInsets.all(40),
