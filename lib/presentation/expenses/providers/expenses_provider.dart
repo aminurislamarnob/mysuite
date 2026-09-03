@@ -301,6 +301,85 @@ final budgetProgressProvider = FutureProvider<List<BudgetProgress>>((
   }).toList();
 });
 
+/// One category's share of the spending no cap covers.
+@immutable
+class UncappedSlice {
+  /// Null for expenses saved without a category. Those cannot be capped —
+  /// there is nothing to attach a budget to — so the row offers to categorise
+  /// them instead.
+  final int? categoryId;
+  final String label;
+
+  /// The category's icon token, for [AppIcons.category]. Null when there is no
+  /// category to draw one from.
+  final String? icon;
+  final int color;
+  final double amount;
+
+  const UncappedSlice({
+    required this.categoryId,
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.amount,
+  });
+
+  bool get isUncategorised => categoryId == null;
+}
+
+/// What a month's spending left outside every cap, biggest share first.
+@immutable
+class UncappedSpending {
+  final double total;
+  final List<UncappedSlice> slices;
+
+  const UncappedSpending({required this.total, required this.slices});
+}
+
+/// The spending no budget covers, or null when the question does not arise.
+///
+/// Capping two categories and then spending on a third used to leave the
+/// budgets tab showing two full bars and nothing else, so a month where the
+/// money all escaped looked like a month where none of it moved. This is the
+/// remainder that makes the tab add up to what was actually spent.
+///
+/// Yields null in the two cases where nothing is unbudgeted: an `Overall` cap
+/// already promises every taka of the month, and a month whose spending all
+/// landed in capped categories has no remainder to report.
+final uncappedSpendingProvider = FutureProvider<UncappedSpending?>((ref) async {
+  final budgets = await ref.watch(budgetsProvider.future);
+  if (budgets.any((b) => b.categoryId == null)) return null;
+
+  final categories = await ref.watch(categoriesProvider.future);
+  final report = await ref.watch(monthReportProvider.future);
+  final capped = budgets.map((b) => b.categoryId).toSet();
+
+  // `byCategory` counts expenses alone — income and transfers never reach it —
+  // so these shares sum to the month's spending and the breakdown adds up to
+  // the headline.
+  final slices = <UncappedSlice>[];
+  for (final entry in report.byCategory.entries) {
+    if (capped.contains(entry.key) || entry.value <= 0) continue;
+    final cat = categories.where((c) => c.id == entry.key).firstOrNull;
+    slices.add(
+      UncappedSlice(
+        categoryId: entry.key,
+        label: entry.key == null ? 'Uncategorised' : (cat?.name ?? 'Category'),
+        icon: cat?.icon,
+        color: cat?.color ?? 0xFF6C6C6C,
+        amount: entry.value,
+      ),
+    );
+  }
+  if (slices.isEmpty) return null;
+
+  slices.sort((a, b) => b.amount.compareTo(a.amount));
+  return UncappedSpending(
+    total: slices.fold(0.0, (sum, s) => sum + s.amount),
+    slices: slices,
+  );
+});
+
 /// Total monthly cost of everything flagged as a subscription.
 final subscriptionTotalProvider = FutureProvider<double>((ref) async {
   final bills = await ref.watch(recurringProvider.future);
