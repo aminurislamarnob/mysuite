@@ -215,10 +215,14 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
             autofocus: true,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             textStyle: const TextStyle(fontSize: 30, fontWeight: FontWeight.w700),
+            // The field centres its prefix on the input's full height while the
+            // amount itself sits on a baseline. The two only line up when the
+            // symbol's line box matches the amount's, so this size tracks the
+            // textStyle above; weight and colour still set it back.
             prefix: Text(
               currency,
               style: TextStyle(
-                fontSize: 26,
+                fontSize: 30,
                 fontWeight: FontWeight.w600,
                 color: muted,
               ),

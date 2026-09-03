@@ -658,6 +658,10 @@ class BrandTile extends StatelessWidget {
 /// The brand's fields are filled with the peach tint and rounded to
 /// [AppRadii.field] rather than forui's bordered, unfilled default.
 class BrandField extends StatefulWidget {
+  /// Distance from the field's edge to a [prefix] or [suffix]. Matches the
+  /// horizontal padding forui's `FTile` gives a [BrandTile]'s leading glyph.
+  static const double affixInset = 15;
+
   final TextEditingController? controller;
   final String? label;
   final String? hint;
@@ -776,13 +780,47 @@ class _BrandFieldState extends State<BrandField> {
       textCapitalization: widget.textCapitalization,
       inputFormatters: widget.inputFormatters,
       onSubmit: widget.onSubmit,
-      prefixBuilder: widget.prefix == null ? null : (_, _, _) => widget.prefix!,
-      suffixBuilder: widget.suffix == null ? null : (_, _, _) => widget.suffix!,
+      // forui zeroes the field's leading contentPadding the moment a prefix
+      // exists, and clears the prefix's minimum box, so an unwrapped prefix
+      // sits flush against the border. The inset is the one `BrandTile` gives
+      // its leading glyph, so a field's symbol lines up with the row icons
+      // stacked under it; the trailing gap separates it from the text.
+      prefixBuilder: widget.prefix == null
+          ? null
+          : (_, _, _) => Padding(
+              padding: const EdgeInsetsDirectional.only(
+                start: BrandField.affixInset,
+                end: 8,
+              ),
+              child: widget.prefix!,
+            ),
+      // The same applies on the trailing edge.
+      suffixBuilder: widget.suffix == null
+          ? null
+          : (_, _, _) => Padding(
+              padding: const EdgeInsetsDirectional.only(
+                start: 8,
+                end: BrandField.affixInset,
+              ),
+              child: widget.suffix!,
+            ),
       focusNode: widget.focusNode,
       style: .delta(
         contentTextStyle: widget.textStyle == null
             ? null
             : .delta([.all(TextStyleDelta.value(widget.textStyle!))]),
+        // forui builds the hint from the theme's body style and never from
+        // contentTextStyle, so a field that sets its own text size would show
+        // a hint several sizes smaller than the text that replaces it.
+        hintTextStyle: widget.textStyle == null
+            ? null
+            : .delta([
+                .all(
+                  TextStyleDelta.value(
+                    widget.textStyle!.copyWith(color: context.muted),
+                  ),
+                ),
+              ]),
         // At high contrast the tint flattens, so the field falls back to the
         // page surface and leans on its border instead.
         color: .delta([
