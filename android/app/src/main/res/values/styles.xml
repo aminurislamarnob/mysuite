@@ -15,4 +15,13 @@
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
+    <!-- The photo cropper's own activity. Android 15 forces every window
+         edge-to-edge, and UCrop does not apply insets itself, so on the stock
+         AppCompat theme its toolbar slides under the status bar and the crop
+         button stops taking taps. Fitting system windows puts it back below. -->
+    <style name="CropTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:fitsSystemWindows">true</item>
+        <item name="android:statusBarColor">@color/crop_toolbar</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
 </resources>
