@@ -1,8 +1,6 @@
-import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/database/app_database.dart';
 import '../../../core/settings/app_settings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_icons.dart';
@@ -11,6 +9,7 @@ import '../../../core/widgets/brand.dart';
 import '../../../core/widgets/common.dart';
 import '../providers/expenses_provider.dart';
 import '../repository/expense_repository.dart';
+import 'expense_entry_sheet.dart';
 
 class BillsTab extends ConsumerWidget {
   const BillsTab({super.key});
@@ -34,7 +33,10 @@ class BillsTab extends ConsumerWidget {
                   message:
                       'Track rent, internet, Netflix — anything recurring.',
                   actionLabel: 'Add a bill',
-                  onAction: () => _addBill(context, ref),
+                  onAction: () => ExpenseEntrySheet.show(
+                    context,
+                    kind: ExpenseEntrySheet.billMode,
+                  ),
                 )
               : ListView(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
@@ -111,7 +113,10 @@ class BillsTab extends ConsumerWidget {
           bottom: 16,
           child: FloatingActionButton.small(
             heroTag: 'bill-fab',
-            onPressed: () => _addBill(context, ref),
+            onPressed: () => ExpenseEntrySheet.show(
+              context,
+              kind: ExpenseEntrySheet.billMode,
+            ),
             backgroundColor: AppColors.expenseAccent,
             foregroundColor: Colors.white,
             child: const AppIcon(AppIcons.add),
@@ -119,136 +124,5 @@ class BillsTab extends ConsumerWidget {
         ),
       ],
     );
-  }
-
-  Future<void> _addBill(BuildContext context, WidgetRef ref) async {
-    final name = TextEditingController();
-    final amount = TextEditingController();
-    var period = 'monthly';
-    var isSubscription = false;
-    var due = DateTime.now().add(const Duration(days: 30));
-    final accounts = ref.read(accountsProvider).valueOrNull ?? const [];
-    final categories = ref.read(categoriesProvider).valueOrNull ?? const [];
-    int? accountId = accounts.firstOrNull?.id;
-    int? categoryId;
-
-    final saved = await brandSheet<bool>(
-      context: context,
-      builder: (_) => StatefulBuilder(
-        builder: (context, setState) => SheetScaffold(
-          title: 'New recurring bill',
-          actions: [
-            BrandButton(
-              label: 'Save',
-              kind: BrandButtonKind.ghost,
-              expand: false,
-              onPressed: () => Navigator.pop(context, true),
-            ),
-          ],
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              BrandField(
-                controller: name,
-                label: 'Name',
-                hint: 'Internet',
-                autofocus: true,
-              ),
-              const SizedBox(height: 12),
-              BrandField(
-                controller: amount,
-                label: 'Amount',
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-              ),
-              const SizedBox(height: 16),
-              BrandSegmented<String>(
-                options: const {
-                  'weekly': 'Weekly',
-                  'monthly': 'Monthly',
-                  'yearly': 'Yearly',
-                },
-                selected: period,
-                onSelected: (v) => setState(() => period = v),
-              ),
-              const SizedBox(height: 8),
-              BrandSwitchTile(
-                title: 'This is a subscription',
-                value: isSubscription,
-                onChanged: (v) => setState(() => isSubscription = v),
-              ),
-              BrandTile(
-                leading: const AppIcon(AppIcons.calendar),
-                title: const Text('Next due'),
-                subtitle: Text(Fmt.dayMonthYear(due)),
-                onTap: () async {
-                  final picked = await brandDatePicker(
-                    context,
-                    initial: due,
-                    first: DateTime.now(),
-                    last: DateTime(2100),
-                    title: 'Next due',
-                  );
-                  if (picked != null) setState(() => due = picked);
-                },
-              ),
-              const SizedBox(height: 8),
-              const Text('Account'),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: accounts
-                    .map(
-                      (a) => Pill(
-                        label: a.name,
-                        selected: accountId == a.id,
-                        color: Theme.of(context).colorScheme.primary,
-                        onTap: () => setState(() => accountId = a.id),
-                      ),
-                    )
-                    .toList(),
-              ),
-              const SizedBox(height: 12),
-              const Text('Category'),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: categories
-                    .where((c) => !c.isIncome)
-                    .map(
-                      (c) => Pill(
-                        label: c.name,
-                        selected: categoryId == c.id,
-                        color: Theme.of(context).colorScheme.primary,
-                        onTap: () => setState(() => categoryId = c.id),
-                      ),
-                    )
-                    .toList(),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-
-    final value = double.tryParse(amount.text.trim());
-    if (saved == true && name.text.trim().isNotEmpty && value != null) {
-      await ref
-          .read(expenseRepositoryProvider)
-          .createRecurring(
-            RecurringExpensesCompanion.insert(
-              name: name.text.trim(),
-              amount: value,
-              period: drift.Value(period),
-              isSubscription: drift.Value(isSubscription),
-              nextDueDate: due,
-              accountId: drift.Value(accountId),
-              categoryId: drift.Value(categoryId),
-            ),
-          );
-    }
   }
 }

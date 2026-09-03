@@ -1,7 +1,9 @@
+import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
+import '../../../core/database/app_database.dart';
 import '../../../core/people/people_repository.dart';
 import '../../../core/settings/app_settings.dart';
 import '../../../core/theme/app_colors.dart';
@@ -17,7 +19,15 @@ import '../utils/expense_voice_parser.dart';
 
 /// Two-tap entry: amount is prefilled and focused, category and account are
 /// one tap each, then Save.
+///
+/// The segmented control selects what is being recorded. Three of the four
+/// options are [TxKind]s that write a transaction; [billMode] instead writes
+/// a recurring bill, so everything the FAB can add starts here.
 class ExpenseEntrySheet extends ConsumerStatefulWidget {
+  /// Not a [TxKind]: the sheet writes a `RecurringExpenses` row instead of a
+  /// transaction. Negative so it can never collide with a kind.
+  static const billMode = -1;
+
   final int initialKind;
   final String? initialNote;
   final double? initialAmount;
@@ -56,6 +66,7 @@ class ExpenseEntrySheet extends ConsumerStatefulWidget {
 class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
   late final TextEditingController _amount;
   late final TextEditingController _note;
+  late final TextEditingController _name;
   final _speech = stt.SpeechToText();
 
   late int _kind;
@@ -63,8 +74,14 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
   int? _accountId;
   int? _transferAccountId;
   int? _personId;
+
+  /// The transaction's date, or the bill's next due date.
   DateTime _date = DateTime.now();
+  String _period = 'monthly';
+  bool _isSubscription = false;
   bool _listening = false;
+
+  bool get _isBill => _kind == ExpenseEntrySheet.billMode;
 
   @override
   void initState() {
@@ -76,12 +93,15 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
           : widget.initialAmount!.toStringAsFixed(0),
     );
     _note = TextEditingController(text: widget.initialNote ?? '');
+    _name = TextEditingController();
+    if (_isBill) _date = DateTime.now().add(const Duration(days: 30));
   }
 
   @override
   void dispose() {
     _amount.dispose();
     _note.dispose();
+    _name.dispose();
     _speech.stop();
     super.dispose();
   }
@@ -163,6 +183,27 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
       _toast('Choose the destination account.');
       return;
     }
+    if (_isBill) {
+      if (_name.text.trim().isEmpty) {
+        _toast('Name the bill first.');
+        return;
+      }
+      await ref
+          .read(expenseRepositoryProvider)
+          .createRecurring(
+            RecurringExpensesCompanion.insert(
+              name: _name.text.trim(),
+              amount: amount,
+              period: drift.Value(_period),
+              isSubscription: drift.Value(_isSubscription),
+              nextDueDate: _date,
+              accountId: drift.Value(accountId),
+              categoryId: drift.Value(_categoryId),
+            ),
+          );
+      if (mounted) Navigator.pop(context);
+      return;
+    }
 
     await ref
         .read(expenseRepositoryProvider)
@@ -199,16 +240,20 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
       title: switch (_kind) {
         TxKind.income => 'Add income',
         TxKind.transfer => 'Transfer',
+        ExpenseEntrySheet.billMode => 'Add bill',
         _ => 'Add expense',
       },
       actions: [
-        CircleIconButton(
-          icon: _listening ? AppIcons.micOff : AppIcons.mic,
-          tooltip: 'Voice entry',
-          color: _listening ? AppColors.dangerLight : null,
-          size: 40,
-          onPressed: _voiceEntry,
-        ),
+        // The parser only ever produces an expense or income, so dictating
+        // into the bill form would silently leave it.
+        if (!_isBill)
+          CircleIconButton(
+            icon: _listening ? AppIcons.micOff : AppIcons.mic,
+            tooltip: 'Voice entry',
+            color: _listening ? AppColors.dangerLight : null,
+            size: 40,
+            onPressed: _voiceEntry,
+          ),
         BrandButton(
           label: 'Save',
           kind: BrandButtonKind.ghost,
@@ -224,11 +269,16 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
               TxKind.expense: 'Expense',
               TxKind.income: 'Income',
               TxKind.transfer: 'Transfer',
+              ExpenseEntrySheet.billMode: 'Bill',
             },
             selected: _kind,
             onSelected: (k) => setState(() {
               _kind = k;
               _categoryId = null;
+              // A bill is dated by when it next falls due, not today.
+              _date = _isBill
+                  ? DateTime.now().add(const Duration(days: 30))
+                  : DateTime.now();
             }),
           ),
           const SizedBox(height: 20),
@@ -255,6 +305,32 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
             ),
           ),
           const SizedBox(height: 16),
+
+          if (_isBill) ...[
+            BrandField(
+              controller: _name,
+              label: 'Name',
+              hint: 'Internet',
+              textCapitalization: TextCapitalization.sentences,
+            ),
+            const SizedBox(height: 16),
+            BrandSegmented<String>(
+              options: const {
+                'weekly': 'Weekly',
+                'monthly': 'Monthly',
+                'yearly': 'Yearly',
+              },
+              selected: _period,
+              onSelected: (v) => setState(() => _period = v),
+            ),
+            const SizedBox(height: 8),
+            BrandSwitchTile(
+              title: 'This is a subscription',
+              value: _isSubscription,
+              onChanged: (v) => setState(() => _isSubscription = v),
+            ),
+            const SizedBox(height: 8),
+          ],
 
           if (_kind != TxKind.transfer) ...[
             Text('Category', style: TextStyle(color: muted, fontSize: 12)),
@@ -325,7 +401,7 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
             ),
           ],
 
-          if (_kind != TxKind.transfer) ...[
+          if (_kind != TxKind.transfer && !_isBill) ...[
             const SizedBox(height: 16),
             Text('For', style: TextStyle(color: muted, fontSize: 12)),
             const SizedBox(height: 8),
@@ -351,17 +427,19 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
             ),
           ],
 
-          const SizedBox(height: 16),
-          BrandField(
-            controller: _note,
-            label: 'Note',
-            textCapitalization: TextCapitalization.sentences,
-            prefix: const AppIcon(AppIcons.note),
-          ),
+          if (!_isBill) ...[
+            const SizedBox(height: 16),
+            BrandField(
+              controller: _note,
+              label: 'Note',
+              textCapitalization: TextCapitalization.sentences,
+              prefix: const AppIcon(AppIcons.note),
+            ),
+          ],
           const SizedBox(height: 8),
           BrandTile(
             leading: const AppIcon(AppIcons.calendar),
-            title: const Text('Date'),
+            title: Text(_isBill ? 'Next due' : 'Date'),
             subtitle: Text(Fmt.dayMonthYear(_date)),
             trailing: const AppIcon(AppIcons.chevronRight),
             onTap: () async {
