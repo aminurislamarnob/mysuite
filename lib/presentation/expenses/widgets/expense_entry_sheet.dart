@@ -33,12 +33,16 @@ class ExpenseEntrySheet extends ConsumerStatefulWidget {
   final double? initialAmount;
   final String? receiptPath;
 
+  /// The row being rewritten; null when adding.
+  final Expense? existing;
+
   const ExpenseEntrySheet({
     super.key,
     this.initialKind = TxKind.expense,
     this.initialNote,
     this.initialAmount,
     this.receiptPath,
+    this.existing,
   });
 
   static Future<void> show(
@@ -55,6 +59,20 @@ class ExpenseEntrySheet extends ConsumerStatefulWidget {
         initialNote: note,
         initialAmount: amount,
         receiptPath: receiptPath,
+      ),
+    );
+  }
+
+  /// Reopens the sheet on an existing transaction, prefilled.
+  static Future<void> edit(BuildContext context, Expense tx) {
+    return brandSheet(
+      context: context,
+      builder: (_) => ExpenseEntrySheet(
+        initialKind: tx.kind,
+        initialNote: tx.note,
+        initialAmount: tx.amount,
+        receiptPath: tx.receiptPath,
+        existing: tx,
       ),
     );
   }
@@ -82,6 +100,7 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
   bool _listening = false;
 
   bool get _isBill => _kind == ExpenseEntrySheet.billMode;
+  Expense? get _existing => widget.existing;
 
   @override
   void initState() {
@@ -95,6 +114,14 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
     _note = TextEditingController(text: widget.initialNote ?? '');
     _name = TextEditingController();
     if (_isBill) _date = DateTime.now().add(const Duration(days: 30));
+    final existing = widget.existing;
+    if (existing != null) {
+      _categoryId = existing.categoryId;
+      _accountId = existing.accountId;
+      _transferAccountId = existing.transferAccountId;
+      _personId = existing.personId;
+      _date = existing.date;
+    }
   }
 
   @override
@@ -205,19 +232,36 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
       return;
     }
 
-    await ref
-        .read(expenseRepositoryProvider)
-        .addTransaction(
-          amount: amount,
-          accountId: accountId,
-          categoryId: _kind == TxKind.transfer ? null : _categoryId,
-          kind: _kind,
-          transferAccountId: _transferAccountId,
-          personId: _kind == TxKind.transfer ? null : _personId,
-          note: _note.text.trim().isEmpty ? null : _note.text.trim(),
-          receiptPath: widget.receiptPath,
-          date: _date,
-        );
+    final repo = ref.read(expenseRepositoryProvider);
+    final note = _note.text.trim().isEmpty ? null : _note.text.trim();
+    final categoryId = _kind == TxKind.transfer ? null : _categoryId;
+
+    final existing = _existing;
+    if (existing == null) {
+      await repo.addTransaction(
+        amount: amount,
+        accountId: accountId,
+        categoryId: categoryId,
+        kind: _kind,
+        transferAccountId: _transferAccountId,
+        personId: _kind == TxKind.transfer ? null : _personId,
+        note: note,
+        receiptPath: widget.receiptPath,
+        date: _date,
+      );
+    } else {
+      await repo.updateTransaction(
+        existing.id,
+        amount: amount,
+        accountId: accountId,
+        categoryId: drift.Value(categoryId),
+        kind: _kind,
+        transferAccountId: drift.Value(_transferAccountId),
+        personId: _kind == TxKind.transfer ? null : _personId,
+        note: drift.Value(note),
+        date: _date,
+      );
+    }
 
     if (mounted) Navigator.pop(context);
   }
@@ -237,10 +281,12 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
     _accountId ??= accounts.firstOrNull?.id;
 
     return SheetScaffold(
-      title: switch (_kind) {
-        TxKind.income => 'Add income',
-        TxKind.transfer => 'Transfer',
-        ExpenseEntrySheet.billMode => 'Add bill',
+      title: switch ((_kind, _existing != null)) {
+        (TxKind.income, false) => 'Add income',
+        (TxKind.income, true) => 'Edit income',
+        (TxKind.transfer, _) => 'Transfer',
+        (ExpenseEntrySheet.billMode, _) => 'Add bill',
+        (_, true) => 'Edit expense',
         _ => 'Add expense',
       },
       actions: [
@@ -265,11 +311,11 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           BrandSegmented<int>(
-            options: const {
+            options: {
               TxKind.expense: 'Expense',
               TxKind.income: 'Income',
               TxKind.transfer: 'Transfer',
-              ExpenseEntrySheet.billMode: 'Bill',
+              if (_existing == null) ExpenseEntrySheet.billMode: 'Bill',
             },
             selected: _kind,
             onSelected: (k) => setState(() {

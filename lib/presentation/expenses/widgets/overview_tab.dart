@@ -12,6 +12,7 @@ import '../../../core/widgets/common.dart';
 import '../providers/expenses_provider.dart';
 import '../repository/expense_repository.dart';
 import 'accounts_sheet.dart';
+import 'expense_entry_sheet.dart';
 
 class OverviewTab extends ConsumerWidget {
   const OverviewTab({super.key});
@@ -256,9 +257,15 @@ class _TxTile extends ConsumerWidget {
       _ => '-',
     };
 
+    // A loan's principal is the loan; removing it here would leave the loan
+    // with no money behind it, so that lives in the Loans tab.
+    final isLoanPrincipal = TxKind.isLoanPrincipal(tx.kind);
+
     return Dismissible(
       key: ValueKey('tx-${tx.id}'),
-      direction: DismissDirection.endToStart,
+      direction: isLoanPrincipal
+          ? DismissDirection.none
+          : DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
@@ -268,10 +275,12 @@ class _TxTile extends ConsumerWidget {
         ),
         child: const AppIcon(AppIcons.delete, color: Colors.white),
       ),
-      onDismissed: (_) =>
-          ref.read(expenseRepositoryProvider).deleteTransaction(tx.id),
+      onDismissed: (_) => _delete(context, ref),
       child: BrandTile(
         dense: true,
+        onTap: isLoanPrincipal
+            ? null
+            : () => ExpenseEntrySheet.edit(context, tx),
         leading: Container(
           padding: const EdgeInsets.all(9),
           decoration: BoxDecoration(
@@ -303,6 +312,20 @@ class _TxTile extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+
+  /// Deletes the row, offering to put it back — id and all, so a receipt or
+  /// loan link survives the round trip.
+  Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    final repo = ref.read(expenseRepositoryProvider);
+    final deleted = await repo.deleteTransaction(tx.id);
+    if (deleted == null || !context.mounted) return;
+    brandToast(
+      context,
+      'Transaction deleted',
+      actionLabel: 'Undo',
+      onAction: () => repo.restoreTransaction(deleted),
     );
   }
 }
