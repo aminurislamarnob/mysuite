@@ -957,60 +957,71 @@ class _ProfileDrawer extends ConsumerWidget {
               ),
             ),
           ),
-          BrandTile(
-            leading: const AppIcon(AppIcons.people, size: 20),
-            title: const Text('Everyone'),
-            selected: active == null,
-            onTap: () {
-              ref.read(activeProfileProvider.notifier).state = null;
-              Navigator.pop(context);
-            },
-          ),
-          BrandDivider(),
-          profiles.maybeWhen(
-            data: (list) => TileColumn(
+          Padding(
+            // The header above is full-bleed; everything below it is a card,
+            // so it needs the panel's gutter.
+            padding: const EdgeInsets.symmetric(horizontal: drawerGutter),
+            child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: list
-                  .map(
-                    (p) => BrandTile(
-                      leading: CircleAvatar(
-                        radius: 12,
-                        backgroundColor: Color(p.color),
-                        child: Text(
-                          p.name.isEmpty ? '?' : p.name[0].toUpperCase(),
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Colors.white,
+              children: [
+                BrandTile(
+                  leading: const AppIcon(AppIcons.people, size: 20),
+                  title: const Text('Everyone'),
+                  selected: active == null,
+                  onTap: () {
+                    ref.read(activeProfileProvider.notifier).state = null;
+                    Navigator.pop(context);
+                  },
+                ),
+                BrandDivider(),
+                profiles.maybeWhen(
+                  data: (list) => TileColumn(
+                    mainAxisSize: MainAxisSize.min,
+                    children: list
+                        .map(
+                          (p) => BrandTile(
+                            leading: CircleAvatar(
+                              radius: 12,
+                              backgroundColor: Color(p.color),
+                              child: Text(
+                                p.name.isEmpty ? '?' : p.name[0].toUpperCase(),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            title: Text(p.name),
+                            subtitle: Text(
+                              p.relation,
+                              style: const TextStyle(fontSize: 11),
+                            ),
+                            selected: active == p.id,
+                            onTap: () {
+                              ref.read(activeProfileProvider.notifier).state =
+                                  p.id;
+                              Navigator.pop(context);
+                            },
+                            onLongPress: () async {
+                              Navigator.pop(context);
+                              await ref
+                                  .read(medicineRepositoryProvider)
+                                  .deleteProfile(p.id);
+                            },
                           ),
-                        ),
-                      ),
-                      title: Text(p.name),
-                      subtitle: Text(
-                        p.relation,
-                        style: const TextStyle(fontSize: 11),
-                      ),
-                      selected: active == p.id,
-                      onTap: () {
-                        ref.read(activeProfileProvider.notifier).state = p.id;
-                        Navigator.pop(context);
-                      },
-                      onLongPress: () async {
-                        Navigator.pop(context);
-                        await ref
-                            .read(medicineRepositoryProvider)
-                            .deleteProfile(p.id);
-                      },
-                    ),
-                  )
-                  .toList(),
+                        )
+                        .toList(),
+                  ),
+                  orElse: () => const SizedBox.shrink(),
+                ),
+                BrandDivider(),
+                BrandTile(
+                  leading: const AppIcon(AppIcons.personAdd, size: 20),
+                  title: const Text('Add profile'),
+                  onTap: () => _addProfile(context, ref),
+                ),
+              ],
             ),
-            orElse: () => const SizedBox.shrink(),
-          ),
-          BrandDivider(),
-          BrandTile(
-            leading: const AppIcon(AppIcons.personAdd, size: 20),
-            title: const Text('Add profile'),
-            onTap: () => _addProfile(context, ref),
           ),
         ],
       ),

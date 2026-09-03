@@ -810,50 +810,68 @@ class _ProjectDrawer extends ConsumerWidget {
               ),
             ),
           ),
-          BrandTile(
-            leading: const AppIcon(AppIcons.inbox, size: 20),
-            title: const Text('All tasks'),
-            selected: selected == null,
-            onTap: () {
-              ref.read(taskProjectFilterProvider.notifier).state = null;
-              Navigator.pop(context);
-            },
-          ),
-          BrandDivider(),
-          projects.maybeWhen(
-            data: (list) => TileColumn(
+          Padding(
+            // The header above is full-bleed; everything below it is a card,
+            // so it needs the panel's gutter.
+            padding: const EdgeInsets.symmetric(horizontal: drawerGutter),
+            child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: list.map((p) {
-                final open = counts.where((t) => t.projectId == p.id).length;
-                return BrandTile(
-                  leading: AppIcon(
-                    AppIcons.project(p.icon),
-                    size: 20,
-                    color: Color(p.color),
-                  ),
-                  title: Text(p.name),
-                  trailing: open == 0
-                      ? null
-                      : Text('$open', style: const TextStyle(fontSize: 12)),
-                  selected: selected == p.id,
+              children: [
+                BrandTile(
+                  leading: const AppIcon(AppIcons.inbox, size: 20),
+                  title: const Text('All tasks'),
+                  selected: selected == null,
                   onTap: () {
-                    ref.read(taskProjectFilterProvider.notifier).state = p.id;
+                    ref.read(taskProjectFilterProvider.notifier).state = null;
                     Navigator.pop(context);
                   },
-                  onLongPress: () async {
-                    Navigator.pop(context);
-                    await ref.read(taskRepositoryProvider).deleteProject(p.id);
-                  },
-                );
-              }).toList(),
+                ),
+                BrandDivider(),
+                projects.maybeWhen(
+                  data: (list) => TileColumn(
+                    mainAxisSize: MainAxisSize.min,
+                    children: list.map((p) {
+                      final open = counts
+                          .where((t) => t.projectId == p.id)
+                          .length;
+                      return BrandTile(
+                        leading: AppIcon(
+                          AppIcons.project(p.icon),
+                          size: 20,
+                          color: Color(p.color),
+                        ),
+                        title: Text(p.name),
+                        trailing: open == 0
+                            ? null
+                            : Text(
+                                '$open',
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                        selected: selected == p.id,
+                        onTap: () {
+                          ref.read(taskProjectFilterProvider.notifier).state =
+                              p.id;
+                          Navigator.pop(context);
+                        },
+                        onLongPress: () async {
+                          Navigator.pop(context);
+                          await ref
+                              .read(taskRepositoryProvider)
+                              .deleteProject(p.id);
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  orElse: () => const SizedBox.shrink(),
+                ),
+                BrandDivider(),
+                BrandTile(
+                  leading: const AppIcon(AppIcons.add, size: 20),
+                  title: const Text('New project'),
+                  onTap: () => _createProject(context, ref),
+                ),
+              ],
             ),
-            orElse: () => const SizedBox.shrink(),
-          ),
-          BrandDivider(),
-          BrandTile(
-            leading: const AppIcon(AppIcons.add, size: 20),
-            title: const Text('New project'),
-            onTap: () => _createProject(context, ref),
           ),
         ],
       ),

@@ -415,7 +415,7 @@ class _NotesDrawer extends ConsumerWidget {
           ),
           BrandDivider(),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
+            padding: const EdgeInsets.fromLTRB(drawerGutter, 12, 4, 4),
             child: Row(
               children: [
                 const Expanded(
@@ -463,13 +463,18 @@ class _NotesDrawer extends ConsumerWidget {
           ),
           BrandDivider(),
           const Padding(
-            padding: EdgeInsets.fromLTRB(16, 12, 16, 4),
+            padding: EdgeInsets.fromLTRB(drawerGutter, 12, drawerGutter, 4),
             child: Text('Tags', style: TextStyle(fontWeight: FontWeight.w700)),
           ),
           tags.maybeWhen(
             data: (list) => list.isEmpty
                 ? const Padding(
-                    padding: EdgeInsets.fromLTRB(16, 4, 16, 16),
+                    padding: EdgeInsets.fromLTRB(
+                      drawerGutter,
+                      4,
+                      drawerGutter,
+                      16,
+                    ),
                     child: Text(
                       'Tags you add to notes appear here.',
                       style: TextStyle(fontSize: 12),
@@ -555,7 +560,12 @@ class _DrawerItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: cardGap),
+      padding: const EdgeInsets.fromLTRB(
+        drawerGutter,
+        0,
+        drawerGutter,
+        cardGap,
+      ),
       child: BrandTile(
         selected: selected,
         leading: AppIcon(icon, size: 20, color: iconColor),

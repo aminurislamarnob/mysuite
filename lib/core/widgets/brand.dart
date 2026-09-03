@@ -168,6 +168,13 @@ const double actionGap = 8;
 /// number, named, so every other list can agree with them.
 const double cardGap = 10;
 
+/// The inset from a navigation drawer's edge to the cards inside it.
+///
+/// A drawer's list has no page padding of its own — the accent header is
+/// full-bleed — so without this its rows sit against the panel edge with their
+/// left corners cut off.
+const double drawerGutter = 12;
+
 /// The centred title bar used on the detail screens: a close/back circle, a
 /// bold centred title and an optional trailing circle.
 class BrandTopBar extends StatelessWidget implements PreferredSizeWidget {
