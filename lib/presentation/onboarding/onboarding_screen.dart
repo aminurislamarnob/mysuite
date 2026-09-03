@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/database/app_database.dart';
+import '../../core/people/people_repository.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/security_service.dart';
 import '../../core/settings/app_settings.dart';
@@ -12,11 +13,11 @@ import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/brand.dart';
 import '../../core/widgets/common.dart';
-import '../../core/people/people_repository.dart';
 import '../habits/repository/habit_repository.dart';
 import '../modules/modules_screen.dart';
 
-/// First-run flow: language, theme, modules, starter habits, then app lock.
+/// First-run flow: name, language, theme, modules, starter habits, then app
+/// lock.
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -189,7 +190,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 final m = AppModule.values[i];
                 final (icon, color) = ModulesScreen.metaFor(m);
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
+                  // Wider than a list row's gutter: these are tall feature
+                  // cards, and 10 reads cramped under that much weight.
+                  padding: const EdgeInsets.only(bottom: 14),
                   child: TintCard(
                     tintIndex: i,
                     padding: const EdgeInsets.symmetric(

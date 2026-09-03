@@ -158,28 +158,33 @@ class _AccountRow extends ConsumerWidget {
     final repo = ref.read(expenseRepositoryProvider);
     final muted = Theme.of(context).colorScheme.outline;
 
-    return BrandTile(
-      dense: true,
-      leading: AppIcon(
-        AppIcons.account(account.type),
-        color: account.isArchived ? muted : Color(account.color),
+    return Padding(
+      // The same gutter the Bills and Loans lists use, so a stack of accounts
+      // reads as separate rows rather than one block.
+      padding: const EdgeInsets.only(bottom: 10),
+      child: BrandTile(
+        dense: true,
+        leading: AppIcon(
+          AppIcons.account(account.type),
+          color: account.isArchived ? muted : Color(account.color),
+        ),
+        title: Text(
+          account.name,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        subtitle: Text(
+          Fmt.money(account.balance, currency),
+          style: TextStyle(fontSize: 12, color: muted),
+        ),
+        trailing: CircleIconButton(
+          icon: account.isArchived ? AppIcons.unarchive : AppIcons.archive,
+          tooltip: account.isArchived ? 'Restore' : 'Archive',
+          size: 40,
+          onPressed: () =>
+              repo.setAccountArchived(account.id, !account.isArchived),
+        ),
+        onTap: () => AccountsSheet._edit(context, ref, account: account),
       ),
-      title: Text(
-        account.name,
-        style: const TextStyle(fontWeight: FontWeight.w600),
-      ),
-      subtitle: Text(
-        Fmt.money(account.balance, currency),
-        style: TextStyle(fontSize: 12, color: muted),
-      ),
-      trailing: CircleIconButton(
-        icon: account.isArchived ? AppIcons.unarchive : AppIcons.archive,
-        tooltip: account.isArchived ? 'Restore' : 'Archive',
-        size: 40,
-        onPressed: () =>
-            repo.setAccountArchived(account.id, !account.isArchived),
-      ),
-      onTap: () => AccountsSheet._edit(context, ref, account: account),
     );
   }
 }
