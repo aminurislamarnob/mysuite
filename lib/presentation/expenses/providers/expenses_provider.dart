@@ -139,6 +139,78 @@ final monthlyTrendProvider =
       return ref.watch(expenseRepositoryProvider).monthlyTrend(6);
     });
 
+/// Loans, unsettled and soonest-due first.
+final loansProvider = StreamProvider<List<Loan>>((ref) {
+  return ref.watch(expenseRepositoryProvider).watchLoans();
+});
+
+/// Every repayment row, so outstanding balances derive from one query
+/// rather than one per loan.
+final loanRepaymentsProvider = StreamProvider<List<Expense>>((ref) {
+  return ref.watch(expenseRepositoryProvider).watchRepayments();
+});
+
+/// A loan with the person on the other side and what is still owed.
+@immutable
+class LoanRow {
+  final Loan loan;
+  final Person? person;
+  final double repaid;
+
+  const LoanRow({required this.loan, this.person, required this.repaid});
+
+  double get outstanding => loan.principal - repaid;
+  bool get isSettled => loan.settledAt != null;
+
+  /// True when they owe me, false when I owe them.
+  bool get isLent => loan.direction == LoanDirection.lent;
+
+  /// Days until the loan falls due; negative once overdue.
+  int? get dueInDays {
+    final due = loan.dueDate;
+    if (due == null) return null;
+    return Fmt.dateOnly(due).difference(Fmt.dateOnly(DateTime.now())).inDays;
+  }
+}
+
+final loanRowsProvider = FutureProvider<List<LoanRow>>((ref) async {
+  final loans = await ref.watch(loansProvider.future);
+  final repayments = await ref.watch(loanRepaymentsProvider.future);
+  final people = await ref.watch(peopleProvider.future);
+
+  final repaid = <int, double>{};
+  for (final r in repayments) {
+    if (r.loanId == null) continue;
+    repaid[r.loanId!] = (repaid[r.loanId!] ?? 0) + r.amount;
+  }
+
+  return [
+    for (final l in loans)
+      LoanRow(
+        loan: l,
+        person: people.where((p) => p.id == l.personId).firstOrNull,
+        repaid: repaid[l.id] ?? 0,
+      ),
+  ];
+});
+
+/// What is still owed in each direction, for the Loans tab header.
+final loanTotalsProvider = FutureProvider<({double owedToMe, double iOwe})>((
+  ref,
+) async {
+  final rows = await ref.watch(loanRowsProvider.future);
+  var owedToMe = 0.0;
+  var iOwe = 0.0;
+  for (final r in rows.where((r) => !r.isSettled)) {
+    if (r.isLent) {
+      owedToMe += r.outstanding;
+    } else {
+      iOwe += r.outstanding;
+    }
+  }
+  return (owedToMe: owedToMe, iOwe: iOwe);
+});
+
 /// Budget progress rows for the budgets tab.
 @immutable
 class BudgetProgress {

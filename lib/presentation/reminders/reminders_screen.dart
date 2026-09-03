@@ -119,6 +119,28 @@ final remindersProvider = FutureProvider<List<ReminderItem>>((ref) async {
   }
 
   if (settings.isEnabled(AppModule.expenses)) {
+    final loans = await ref.watch(loanRowsProvider.future);
+    for (final l in loans) {
+      final due = l.loan.dueDate;
+      if (l.isSettled || due == null) continue;
+      items.add(
+        ReminderItem(
+          title: l.person == null
+              ? (l.isLent ? 'Loan due' : 'Repayment due')
+              : l.isLent
+              ? '${l.person!.name} owes you'
+              : 'You owe ${l.person!.name}',
+          subtitle:
+              '${settings.currencySymbol}'
+              '${l.outstanding.toStringAsFixed(0)} outstanding',
+          at: due,
+          icon: AppIcons.transfer,
+          color: AppColors.expenseAccent,
+          route: '/expenses',
+        ),
+      );
+    }
+
     final bills = await ref.watch(recurringProvider.future);
     for (final b in bills) {
       items.add(

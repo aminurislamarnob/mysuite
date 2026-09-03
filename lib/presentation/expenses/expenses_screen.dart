@@ -14,6 +14,7 @@ import 'repository/expense_repository.dart';
 import 'widgets/bills_tab.dart';
 import 'widgets/budgets_tab.dart';
 import 'widgets/expense_entry_sheet.dart';
+import 'widgets/loans_tab.dart';
 import 'widgets/overview_tab.dart';
 import 'widgets/reports_tab.dart';
 
@@ -75,6 +76,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
           'Reports': ReportsTab(),
           'Budgets': BudgetsTab(),
           'Bills': BillsTab(),
+          'Loans': LoansTab(),
         },
       ),
     );
