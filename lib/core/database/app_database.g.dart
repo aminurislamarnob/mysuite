@@ -4394,6 +4394,17 @@ class $PeopleTable extends People with TableInfo<$PeopleTable, Person> {
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _photoPathMeta = const VerificationMeta(
+    'photoPath',
+  );
+  @override
+  late final GeneratedColumn<String> photoPath = GeneratedColumn<String>(
+    'photo_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -4402,6 +4413,7 @@ class $PeopleTable extends People with TableInfo<$PeopleTable, Person> {
     color,
     type,
     isSelf,
+    photoPath,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -4450,6 +4462,12 @@ class $PeopleTable extends People with TableInfo<$PeopleTable, Person> {
         isSelf.isAcceptableOrUnknown(data['is_self']!, _isSelfMeta),
       );
     }
+    if (data.containsKey('photo_path')) {
+      context.handle(
+        _photoPathMeta,
+        photoPath.isAcceptableOrUnknown(data['photo_path']!, _photoPathMeta),
+      );
+    }
     return context;
   }
 
@@ -4483,6 +4501,10 @@ class $PeopleTable extends People with TableInfo<$PeopleTable, Person> {
         DriftSqlType.bool,
         data['${effectivePrefix}is_self'],
       )!,
+      photoPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}photo_path'],
+      ),
     );
   }
 
@@ -4504,6 +4526,10 @@ class Person extends DataClass implements Insertable<Person> {
   /// The seeded row for the user, which every module falls back to and no
   /// screen may delete.
   final bool isSelf;
+
+  /// An avatar under the app's documents directory, written by `AvatarStorage`.
+  /// Null until one is chosen.
+  final String? photoPath;
   const Person({
     required this.id,
     required this.name,
@@ -4511,6 +4537,7 @@ class Person extends DataClass implements Insertable<Person> {
     required this.color,
     required this.type,
     required this.isSelf,
+    this.photoPath,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -4521,6 +4548,9 @@ class Person extends DataClass implements Insertable<Person> {
     map['color'] = Variable<int>(color);
     map['type'] = Variable<String>(type);
     map['is_self'] = Variable<bool>(isSelf);
+    if (!nullToAbsent || photoPath != null) {
+      map['photo_path'] = Variable<String>(photoPath);
+    }
     return map;
   }
 
@@ -4532,6 +4562,9 @@ class Person extends DataClass implements Insertable<Person> {
       color: Value(color),
       type: Value(type),
       isSelf: Value(isSelf),
+      photoPath: photoPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(photoPath),
     );
   }
 
@@ -4547,6 +4580,7 @@ class Person extends DataClass implements Insertable<Person> {
       color: serializer.fromJson<int>(json['color']),
       type: serializer.fromJson<String>(json['type']),
       isSelf: serializer.fromJson<bool>(json['isSelf']),
+      photoPath: serializer.fromJson<String?>(json['photoPath']),
     );
   }
   @override
@@ -4559,6 +4593,7 @@ class Person extends DataClass implements Insertable<Person> {
       'color': serializer.toJson<int>(color),
       'type': serializer.toJson<String>(type),
       'isSelf': serializer.toJson<bool>(isSelf),
+      'photoPath': serializer.toJson<String?>(photoPath),
     };
   }
 
@@ -4569,6 +4604,7 @@ class Person extends DataClass implements Insertable<Person> {
     int? color,
     String? type,
     bool? isSelf,
+    Value<String?> photoPath = const Value.absent(),
   }) => Person(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -4576,6 +4612,7 @@ class Person extends DataClass implements Insertable<Person> {
     color: color ?? this.color,
     type: type ?? this.type,
     isSelf: isSelf ?? this.isSelf,
+    photoPath: photoPath.present ? photoPath.value : this.photoPath,
   );
   Person copyWithCompanion(PeopleCompanion data) {
     return Person(
@@ -4585,6 +4622,7 @@ class Person extends DataClass implements Insertable<Person> {
       color: data.color.present ? data.color.value : this.color,
       type: data.type.present ? data.type.value : this.type,
       isSelf: data.isSelf.present ? data.isSelf.value : this.isSelf,
+      photoPath: data.photoPath.present ? data.photoPath.value : this.photoPath,
     );
   }
 
@@ -4596,13 +4634,15 @@ class Person extends DataClass implements Insertable<Person> {
           ..write('relation: $relation, ')
           ..write('color: $color, ')
           ..write('type: $type, ')
-          ..write('isSelf: $isSelf')
+          ..write('isSelf: $isSelf, ')
+          ..write('photoPath: $photoPath')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, relation, color, type, isSelf);
+  int get hashCode =>
+      Object.hash(id, name, relation, color, type, isSelf, photoPath);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -4612,7 +4652,8 @@ class Person extends DataClass implements Insertable<Person> {
           other.relation == this.relation &&
           other.color == this.color &&
           other.type == this.type &&
-          other.isSelf == this.isSelf);
+          other.isSelf == this.isSelf &&
+          other.photoPath == this.photoPath);
 }
 
 class PeopleCompanion extends UpdateCompanion<Person> {
@@ -4622,6 +4663,7 @@ class PeopleCompanion extends UpdateCompanion<Person> {
   final Value<int> color;
   final Value<String> type;
   final Value<bool> isSelf;
+  final Value<String?> photoPath;
   const PeopleCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -4629,6 +4671,7 @@ class PeopleCompanion extends UpdateCompanion<Person> {
     this.color = const Value.absent(),
     this.type = const Value.absent(),
     this.isSelf = const Value.absent(),
+    this.photoPath = const Value.absent(),
   });
   PeopleCompanion.insert({
     this.id = const Value.absent(),
@@ -4637,6 +4680,7 @@ class PeopleCompanion extends UpdateCompanion<Person> {
     this.color = const Value.absent(),
     this.type = const Value.absent(),
     this.isSelf = const Value.absent(),
+    this.photoPath = const Value.absent(),
   }) : name = Value(name);
   static Insertable<Person> custom({
     Expression<int>? id,
@@ -4645,6 +4689,7 @@ class PeopleCompanion extends UpdateCompanion<Person> {
     Expression<int>? color,
     Expression<String>? type,
     Expression<bool>? isSelf,
+    Expression<String>? photoPath,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -4653,6 +4698,7 @@ class PeopleCompanion extends UpdateCompanion<Person> {
       if (color != null) 'color': color,
       if (type != null) 'type': type,
       if (isSelf != null) 'is_self': isSelf,
+      if (photoPath != null) 'photo_path': photoPath,
     });
   }
 
@@ -4663,6 +4709,7 @@ class PeopleCompanion extends UpdateCompanion<Person> {
     Value<int>? color,
     Value<String>? type,
     Value<bool>? isSelf,
+    Value<String?>? photoPath,
   }) {
     return PeopleCompanion(
       id: id ?? this.id,
@@ -4671,6 +4718,7 @@ class PeopleCompanion extends UpdateCompanion<Person> {
       color: color ?? this.color,
       type: type ?? this.type,
       isSelf: isSelf ?? this.isSelf,
+      photoPath: photoPath ?? this.photoPath,
     );
   }
 
@@ -4695,6 +4743,9 @@ class PeopleCompanion extends UpdateCompanion<Person> {
     if (isSelf.present) {
       map['is_self'] = Variable<bool>(isSelf.value);
     }
+    if (photoPath.present) {
+      map['photo_path'] = Variable<String>(photoPath.value);
+    }
     return map;
   }
 
@@ -4706,7 +4757,8 @@ class PeopleCompanion extends UpdateCompanion<Person> {
           ..write('relation: $relation, ')
           ..write('color: $color, ')
           ..write('type: $type, ')
-          ..write('isSelf: $isSelf')
+          ..write('isSelf: $isSelf, ')
+          ..write('photoPath: $photoPath')
           ..write(')'))
         .toString();
   }
@@ -14304,6 +14356,7 @@ typedef $$PeopleTableCreateCompanionBuilder =
       Value<int> color,
       Value<String> type,
       Value<bool> isSelf,
+      Value<String?> photoPath,
     });
 typedef $$PeopleTableUpdateCompanionBuilder =
     PeopleCompanion Function({
@@ -14313,6 +14366,7 @@ typedef $$PeopleTableUpdateCompanionBuilder =
       Value<int> color,
       Value<String> type,
       Value<bool> isSelf,
+      Value<String?> photoPath,
     });
 
 final class $$PeopleTableReferences
@@ -14412,6 +14466,11 @@ class $$PeopleTableFilterComposer
 
   ColumnFilters<bool> get isSelf => $composableBuilder(
     column: $table.isSelf,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get photoPath => $composableBuilder(
+    column: $table.photoPath,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -14529,6 +14588,11 @@ class $$PeopleTableOrderingComposer
     column: $table.isSelf,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get photoPath => $composableBuilder(
+    column: $table.photoPath,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$PeopleTableAnnotationComposer
@@ -14557,6 +14621,9 @@ class $$PeopleTableAnnotationComposer
 
   GeneratedColumn<bool> get isSelf =>
       $composableBuilder(column: $table.isSelf, builder: (column) => column);
+
+  GeneratedColumn<String> get photoPath =>
+      $composableBuilder(column: $table.photoPath, builder: (column) => column);
 
   Expression<T> loansRefs<T extends Object>(
     Expression<T> Function($$LoansTableAnnotationComposer a) f,
@@ -14672,6 +14739,7 @@ class $$PeopleTableTableManager
                 Value<int> color = const Value.absent(),
                 Value<String> type = const Value.absent(),
                 Value<bool> isSelf = const Value.absent(),
+                Value<String?> photoPath = const Value.absent(),
               }) => PeopleCompanion(
                 id: id,
                 name: name,
@@ -14679,6 +14747,7 @@ class $$PeopleTableTableManager
                 color: color,
                 type: type,
                 isSelf: isSelf,
+                photoPath: photoPath,
               ),
           createCompanionCallback:
               ({
@@ -14688,6 +14757,7 @@ class $$PeopleTableTableManager
                 Value<int> color = const Value.absent(),
                 Value<String> type = const Value.absent(),
                 Value<bool> isSelf = const Value.absent(),
+                Value<String?> photoPath = const Value.absent(),
               }) => PeopleCompanion.insert(
                 id: id,
                 name: name,
@@ -14695,6 +14765,7 @@ class $$PeopleTableTableManager
                 color: color,
                 type: type,
                 isSelf: isSelf,
+                photoPath: photoPath,
               ),
           withReferenceMapper: (p0) => p0
               .map(

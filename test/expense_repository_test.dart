@@ -1,13 +1,17 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mysuite/core/database/app_database.dart';
+import 'package:mysuite/core/people/avatar_storage.dart';
 import 'package:mysuite/core/people/people_repository.dart';
 import 'package:mysuite/core/utils/formatters.dart';
 import 'package:mysuite/presentation/expenses/repository/expense_repository.dart';
 
 void main() {
   late AppDatabase db;
+  late Directory avatarRoot;
   late PeopleRepository people;
   late ExpenseRepository repo;
   late int cash;
@@ -21,7 +25,8 @@ void main() {
 
   setUp(() async {
     db = AppDatabase.forTesting(NativeDatabase.memory());
-    people = PeopleRepository(db);
+    avatarRoot = Directory.systemTemp.createTempSync('mysuite-expense');
+    people = PeopleRepository(db, AvatarStorage(avatarRoot));
     repo = ExpenseRepository(db, people);
 
     final accounts = await repo.accounts();
@@ -32,7 +37,10 @@ void main() {
     other = categories.firstWhere((c) => c.name == 'Other').id;
   });
 
-  tearDown(() async => db.close());
+  tearDown(() async {
+    await db.close();
+    if (avatarRoot.existsSync()) avatarRoot.deleteSync(recursive: true);
+  });
 
   group('transactions', () {
     test('a transaction defaults to Self', () async {

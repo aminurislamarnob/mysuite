@@ -181,6 +181,10 @@ class People extends Table {
   /// The seeded row for the user, which every module falls back to and no
   /// screen may delete.
   BoolColumn get isSelf => boolean().withDefault(const Constant(false))();
+
+  /// An avatar under the app's documents directory, written by `AvatarStorage`.
+  /// Null until one is chosen.
+  TextColumn get photoPath => text().nullable()();
 }
 
 // ---------------------------------------------------------------------------
@@ -437,7 +441,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -446,6 +450,15 @@ class AppDatabase extends _$AppDatabase {
     },
     onUpgrade: (m, from, to) async {
       // Each future schema bump appends its own `if (from < n)` block here.
+      if (from < 2) {
+        await m.addColumn(people, people.photoPath);
+        // Self used to be seeded under the literal name 'Self'. Blanking it
+        // here means an empty name says "never named" everywhere, rather than
+        // every screen having to know the seed's string — and having to nag
+        // anyone who genuinely calls themselves that.
+        await (update(people)..where((t) => t.isSelf & t.name.equals('Self')))
+            .write(const PeopleCompanion(name: Value('')));
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -548,7 +561,9 @@ class AppDatabase extends _$AppDatabase {
       b.insert(
         people,
         const PeopleCompanion(
-          name: Value('Self'),
+          // Left empty on purpose: onboarding asks for it, and an empty name
+          // is what the profile card watches for.
+          name: Value(''),
           relation: Value('Self'),
           isSelf: Value(true),
         ),

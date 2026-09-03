@@ -1,20 +1,32 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mysuite/core/database/app_database.dart';
+import 'package:mysuite/core/people/avatar_storage.dart';
+import 'package:mysuite/core/people/people_repository.dart';
 import 'package:mysuite/presentation/medicine/repository/medicine_repository.dart';
 import 'package:mysuite/presentation/medicine/utils/schedule_generator.dart';
 
 void main() {
   late AppDatabase db;
+  late Directory avatarRoot;
   late MedicineRepository repo;
 
   setUp(() {
     db = AppDatabase.forTesting(NativeDatabase.memory());
-    repo = MedicineRepository(db);
+    avatarRoot = Directory.systemTemp.createTempSync('mysuite-medicine');
+    repo = MedicineRepository(
+      db,
+      PeopleRepository(db, AvatarStorage(avatarRoot)),
+    );
   });
 
-  tearDown(() async => db.close());
+  tearDown(() async {
+    await db.close();
+    if (avatarRoot.existsSync()) avatarRoot.deleteSync(recursive: true);
+  });
 
   MedicinesCompanion medicine({
     String name = 'Amoxicillin',

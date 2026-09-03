@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'core/people/avatar_storage.dart';
 import 'core/router/app_router.dart';
+import 'core/people/people_repository.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/security_service.dart';
 import 'core/settings/app_settings.dart';
@@ -21,10 +23,16 @@ Future<void> main() async {
   // Settings are read synchronously all over the app, so load them before the
   // first frame rather than threading an AsyncValue through every screen.
   final prefs = await SharedPreferences.getInstance();
+  // Avatars resolve their directory the same way, so the people repository can
+  // stay synchronous.
+  final avatars = await openAvatarStorage();
 
   runApp(
     ProviderScope(
-      overrides: [sharedPrefsProvider.overrideWithValue(prefs)],
+      overrides: [
+        sharedPrefsProvider.overrideWithValue(prefs),
+        avatarStorageProvider.overrideWithValue(avatars),
+      ],
       child: const MySuiteApp(),
     ),
   );
@@ -49,6 +57,8 @@ class _MySuiteAppState extends ConsumerState<MySuiteApp> {
     await ref.read(notificationServiceProvider).init();
     // Notes older than the 30-day trash window are dropped once per launch.
     await ref.read(noteRepositoryProvider).purgeExpiredTrash();
+    // Avatar files a half-finished write left behind.
+    await ref.read(peopleRepositoryProvider).pruneOrphanedAvatars();
   }
 
   @override

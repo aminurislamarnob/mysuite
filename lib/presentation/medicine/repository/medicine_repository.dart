@@ -8,7 +8,10 @@ import '../../../core/utils/formatters.dart';
 import '../utils/schedule_generator.dart';
 
 final medicineRepositoryProvider = Provider<MedicineRepository>((ref) {
-  return MedicineRepository(ref.watch(databaseProvider));
+  return MedicineRepository(
+    ref.watch(databaseProvider),
+    ref.watch(peopleRepositoryProvider),
+  );
 });
 
 /// Dose status values, mirroring `MedicineDoses.status`.
@@ -21,12 +24,15 @@ class DoseStatus {
 class MedicineRepository {
   final AppDatabase _db;
 
-  MedicineRepository(this._db);
+  /// Profiles are household members, so the people repository is passed in
+  /// rather than built here — it owns the avatar files, and a second instance
+  /// would be a second owner.
+  final PeopleRepository _people;
+
+  MedicineRepository(this._db, this._people);
 
   // --- Profiles ------------------------------------------------------------
   // A profile is a household member from the shared People table.
-
-  PeopleRepository get _people => PeopleRepository(_db);
 
   Stream<List<Person>> watchProfiles() =>
       _people.watchPeople(type: PersonType.household);
