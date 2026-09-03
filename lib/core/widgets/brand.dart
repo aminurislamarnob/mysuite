@@ -156,6 +156,9 @@ class CircleIconButton extends StatelessWidget {
   }
 }
 
+/// The gap between adjacent [CircleIconButton]s in a header's action row.
+const double actionGap = 8;
+
 /// The centred title bar used on the detail screens: a close/back circle, a
 /// bold centred title and an optional trailing circle.
 class BrandTopBar extends StatelessWidget implements PreferredSizeWidget {
@@ -203,6 +206,9 @@ class BrandTopBar extends StatelessWidget implements PreferredSizeWidget {
         decoration: .boxDelta(color: Colors.transparent),
         constraints: const BoxConstraints(minHeight: 40),
         titleTextStyle: .value(titleStyle ?? const TextStyle()),
+        // forui butts its actions together. The brand's are outlined circles,
+        // which need air between them to read as separate targets.
+        actionSpacing: actionGap,
       ),
       prefixes: [
         if (leadingIcon != null)
@@ -291,7 +297,10 @@ class GreetingHeader extends StatelessWidget {
             ],
           ),
         ),
-        ...actions,
+        for (final (i, action) in actions.indexed) ...[
+          if (i > 0) const SizedBox(width: actionGap),
+          action,
+        ],
       ],
     );
   }

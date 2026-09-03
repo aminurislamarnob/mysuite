@@ -62,7 +62,6 @@ class DashboardScreen extends ConsumerWidget {
                   tooltip: 'Search everything',
                   onPressed: () => context.push('/search'),
                 ),
-                const SizedBox(width: 8),
                 CircleIconButton(
                   icon: AppIcons.notifications,
                   tooltip: 'Reminders',
