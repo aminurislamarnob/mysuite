@@ -77,7 +77,7 @@ class _SummaryCard extends ConsumerWidget {
         : '${change >= 0 ? '+' : ''}${(change * 100).toStringAsFixed(0)}% vs last month';
 
     return TintCard(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -125,7 +125,7 @@ class _SummaryCard extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 10),
           BrandTile(
             dense: true,
             leading: SizedBox(
@@ -279,51 +279,54 @@ class _TxTile extends ConsumerWidget {
     final isLoanPrincipal = TxKind.isLoanPrincipal(tx.kind);
     final isLoanRow = tx.loanId != null;
 
-    return Dismissible(
-      key: ValueKey('tx-${tx.id}'),
-      direction: isLoanPrincipal
-          ? DismissDirection.none
-          : DismissDirection.endToStart,
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        decoration: BoxDecoration(
-          color: AppColors.dangerLight,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: const AppIcon(AppIcons.delete, color: Colors.white),
-      ),
-      onDismissed: (_) => _delete(context, ref),
-      child: BrandTile(
-        dense: true,
-        onTap: isLoanRow ? null : () => ExpenseEntrySheet.edit(context, tx),
-        leading: Container(
-          padding: const EdgeInsets.all(9),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Dismissible(
+        key: ValueKey('tx-${tx.id}'),
+        direction: isLoanPrincipal
+            ? DismissDirection.none
+            : DismissDirection.endToStart,
+        background: Container(
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 20),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.14),
-            shape: BoxShape.circle,
+            color: AppColors.dangerLight,
+            borderRadius: BorderRadius.circular(20),
           ),
-          child: AppIcon(icon, color: color, size: 18),
+          child: const AppIcon(AppIcons.delete, color: Colors.white),
         ),
-        // A loan row's note is the loan's own, so the row says what it is
-        // and leaves the note to the Loans tab.
-        title: Text(
-          tx.note?.isNotEmpty == true && !isLoan ? tx.note! : fallbackTitle,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-        ),
-        subtitle: Text(
-          '${Fmt.relativeDay(tx.date)}'
-          '${account == null ? '' : ' · ${account.name}'}'
-          // Self is the default, so saying so on every row is noise.
-          '${person == null || person.isSelf ? '' : ' · ${person.name}'}',
-          style: TextStyle(fontSize: 11, color: muted),
-        ),
-        trailing: Text(
-          '$sign${Fmt.money(tx.amount, currency)}',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 15,
-            color: inbound ? AppColors.successLight : null,
+        onDismissed: (_) => _delete(context, ref),
+        child: BrandTile(
+          dense: true,
+          onTap: isLoanRow ? null : () => ExpenseEntrySheet.edit(context, tx),
+          leading: Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.14),
+              shape: BoxShape.circle,
+            ),
+            child: AppIcon(icon, color: color, size: 18),
+          ),
+          // A loan row's note is the loan's own, so the row says what it is
+          // and leaves the note to the Loans tab.
+          title: Text(
+            tx.note?.isNotEmpty == true && !isLoan ? tx.note! : fallbackTitle,
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+          ),
+          subtitle: Text(
+            '${Fmt.relativeDay(tx.date)}'
+            '${account == null ? '' : ' · ${account.name}'}'
+            // Self is the default, so saying so on every row is noise.
+            '${person == null || person.isSelf ? '' : ' · ${person.name}'}',
+            style: TextStyle(fontSize: 11, color: muted),
+          ),
+          trailing: Text(
+            '$sign${Fmt.money(tx.amount, currency)}',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
+              color: inbound ? AppColors.successLight : null,
+            ),
           ),
         ),
       ),

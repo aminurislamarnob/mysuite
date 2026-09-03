@@ -68,6 +68,13 @@ class BrandButton extends StatelessWidget {
         decoration: .delta([
           .all(.shapeDelta(shape: StadiumBorder(side: side))),
         ]),
+        // forui sizes its horizontal inset for a small-radius rectangle. The
+        // pill's ends curve back through that space, so the label reads as
+        // touching the edge; widen it rather than replace it, to keep forui's
+        // per-size vertical padding.
+        contentStyle: .delta(
+          padding: .add(EdgeInsets.symmetric(horizontal: small ? 6 : 10)),
+        ),
       ),
       prefix: icon == null ? null : AppIcon(icon!, size: 18),
       child: Text(label),
