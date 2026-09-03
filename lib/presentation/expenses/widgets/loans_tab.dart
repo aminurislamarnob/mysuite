@@ -69,11 +69,15 @@ class LoansTab extends ConsumerWidget {
               const SizedBox(height: 16),
             ],
             ...open.map((r) => _LoanCard(row: r, currency: currency)),
-            BrandButton(
-              label: 'Add a loan',
-              icon: AppIcons.add,
-              kind: BrandButtonKind.ghost,
-              onPressed: () => LoanSheet.show(context),
+            // The same pill the empty state offers, so the way to add a loan
+            // does not change shape once there is one.
+            Center(
+              child: BrandButton(
+                label: 'Add a loan',
+                icon: AppIcons.add,
+                expand: false,
+                onPressed: () => LoanSheet.show(context),
+              ),
             ),
             if (settled.isNotEmpty) ...[
               const SizedBox(height: 8),

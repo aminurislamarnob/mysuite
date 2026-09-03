@@ -102,13 +102,17 @@ class BillsTab extends ConsumerWidget {
                     ),
                   );
                 }),
-                BrandButton(
-                  label: 'Add a bill',
-                  icon: AppIcons.add,
-                  kind: BrandButtonKind.ghost,
-                  onPressed: () => ExpenseEntrySheet.show(
-                    context,
-                    kind: ExpenseEntrySheet.billMode,
+                // The same pill the empty state offers, so the way to add a
+                // bill does not change shape once there is one.
+                Center(
+                  child: BrandButton(
+                    label: 'Add a bill',
+                    icon: AppIcons.add,
+                    expand: false,
+                    onPressed: () => ExpenseEntrySheet.show(
+                      context,
+                      kind: ExpenseEntrySheet.billMode,
+                    ),
                   ),
                 ),
               ],

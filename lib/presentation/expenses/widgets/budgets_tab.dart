@@ -41,11 +41,15 @@ class BudgetsTab extends ConsumerWidget {
                 onEdit: () => _editBudget(context, ref, existing: p),
               ),
             ),
-            BrandButton(
-              label: 'Add a budget',
-              icon: AppIcons.add,
-              kind: BrandButtonKind.ghost,
-              onPressed: () => _editBudget(context, ref),
+            // The same pill the empty state offers, so the way to add a cap
+            // does not change shape once there is one.
+            Center(
+              child: BrandButton(
+                label: 'Add a budget',
+                icon: AppIcons.add,
+                expand: false,
+                onPressed: () => _editBudget(context, ref),
+              ),
             ),
           ],
         ],
