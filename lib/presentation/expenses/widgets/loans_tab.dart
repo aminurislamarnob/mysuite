@@ -22,75 +22,67 @@ class LoansTab extends ConsumerWidget {
     final rows = ref.watch(loanRowsProvider);
     final totals = ref.watch(loanTotalsProvider).valueOrNull;
 
-    return Stack(
-      children: [
-        rows.when(
-          loading: () => const Center(child: BrandSpinner()),
-          error: (e, _) => Text('$e'),
-          data: (loans) {
-            final open = loans.where((r) => !r.isSettled).toList();
-            final settled = loans.where((r) => r.isSettled).toList();
+    // The screen's own FAB owns the bottom corner, so the way to add a loan
+    // sits in the list where it can be seen.
+    return rows.when(
+      loading: () => const Center(child: BrandSpinner()),
+      error: (e, _) => Text('$e'),
+      data: (loans) {
+        final open = loans.where((r) => !r.isSettled).toList();
+        final settled = loans.where((r) => r.isSettled).toList();
 
-            if (loans.isEmpty) {
-              return EmptyState(
-                icon: AppIcons.transfer,
-                title: 'No loans',
-                message: 'Track what you lent out and what you owe.',
-                actionLabel: 'Add a loan',
-                onAction: () => LoanSheet.show(context),
-              );
-            }
+        if (loans.isEmpty) {
+          return EmptyState(
+            icon: AppIcons.transfer,
+            title: 'No loans',
+            message: 'Track what you lent out and what you owe.',
+            actionLabel: 'Add a loan',
+            onAction: () => LoanSheet.show(context),
+          );
+        }
 
-            return ListView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-              children: [
-                if (totals != null &&
-                    (totals.owedToMe > 0 || totals.iOwe > 0)) ...[
-                  Row(
-                    children: [
-                      Expanded(
-                        child: StatTile(
-                          icon: AppIcons.arrowDown,
-                          color: AppColors.successLight,
-                          label: 'Owed to me',
-                          value: Fmt.compactMoney(totals.owedToMe, currency),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: StatTile(
-                          icon: AppIcons.arrowUp,
-                          color: AppColors.dangerLight,
-                          label: 'I owe',
-                          value: Fmt.compactMoney(totals.iOwe, currency),
-                        ),
-                      ),
-                    ],
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+          children: [
+            if (totals != null && (totals.owedToMe > 0 || totals.iOwe > 0)) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: StatTile(
+                      icon: AppIcons.arrowDown,
+                      color: AppColors.successLight,
+                      label: 'Owed to me',
+                      value: Fmt.compactMoney(totals.owedToMe, currency),
+                    ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: StatTile(
+                      icon: AppIcons.arrowUp,
+                      color: AppColors.dangerLight,
+                      label: 'I owe',
+                      value: Fmt.compactMoney(totals.iOwe, currency),
+                    ),
+                  ),
                 ],
-                ...open.map((r) => _LoanCard(row: r, currency: currency)),
-                if (settled.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  const SectionHeader('Settled'),
-                  ...settled.map((r) => _LoanCard(row: r, currency: currency)),
-                ],
-              ],
-            );
-          },
-        ),
-        Positioned(
-          right: 16,
-          bottom: 16,
-          child: FloatingActionButton.small(
-            heroTag: 'loan-fab',
-            onPressed: () => LoanSheet.show(context),
-            backgroundColor: AppColors.expenseAccent,
-            foregroundColor: Colors.white,
-            child: const AppIcon(AppIcons.add),
-          ),
-        ),
-      ],
+              ),
+              const SizedBox(height: 16),
+            ],
+            ...open.map((r) => _LoanCard(row: r, currency: currency)),
+            BrandButton(
+              label: 'Add a loan',
+              icon: AppIcons.add,
+              kind: BrandButtonKind.ghost,
+              onPressed: () => LoanSheet.show(context),
+            ),
+            if (settled.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              const SectionHeader('Settled'),
+              ...settled.map((r) => _LoanCard(row: r, currency: currency)),
+            ],
+          ],
+        );
+      },
     );
   }
 }

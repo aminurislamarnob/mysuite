@@ -21,41 +21,35 @@ class BudgetsTab extends ConsumerWidget {
     final currency = ref.watch(settingsProvider).currencySymbol;
     final progress = ref.watch(budgetProgressProvider);
 
-    return Stack(
-      children: [
-        progress.when(
-          loading: () => const Center(child: BrandSpinner()),
-          error: (e, _) => Text('$e'),
-          data: (rows) => ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-            children: [
-              const MonthStepper(),
-              const SizedBox(height: 8),
-              if (rows.isEmpty)
-                _EmptyMonth(onSet: () => _editBudget(context, ref))
-              else
-                ...rows.map(
-                  (p) => _BudgetRow(
-                    progress: p,
-                    currency: currency,
-                    onEdit: () => _editBudget(context, ref, existing: p),
-                  ),
-                ),
-            ],
-          ),
-        ),
-        Positioned(
-          right: 16,
-          bottom: 16,
-          child: FloatingActionButton.small(
-            heroTag: 'budget-fab',
-            onPressed: () => _editBudget(context, ref),
-            backgroundColor: AppColors.expenseAccent,
-            foregroundColor: Colors.white,
-            child: const AppIcon(AppIcons.add),
-          ),
-        ),
-      ],
+    // The screen's own FAB owns the bottom corner, so the way to add a cap
+    // sits in the list where it can be seen.
+    return progress.when(
+      loading: () => const Center(child: BrandSpinner()),
+      error: (e, _) => Text('$e'),
+      data: (rows) => ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+        children: [
+          const MonthStepper(),
+          const SizedBox(height: 8),
+          if (rows.isEmpty)
+            _EmptyMonth(onSet: () => _editBudget(context, ref))
+          else ...[
+            ...rows.map(
+              (p) => _BudgetRow(
+                progress: p,
+                currency: currency,
+                onEdit: () => _editBudget(context, ref, existing: p),
+              ),
+            ),
+            BrandButton(
+              label: 'Add a budget',
+              icon: AppIcons.add,
+              kind: BrandButtonKind.ghost,
+              onPressed: () => _editBudget(context, ref),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
