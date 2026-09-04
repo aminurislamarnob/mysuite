@@ -257,6 +257,7 @@ class AppIcons {
   static const notificationsOff = HugeIcons.strokeRoundedNotificationOff03;
 
   // settings & accessibility
+  static const palette = HugeIcons.strokeRoundedColors;
   static const themeMode = HugeIcons.strokeRoundedSun03;
   static const themeSystem = HugeIcons.strokeRoundedSmartPhone01;
   static const lightMode = HugeIcons.strokeRoundedSun03;

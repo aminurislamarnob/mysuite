@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../theme/app_palette.dart';
+
 /// The six toggleable feature modules. Disabling one hides it from the modules
 /// grid, the dashboard, and the quick-add sheet.
 enum AppModule { notes, medicine, habits, tasks, expenses, focus }
@@ -39,6 +41,7 @@ extension AppModuleX on AppModule {
 class AppSettings {
   final Set<AppModule> enabledModules;
   final ThemeMode themeMode;
+  final AppPalette palette;
   final bool reduceMotion;
   final bool compactDensity;
   final double textScale;
@@ -63,6 +66,7 @@ class AppSettings {
       AppModule.focus,
     },
     this.themeMode = ThemeMode.system,
+    this.palette = AppPalette.coral,
     this.reduceMotion = false,
     this.compactDensity = false,
     this.textScale = 1.0,
@@ -90,6 +94,7 @@ class AppSettings {
   AppSettings copyWith({
     Set<AppModule>? enabledModules,
     ThemeMode? themeMode,
+    AppPalette? palette,
     bool? reduceMotion,
     bool? compactDensity,
     double? textScale,
@@ -107,6 +112,7 @@ class AppSettings {
     return AppSettings(
       enabledModules: enabledModules ?? this.enabledModules,
       themeMode: themeMode ?? this.themeMode,
+      palette: palette ?? this.palette,
       reduceMotion: reduceMotion ?? this.reduceMotion,
       compactDensity: compactDensity ?? this.compactDensity,
       textScale: textScale ?? this.textScale,
@@ -144,6 +150,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 
   static const _kModules = 'enabled_modules';
   static const _kTheme = 'theme_mode';
+  static const _kPalette = 'palette';
   static const _kMotion = 'reduce_motion';
   static const _kDensity = 'compact_density';
   static const _kScale = 'text_scale';
@@ -173,6 +180,8 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       themeMode:
           ThemeMode.values[(_prefs.getInt(_kTheme) ?? ThemeMode.system.index)
               .clamp(0, ThemeMode.values.length - 1)],
+      // By name, not index: inserting a palette must not reassign a saved one.
+      palette: AppPaletteX.byName(_prefs.getString(_kPalette)),
       reduceMotion: _prefs.getBool(_kMotion) ?? false,
       compactDensity: _prefs.getBool(_kDensity) ?? false,
       textScale: _prefs.getDouble(_kScale) ?? 1.0,
@@ -213,6 +222,11 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   void setThemeMode(ThemeMode mode) {
     _prefs.setInt(_kTheme, mode.index);
     state = state.copyWith(themeMode: mode);
+  }
+
+  void setPalette(AppPalette p) {
+    _prefs.setString(_kPalette, p.name);
+    state = state.copyWith(palette: p);
   }
 
   void setReduceMotion(bool v) {

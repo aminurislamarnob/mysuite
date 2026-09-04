@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 
-import '../theme/app_colors.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 import 'brand.dart';
@@ -1605,8 +1604,8 @@ Future<T?> brandSideSheet<T>({
 /// Shows a message. Replaces `ScaffoldMessenger.showSnackBar`.
 ///
 /// Styled from the values the Material `snackBarTheme` used — a near-black slab
-/// with coral action text — and aligned to the bottom so it lands where the
-/// snack bar used to rather than in forui's default corner.
+/// with a brand-coloured action — and aligned to the bottom so it lands where
+/// the snack bar used to rather than in forui's default corner.
 void brandToast(
   BuildContext context,
   String message, {
@@ -1614,6 +1613,12 @@ void brandToast(
   VoidCallback? onAction,
   Duration duration = const Duration(seconds: 4),
 }) {
+  final theme = Theme.of(context);
+  // The slab is dark in both themes, so the action wants the palette's
+  // dark-mode primary. `snackBarTheme` already resolved exactly that.
+  final action =
+      theme.snackBarTheme.actionTextColor ?? theme.colorScheme.primary;
+
   showFToast(
     context: context,
     alignment: FToastAlignment.bottomCenter,
@@ -1631,10 +1636,7 @@ void brandToast(
             },
             child: Text(
               actionLabel,
-              style: const TextStyle(
-                color: AppColors.coralSoft,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(color: action, fontWeight: FontWeight.w600),
             ),
           ),
   );

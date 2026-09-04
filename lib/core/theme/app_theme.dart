@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
+import 'app_palette.dart';
 
 /// Shape tokens for the coral rebrand. The reference design groups content into
 /// large, softly rounded cards and uses full pills for anything tappable.
@@ -77,21 +78,22 @@ class BrandColors extends ThemeExtension<BrandColors> {
   /// A reasonable stand-in derived from any [ThemeData], for the case where a
   /// widget is built under a theme that never registered the extension.
   factory BrandColors.fallback(ThemeData theme) {
-    final dark = theme.brightness == Brightness.dark;
-    final tints = dark ? AppColors.tintsDark : AppColors.tints;
+    // The default palette, since a theme that never registered the extension
+    // cannot say which one the user picked.
+    final p = AppPalette.coral.spec(theme.brightness);
     return BrandColors(
-      tints: tints,
-      hairline: dark ? AppColors.hairlineDark : AppColors.hairlineLight,
+      tints: p.tints,
+      hairline: p.hairline,
       canvas: theme.scaffoldBackgroundColor,
-      success: dark ? AppColors.successDark : AppColors.successLight,
-      warning: dark ? AppColors.warningDark : AppColors.warningLight,
-      danger: dark ? AppColors.dangerDark : AppColors.dangerLight,
-      note: dark ? AppColors.noteAccentDark : AppColors.noteAccent,
-      medicine: dark ? AppColors.medicineAccentDark : AppColors.medicineAccent,
-      habit: dark ? AppColors.habitAccentDark : AppColors.habitAccent,
-      task: dark ? AppColors.taskAccentDark : AppColors.taskAccent,
-      expense: dark ? AppColors.expenseAccentDark : AppColors.expenseAccent,
-      focus: dark ? AppColors.focusAccentDark : AppColors.focusAccent,
+      success: p.success,
+      warning: p.warning,
+      danger: p.danger,
+      note: p.note,
+      medicine: p.medicine,
+      habit: p.habit,
+      task: p.task,
+      expense: p.expense,
+      focus: p.focus,
     );
   }
 
@@ -157,6 +159,7 @@ class BrandColors extends ThemeExtension<BrandColors> {
 @immutable
 class BrandTokens {
   final Brightness brightness;
+  final AppPalette palette;
   final bool compact;
   final String locale;
 
@@ -182,6 +185,7 @@ class BrandTokens {
 
   const BrandTokens({
     required this.brightness,
+    required this.palette,
     required this.compact,
     required this.locale,
     required this.text,
@@ -282,45 +286,50 @@ class AppTheme {
   /// `brandForuiTheme()` all read from it.
   static BrandTokens tokens({
     required Brightness brightness,
+    AppPalette palette = AppPalette.coral,
     bool compact = false,
     String locale = 'en',
   }) {
-    final dark = brightness == Brightness.dark;
+    final p = palette.spec(brightness);
 
     return BrandTokens(
       brightness: brightness,
+      palette: palette,
       compact: compact,
       locale: locale,
-      text: dark ? AppColors.textDark : AppColors.textLight,
-      muted: dark ? AppColors.mutedDark : AppColors.mutedLight,
-      background: dark ? AppColors.backgroundDark : AppColors.backgroundLight,
-      surface: dark ? AppColors.surfaceDark : AppColors.surfaceLight,
-      primary: dark ? AppColors.primaryDark : AppColors.primaryLight,
-      onPrimary: dark ? const Color(0xFF3A1206) : Colors.white,
-      secondary: dark ? AppColors.coralSoft : AppColors.coralDeep,
-      error: dark ? AppColors.dangerDark : AppColors.dangerLight,
+      text: p.text,
+      muted: p.muted,
+      background: p.background,
+      surface: p.surface,
+      primary: p.primary,
+      onPrimary: p.onPrimary,
+      secondary: p.secondary,
+      error: p.danger,
       brand: BrandColors(
-        tints: dark ? AppColors.tintsDark : AppColors.tints,
-        hairline: dark ? AppColors.hairlineDark : AppColors.hairlineLight,
-        canvas: dark ? AppColors.backgroundDark : Colors.white,
-        success: dark ? AppColors.successDark : AppColors.successLight,
-        warning: dark ? AppColors.warningDark : AppColors.warningLight,
-        danger: dark ? AppColors.dangerDark : AppColors.dangerLight,
-        note: dark ? AppColors.noteAccentDark : AppColors.noteAccent,
-        medicine: dark
-            ? AppColors.medicineAccentDark
-            : AppColors.medicineAccent,
-        habit: dark ? AppColors.habitAccentDark : AppColors.habitAccent,
-        task: dark ? AppColors.taskAccentDark : AppColors.taskAccent,
-        expense: dark ? AppColors.expenseAccentDark : AppColors.expenseAccent,
-        focus: dark ? AppColors.focusAccentDark : AppColors.focusAccent,
+        tints: p.tints,
+        hairline: p.hairline,
+        canvas: p.background,
+        success: p.success,
+        warning: p.warning,
+        danger: p.danger,
+        note: p.note,
+        medicine: p.medicine,
+        habit: p.habit,
+        task: p.task,
+        expense: p.expense,
+        focus: p.focus,
       ),
     );
   }
 
-  static ThemeData light({bool compact = false, String locale = 'en'}) {
+  static ThemeData light({
+    AppPalette palette = AppPalette.coral,
+    bool compact = false,
+    String locale = 'en',
+  }) {
     final t = tokens(
       brightness: Brightness.light,
+      palette: palette,
       compact: compact,
       locale: locale,
     );
@@ -336,15 +345,20 @@ class AppTheme {
         outline: t.muted,
         // `surfaceContainer` is the pastel fill Material picks for grouped
         // content, so pointing it at the peach tint brands stock widgets too.
-        surfaceContainer: AppColors.tintPeach,
-        surfaceContainerHighest: AppColors.tintApricot,
+        surfaceContainer: t.brand.tints.first,
+        surfaceContainerHighest: t.brand.tints[1],
       ),
     );
   }
 
-  static ThemeData dark({bool compact = false, String locale = 'en'}) {
+  static ThemeData dark({
+    AppPalette palette = AppPalette.coral,
+    bool compact = false,
+    String locale = 'en',
+  }) {
     final t = tokens(
       brightness: Brightness.dark,
+      palette: palette,
       compact: compact,
       locale: locale,
     );
@@ -358,8 +372,8 @@ class AppTheme {
         error: t.error,
         onSurface: t.text,
         outline: t.muted,
-        surfaceContainer: AppColors.tintsDark.first,
-        surfaceContainerHighest: AppColors.tintsDark.last,
+        surfaceContainer: t.brand.tints.first,
+        surfaceContainerHighest: t.brand.tints.last,
       ),
     );
   }
@@ -467,7 +481,7 @@ class AppTheme {
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: primary,
-        foregroundColor: Colors.white,
+        foregroundColor: onPrimary,
         elevation: 6,
         shape: const CircleBorder(),
       ),
@@ -489,9 +503,11 @@ class AppTheme {
         behavior: SnackBarBehavior.floating,
         backgroundColor: brightness == Brightness.light
             ? const Color(0xFF1C1512)
-            : AppColors.tintsDark.first,
+            : brand.tints.first,
         contentTextStyle: const TextStyle(color: Colors.white, fontSize: 14),
-        actionTextColor: AppColors.coralSoft,
+        // The toast is dark in both themes, so its action takes the
+        // palette's dark-mode primary whichever theme is live.
+        actionTextColor: t.palette.spec(Brightness.dark).primary,
         insetPadding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.field),

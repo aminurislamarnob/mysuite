@@ -8,6 +8,7 @@ import 'package:mysuite/core/theme/app_icons.dart';
 import 'package:mysuite/core/theme/app_theme.dart';
 import 'package:mysuite/core/widgets/brand.dart';
 import 'package:mysuite/core/widgets/common.dart';
+import 'package:mysuite/core/theme/app_palette.dart';
 
 /// Pumps [child] the way the real app does: a Material theme carrying the
 /// [BrandColors] extension, with the forui theme layered underneath it.
@@ -93,6 +94,47 @@ void main() {
   });
 
   group('BrandColors', () {
+    test('the chosen palette reaches both halves of the theme', () {
+      for (final palette in AppPalette.values) {
+        for (final brightness in Brightness.values) {
+          final spec = palette.spec(brightness);
+          final theme = brightness == Brightness.light
+              ? AppTheme.light(palette: palette)
+              : AppTheme.dark(palette: palette);
+          final brand = theme.extension<BrandColors>()!;
+          final where = '${palette.name} ${brightness.name}';
+
+          expect(theme.colorScheme.primary, spec.primary, reason: where);
+          expect(theme.colorScheme.onPrimary, spec.onPrimary, reason: where);
+          expect(theme.scaffoldBackgroundColor, spec.background, reason: where);
+          expect(brand.danger, spec.danger, reason: where);
+          expect(brand.task, spec.task, reason: where);
+          expect(brand.tints, spec.tints, reason: where);
+
+          // The FAB used to paint its glyph white regardless of what it sat
+          // on, which is how coral's label ended up at 2.91:1.
+          expect(
+            theme.floatingActionButtonTheme.foregroundColor,
+            spec.onPrimary,
+            reason: where,
+          );
+        }
+      }
+    });
+
+    test('only coral pins its tints; the rest derive from the primary', () {
+      // Coral keeps the hand-picked peach/apricot/cream rotation the design
+      // shipped with. Everything else lays its primary over the page.
+      expect(AppPalette.coral.spec(Brightness.light).tints, AppColors.tints);
+      for (final p in AppPalette.values.where((p) => p != AppPalette.coral)) {
+        final spec = p.spec(Brightness.light);
+        expect(spec.tints, hasLength(3));
+        expect(spec.tints.toSet(), hasLength(3), reason: '${p.name} tints');
+        // Rising density: each fill sits further from the page than the last.
+        expect(spec.tints.first, isNot(spec.tints.last), reason: p.name);
+      }
+    });
+
     test('dark resolves the dark variant of every slot, not the light one', () {
       // The bug this extension exists to prevent: before the migration, 80
       // unguarded `AppColors.*Light` references outside the theme layer meant
@@ -175,7 +217,6 @@ void main() {
       expect(theme.colorScheme.primary, AppColors.coral);
       expect(theme.scaffoldBackgroundColor, AppColors.backgroundLight);
     });
-
   });
 
   testWidgets('context.brand falls back when no theme registered it', (
@@ -260,7 +301,10 @@ void main() {
         .toList();
 
     expect(borders, isEmpty);
-    expect(fillsOf(tester, find.byType(TintCard)), contains(AppColors.tintPeach));
+    expect(
+      fillsOf(tester, find.byType(TintCard)),
+      contains(AppColors.tintPeach),
+    );
   });
 
   testWidgets('ProgressRing renders an overrun in the error colour', (

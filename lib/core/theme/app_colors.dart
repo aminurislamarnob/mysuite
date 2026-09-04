@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// The mySuite palette, rebuilt around the coral fitness identity.
 ///
-/// The design leans on one saturated accent (`#FF6547`) sitting on a pure white
+/// The design leans on one saturated accent (`#F15F43`) sitting on a pure white
 /// page, with content grouped into large, barely-there pastel cards rather than
 /// outlined boxes. Module colours were re-tinted into the same warm family so
 /// six modules still read apart without any of them fighting the brand coral.
@@ -14,15 +14,24 @@ class AppColors {
   // ---------------------------------------------------------------------------
 
   /// The single brand accent: FABs, rings, active nav, primary buttons.
-  static const coral = Color(0xFFFF6547);
+  ///
+  /// Five percent below the `#FF6547` the design shipped with. The flagship
+  /// module carries the brand, so this doubles as the medicine glyph drawn on
+  /// a medicine card — and at the original value that pair sat at 2.70:1,
+  /// under the 3:1 the contrast gate holds every accent to.
+  static const coral = Color(0xFFF15F43);
   static const coralDeep = Color(0xFFE24E32);
   static const coralSoft = Color(0xFFFFAA99);
 
+  /// The near-black that sits on coral. Dark mode always used it; light mode
+  /// used white, at 2.91:1 — below AA for the label on a primary button.
+  static const onCoral = Color(0xFF3A1206);
+
   // Light theme
   static const primaryLight = coral;
-  static const successLight = Color(0xFF3BB273);
-  static const warningLight = Color(0xFFF2A03D);
-  static const dangerLight = Color(0xFFE5484D);
+  static const successLight = Color(0xFF2D8657);
+  static const warningLight = Color(0xFFA16B29);
+  static const dangerLight = Color(0xFFD34247);
   static const backgroundLight = Color(0xFFFFFFFF);
   static const surfaceLight = Color(0xFFFFFFFF);
   static const textLight = Color(0xFF0D0D0D);
@@ -74,12 +83,14 @@ class AppColors {
   // Module accents
   // ---------------------------------------------------------------------------
 
-  static const noteAccent = Color(0xFFF2A03D); // amber
+  /// Note and habit share a hue with warning and success, so they share the
+  /// value too — one colour that satisfies the stricter of the two bars.
+  static const noteAccent = warningLight; // amber
   static const medicineAccent = coral; // the flagship module carries the brand
-  static const habitAccent = Color(0xFF3BB273); // moss green
+  static const habitAccent = successLight; // moss green
   static const taskAccent = Color(0xFF5B7CE0); // muted indigo
   static const expenseAccent = Color(0xFF9A6DD7); // warm violet
-  static const focusAccent = Color(0xFF3AAFB9); // teal
+  static const focusAccent = Color(0xFF349CA5); // teal
 
   /// The dark-mode twins. Note and habit share a hue with warning and success,
   /// so they reuse those already-tuned darks; the rest apply the same lift the

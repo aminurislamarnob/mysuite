@@ -11,6 +11,7 @@ import '../../core/theme/app_icons.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/brand.dart';
 import '../../core/widgets/common.dart';
+import '../../core/widgets/palette_picker.dart';
 import 'people_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -83,6 +84,11 @@ class SettingsScreen extends ConsumerWidget {
                     selected: settings.themeMode,
                     onSelected: notifier.setThemeMode,
                   ),
+                ),
+                BrandTile(
+                  leading: const AppIcon(AppIcons.palette),
+                  title: const Text('Palette'),
+                  trailing: const PalettePicker(),
                 ),
                 BrandSwitchTile(
                   leading: const AppIcon(AppIcons.compact),

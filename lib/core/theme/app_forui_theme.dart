@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 
 import 'app_colors.dart';
+import 'app_palette.dart';
 import 'app_icons.dart';
 import 'app_theme.dart';
 
@@ -18,10 +19,11 @@ import 'app_theme.dart';
 /// right brands the whole library at once.
 FThemeData brandForuiTheme({
   required Brightness brightness,
+  AppPalette palette = AppPalette.coral,
   bool compact = false,
   String locale = 'en',
 }) {
-  // Memoised on the three inputs. `MaterialApp.builder` rebuilds this on every
+  // Memoised on the four inputs. `MaterialApp.builder` rebuilds this on every
   // settings change, and forui's styles hold `Tween`s, which have no value
   // equality — so a freshly built theme never compares equal to the last one.
   // Widgets that watch their inherited style for change then treat every
@@ -29,18 +31,23 @@ FThemeData brandForuiTheme({
   // `FAccordionItem.didChangeDependencies` resets the reveal animation to
   // `initiallyExpanded`. Flipping any switch in Settings closed the "Lock
   // individual modules" list under itself.
-  final key = (brightness, compact, locale);
+  final key = (brightness, palette, compact, locale);
   if (_cacheKey == key) return _cached!;
 
   final theme = brandForuiThemeFrom(
-    AppTheme.tokens(brightness: brightness, compact: compact, locale: locale),
+    AppTheme.tokens(
+      brightness: brightness,
+      palette: palette,
+      compact: compact,
+      locale: locale,
+    ),
   );
   _cacheKey = key;
   _cached = theme;
   return theme;
 }
 
-(Brightness, bool, String)? _cacheKey;
+(Brightness, AppPalette, bool, String)? _cacheKey;
 FThemeData? _cached;
 
 /// Builds the forui theme from already-resolved [BrandTokens].

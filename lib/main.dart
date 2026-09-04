@@ -70,13 +70,20 @@ class _MySuiteAppState extends ConsumerState<MySuiteApp> {
       title: 'mySuite',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(
+        palette: settings.palette,
         compact: settings.compactDensity,
         locale: settings.locale,
       ),
       darkTheme: AppTheme.dark(
+        palette: settings.palette,
         compact: settings.compactDensity,
         locale: settings.locale,
       ),
+      // Material crossfades a theme change on its own; this is only here so
+      // the duration can be zeroed for reduce-motion, in step with FTheme.
+      themeAnimationDuration: settings.reduceMotion
+          ? Duration.zero
+          : const Duration(milliseconds: 200),
       themeMode: settings.themeMode,
       routerConfig: router,
       locale: Locale(settings.locale),
@@ -107,8 +114,19 @@ class _MySuiteAppState extends ConsumerState<MySuiteApp> {
             disableAnimations: settings.reduceMotion,
           ),
           child: FTheme(
+            // Both halves of the theme animate a palette change. Reduce motion
+            // is a full-screen colour crossfade's most obvious customer, and
+            // Flutter's implicit animations do not consult
+            // MediaQuery.disableAnimations, so it has to be passed explicitly
+            // here and to themeAnimationDuration above.
+            motion: FThemeMotion(
+              duration: settings.reduceMotion
+                  ? Duration.zero
+                  : const Duration(milliseconds: 200),
+            ),
             data: brandForuiTheme(
               brightness: brightness,
+              palette: settings.palette,
               compact: settings.compactDensity,
               locale: settings.locale,
             ),

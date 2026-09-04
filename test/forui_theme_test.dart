@@ -45,7 +45,6 @@ void main() {
       expect(colors.muted, AppColors.tintApricot);
       expect(colors.secondary, isNot(AppColors.coralDeep));
     });
-
   });
 
   group('brandForuiTheme identity', () {
@@ -286,7 +285,9 @@ void main() {
       // making the selected tab's text invisible.
       expect(selected, isNot(indicator.color));
       expect(unselected, isNot(indicator.color));
-      expect(selected, Colors.white);
+      // Whatever the palette puts on its primary — near-black for coral, since
+      // white on coral is 2.91:1.
+      expect(selected, AppColors.onCoral);
     });
 
     test('the strip has no track of its own', () {

@@ -14,6 +14,8 @@ import '../../core/widgets/brand.dart';
 import '../../core/widgets/common.dart';
 import '../habits/repository/habit_repository.dart';
 import '../modules/modules_screen.dart';
+import '../../core/widgets/palette_picker.dart';
+import '../../core/theme/app_palette.dart';
 
 /// First-run flow: name, language, theme, modules, starter habits, then app
 /// lock.
@@ -315,6 +317,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 .read(settingsProvider.notifier)
                 .setThemeMode(ThemeMode.dark),
           ),
+          const SizedBox(height: 24),
+          Text('Colour', style: Theme.of(context).textTheme.titleSmall),
+          const SizedBox(height: 4),
+          Text(
+            settings.palette.blurb,
+            style: TextStyle(color: context.muted, fontSize: 13),
+          ),
+          const SizedBox(height: 10),
+          const PalettePicker(),
         ],
       ),
     );
