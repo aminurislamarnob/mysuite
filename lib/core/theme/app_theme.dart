@@ -19,10 +19,12 @@ class AppRadii {
   /// Bottom sheets.
   static const sheet = 28.0;
 
-  static const cardShape =
-      RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(card)));
-  static const tileShape =
-      RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(tile)));
+  static const cardShape = RoundedRectangleBorder(
+    borderRadius: BorderRadius.all(Radius.circular(card)),
+  );
+  static const tileShape = RoundedRectangleBorder(
+    borderRadius: BorderRadius.all(Radius.circular(tile)),
+  );
 }
 
 /// Extra brand colours the [ColorScheme] has no slot for, hung off the theme so
@@ -60,11 +62,7 @@ class BrandColors extends ThemeExtension<BrandColors> {
   }
 
   @override
-  BrandColors copyWith({
-    List<Color>? tints,
-    Color? hairline,
-    Color? canvas,
-  }) {
+  BrandColors copyWith({List<Color>? tints, Color? hairline, Color? canvas}) {
     return BrandColors(
       tints: tints ?? this.tints,
       hairline: hairline ?? this.hairline,
@@ -144,7 +142,9 @@ class BrandTokens {
   /// The font family for [locale]. Bangla glyphs are absent from Bricolage
   /// Grotesque, so Bengali falls back to Hind Siliguri.
   String get fontFamily =>
-      (locale == 'bn' ? GoogleFonts.hindSiliguri() : GoogleFonts.bricolageGrotesque())
+      (locale == 'bn'
+              ? GoogleFonts.hindSiliguri()
+              : GoogleFonts.bricolageGrotesque())
           .fontFamily!;
 }
 
@@ -173,25 +173,48 @@ class AppTheme {
     final themed = locale == 'bn'
         ? GoogleFonts.hindSiliguriTextTheme(base)
         : GoogleFonts.bricolageGrotesqueTextTheme(base);
-    return themed.apply(bodyColor: body, displayColor: body).copyWith(
+    return themed
+        .apply(bodyColor: body, displayColor: body)
+        .copyWith(
           // The design sets headings in heavy, tight-tracked weights and lets
           // the muted grey carry the supporting copy.
           displayLarge: themed.displayLarge?.copyWith(
-              fontWeight: FontWeight.w700, letterSpacing: -1, color: body),
+            fontWeight: FontWeight.w700,
+            letterSpacing: -1,
+            color: body,
+          ),
           displayMedium: themed.displayMedium?.copyWith(
-              fontWeight: FontWeight.w700, letterSpacing: -0.8, color: body),
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.8,
+            color: body,
+          ),
           displaySmall: themed.displaySmall?.copyWith(
-              fontWeight: FontWeight.w700, letterSpacing: -0.6, color: body),
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.6,
+            color: body,
+          ),
           headlineMedium: themed.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w700, letterSpacing: -0.5, color: body),
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.5,
+            color: body,
+          ),
           headlineSmall: themed.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w700, letterSpacing: -0.4, color: body),
-          titleLarge: themed.titleLarge
-              ?.copyWith(fontWeight: FontWeight.w700, color: body),
-          titleMedium: themed.titleMedium
-              ?.copyWith(fontWeight: FontWeight.w700, color: body),
-          titleSmall: themed.titleSmall
-              ?.copyWith(fontWeight: FontWeight.w600, color: body),
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.4,
+            color: body,
+          ),
+          titleLarge: themed.titleLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: body,
+          ),
+          titleMedium: themed.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: body,
+          ),
+          titleSmall: themed.titleSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: body,
+          ),
         );
   }
 
@@ -234,8 +257,8 @@ class AppTheme {
             // Pastel fills wash out at high contrast, so cards fall back to
             // flat and lean on the stronger outline instead.
             ? (dark
-                ? const [Colors.black, Colors.black, Colors.black]
-                : const [Colors.white, Colors.white, Colors.white])
+                  ? const [Colors.black, Colors.black, Colors.black]
+                  : const [Colors.white, Colors.white, Colors.white])
             : (dark ? AppColors.tintsDark : AppColors.tints),
         hairline: highContrast
             ? (dark ? const Color(0xFF6E6E6E) : const Color(0xFF9A9A9A))
@@ -244,8 +267,9 @@ class AppTheme {
             ? (highContrast ? Colors.black : AppColors.backgroundDark)
             : Colors.white,
       ),
-      cardBorder:
-          highContrast ? BorderSide(color: text, width: 1.2) : BorderSide.none,
+      cardBorder: highContrast
+          ? BorderSide(color: text, width: 1.2)
+          : BorderSide.none,
     );
   }
 
@@ -319,14 +343,15 @@ class AppTheme {
     final locale = t.locale;
     final cardBorder = t.cardBorder;
 
-    final base =
-        brightness == Brightness.light ? ThemeData.light() : ThemeData.dark();
+    final base = brightness == Brightness.light
+        ? ThemeData.light()
+        : ThemeData.dark();
     final textTheme = _textTheme(base.textTheme, text, locale);
 
     OutlineInputBorder field(Color color, double width) => OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadii.field),
-          borderSide: BorderSide(color: color, width: width),
-        );
+      borderRadius: BorderRadius.circular(AppRadii.field),
+      borderSide: BorderSide(color: color, width: width),
+    );
 
     return ThemeData(
       useMaterial3: true,
@@ -366,11 +391,15 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: highContrast ? surface : brand.tints.first,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: field(Colors.transparent, 0),
-        enabledBorder:
-            field(highContrast ? text : Colors.transparent, highContrast ? 1.2 : 0),
+        enabledBorder: field(
+          highContrast ? text : Colors.transparent,
+          highContrast ? 1.2 : 0,
+        ),
         focusedBorder: field(primary, 1.6),
         errorBorder: field(scheme.error, 1.2),
         focusedErrorBorder: field(scheme.error, 1.6),
@@ -418,11 +447,14 @@ class AppTheme {
       listTileTheme: ListTileThemeData(
         iconColor: muted,
         textColor: text,
-        titleTextStyle: textTheme.bodyLarge
-            ?.copyWith(fontWeight: FontWeight.w600, fontSize: 15),
+        titleTextStyle: textTheme.bodyLarge?.copyWith(
+          fontWeight: FontWeight.w600,
+          fontSize: 15,
+        ),
         subtitleTextStyle: textTheme.bodySmall?.copyWith(color: muted),
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadii.field)),
+          borderRadius: BorderRadius.circular(AppRadii.field),
+        ),
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
@@ -433,7 +465,8 @@ class AppTheme {
         actionTextColor: AppColors.coralSoft,
         insetPadding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadii.field)),
+          borderRadius: BorderRadius.circular(AppRadii.field),
+        ),
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(
         color: primary,
@@ -442,12 +475,17 @@ class AppTheme {
         linearMinHeight: 8,
       ),
       switchTheme: SwitchThemeData(
-        thumbColor: WidgetStateProperty.resolveWith((s) =>
-            s.contains(WidgetState.selected) ? Colors.white : surface),
+        thumbColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected) ? Colors.white : surface,
+        ),
         trackColor: WidgetStateProperty.resolveWith(
-            (s) => s.contains(WidgetState.selected) ? primary : brand.hairline),
-        trackOutlineColor: WidgetStateProperty.resolveWith((s) =>
-            s.contains(WidgetState.selected) ? primary : muted.withValues(alpha: 0.4)),
+          (s) => s.contains(WidgetState.selected) ? primary : brand.hairline,
+        ),
+        trackOutlineColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected)
+              ? primary
+              : muted.withValues(alpha: 0.4),
+        ),
       ),
       sliderTheme: SliderThemeData(
         activeTrackColor: primary,
@@ -464,7 +502,8 @@ class AppTheme {
         backgroundColor: background,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadii.card)),
+          borderRadius: BorderRadius.circular(AppRadii.card),
+        ),
         titleTextStyle: textTheme.titleLarge,
       ),
       bottomSheetTheme: BottomSheetThemeData(
@@ -472,8 +511,9 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         showDragHandle: false,
         shape: const RoundedRectangleBorder(
-          borderRadius:
-              BorderRadius.vertical(top: Radius.circular(AppRadii.sheet)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadii.sheet),
+          ),
         ),
       ),
     );

@@ -8,8 +8,10 @@ void main() {
 
   group('NlpParser', () {
     test('parses the example from the spec', () {
-      final r =
-          NlpParser.parse('Buy milk tomorrow 5pm #shopping !high', now: now);
+      final r = NlpParser.parse(
+        'Buy milk tomorrow 5pm #shopping !high',
+        now: now,
+      );
 
       expect(r.title, 'Buy milk');
       expect(r.dueDate, DateTime(2026, 3, 3, 17));
@@ -75,37 +77,51 @@ void main() {
 
   group('Recurrence', () {
     test('daily and weekly advance correctly', () {
-      expect(Recurrence.nextOccurrence('daily', DateTime(2026, 3, 2)),
-          DateTime(2026, 3, 3));
-      expect(Recurrence.nextOccurrence('weekly', DateTime(2026, 3, 2)),
-          DateTime(2026, 3, 9));
+      expect(
+        Recurrence.nextOccurrence('daily', DateTime(2026, 3, 2)),
+        DateTime(2026, 3, 3),
+      );
+      expect(
+        Recurrence.nextOccurrence('weekly', DateTime(2026, 3, 2)),
+        DateTime(2026, 3, 9),
+      );
     });
 
     test('weekdays skips the weekend', () {
       // Friday 2026-03-06 -> Monday 2026-03-09
-      expect(Recurrence.nextOccurrence('weekdays', DateTime(2026, 3, 6)),
-          DateTime(2026, 3, 9));
+      expect(
+        Recurrence.nextOccurrence('weekdays', DateTime(2026, 3, 6)),
+        DateTime(2026, 3, 9),
+      );
     });
 
     test('monthly clamps to the shortest month', () {
-      expect(Recurrence.nextOccurrence('monthly', DateTime(2026, 1, 31)),
-          DateTime(2026, 2, 28));
+      expect(
+        Recurrence.nextOccurrence('monthly', DateTime(2026, 1, 31)),
+        DateTime(2026, 2, 28),
+      );
     });
 
     test('every:N advances by N days', () {
-      expect(Recurrence.nextOccurrence('every:10', DateTime(2026, 3, 2)),
-          DateTime(2026, 3, 12));
+      expect(
+        Recurrence.nextOccurrence('every:10', DateTime(2026, 3, 2)),
+        DateTime(2026, 3, 12),
+      );
     });
 
     test('nth weekday of the month', () {
       // The 2nd Monday of March 2026 is the 9th.
-      expect(Recurrence.nextOccurrence('nth:2:1', DateTime(2026, 3, 2)),
-          DateTime(2026, 3, 9));
+      expect(
+        Recurrence.nextOccurrence('nth:2:1', DateTime(2026, 3, 2)),
+        DateTime(2026, 3, 9),
+      );
     });
 
     test('unknown rules return null', () {
       expect(
-          Recurrence.nextOccurrence('nonsense', DateTime(2026, 3, 2)), isNull);
+        Recurrence.nextOccurrence('nonsense', DateTime(2026, 3, 2)),
+        isNull,
+      );
     });
 
     test('labels read naturally', () {

@@ -25,7 +25,9 @@ class _HostState extends State<_Host> {
       home: FTheme(
         // Deliberately not `brandForuiTheme`, which is memoised: this is the
         // worst case, a genuinely new style object above the accordion.
-        data: brandForuiThemeFrom(AppTheme.tokens(brightness: Brightness.light)),
+        data: brandForuiThemeFrom(
+          AppTheme.tokens(brightness: Brightness.light),
+        ),
         child: Scaffold(
           // Top-aligned so the accordion sizes to its content rather than
           // being stretched to the viewport, which is what makes its height
@@ -52,8 +54,9 @@ class _HostState extends State<_Host> {
 }
 
 void main() {
-  testWidgets('BrandAccordion stays open when the page above it rebuilds',
-      (tester) async {
+  testWidgets('BrandAccordion stays open when the page above it rebuilds', (
+    tester,
+  ) async {
     // forui's managed accordion item resets its reveal animation to
     // `initiallyExpanded` in didChangeDependencies, so any inherited change
     // above it snapped the panel shut. In Settings that meant flipping a

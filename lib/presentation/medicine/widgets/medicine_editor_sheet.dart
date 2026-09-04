@@ -314,10 +314,7 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: BrandField(
-                  controller: _dosageUnit,
-                  label: 'Unit',
-                ),
+                child: BrandField(controller: _dosageUnit, label: 'Unit'),
               ),
               const SizedBox(width: 12),
               Expanded(

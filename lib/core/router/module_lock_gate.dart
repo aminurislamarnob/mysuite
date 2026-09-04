@@ -94,8 +94,10 @@ class _ModuleLockGateState extends ConsumerState<ModuleLockGate>
 
   @override
   Widget build(BuildContext context) {
-    final locked =
-        ref.watch(settingsProvider).lockedModules.contains(widget.module);
+    final locked = ref
+        .watch(settingsProvider)
+        .lockedModules
+        .contains(widget.module);
     if (!locked || _unlocked) return widget.child;
 
     return BrandScaffold(

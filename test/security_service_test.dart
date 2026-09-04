@@ -30,8 +30,7 @@ void main() {
       }
     });
 
-    test('the digest is salted, so the same PIN hashes differently',
-        () async {
+    test('the digest is salted, so the same PIN hashes differently', () async {
       final a = await _container();
       final b = await _container();
 

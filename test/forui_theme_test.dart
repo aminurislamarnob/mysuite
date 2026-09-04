@@ -34,8 +34,9 @@ void main() {
       expect(colors.brightness, Brightness.dark);
     });
 
-    testWidgets('secondary and muted are tint surfaces, not the accent',
-        (tester) async {
+    testWidgets('secondary and muted are tint surfaces, not the accent', (
+      tester,
+    ) async {
       // shadcn's `secondary`/`muted` are muted backgrounds. Putting an accent
       // there would render every secondary button as a coral slab.
       final colors = brandForuiTheme(brightness: Brightness.light).colors;
@@ -45,11 +46,14 @@ void main() {
       expect(colors.secondary, isNot(AppColors.coralDeep));
     });
 
-    testWidgets('high contrast flattens the card and strengthens the border',
-        (tester) async {
+    testWidgets('high contrast flattens the card and strengthens the border', (
+      tester,
+    ) async {
       final plain = brandForuiTheme(brightness: Brightness.light);
-      final hc =
-          brandForuiTheme(brightness: Brightness.light, highContrast: true);
+      final hc = brandForuiTheme(
+        brightness: Brightness.light,
+        highContrast: true,
+      );
 
       expect(hc.colors.card, Colors.white);
       expect(hc.colors.border, isNot(plain.colors.border));
@@ -85,17 +89,19 @@ void main() {
         Brightness.light,
       );
       expect(
-        brandForuiTheme(brightness: Brightness.light, compact: true)
-            .style
-            .sizes
-            .tile,
+        brandForuiTheme(
+          brightness: Brightness.light,
+          compact: true,
+        ).style.sizes.tile,
         lessThan(light.style.sizes.tile),
       );
     });
   });
 
   group('brandForuiTheme dialogs', () {
-    testWidgets('sit on the page background, not the card tint', (tester) async {
+    testWidgets('sit on the page background, not the card tint', (
+      tester,
+    ) async {
       // A BrandField fills with the same tint forui's dialogs default to, so on
       // `card` the inputs of a form dialog vanish into their own surface.
       for (final brightness in Brightness.values) {
@@ -119,29 +125,36 @@ void main() {
       );
     });
 
-    testWidgets('styling a dialog does not revert the icons to Lucide',
-        (tester) async {
+    testWidgets('styling a dialog does not revert the icons to Lucide', (
+      tester,
+    ) async {
       // `FThemeData.copyWith` drops `icons`, so reaching the dialog style
       // through it would silently undo the Hugeicons override. Guarded here
       // because the only symptom is a wrong glyph deep inside forui's chrome.
       final theme = brandForuiTheme(brightness: Brightness.light);
 
-      await tester.pumpWidget(MaterialApp(
-        home: FTheme(
-          data: theme,
-          child: Builder(
-            builder: (context) => theme.icons.chevronDown(context),
+      await tester.pumpWidget(
+        MaterialApp(
+          home: FTheme(
+            data: theme,
+            child: Builder(
+              builder: (context) => theme.icons.chevronDown(context),
+            ),
           ),
         ),
-      ));
+      );
 
       expect(find.byType(HugeIcon), findsOneWidget);
     });
   });
 
   group('brandForuiTheme shape and density', () {
-    testWidgets('the radius ramp is pinned to the brand tokens', (tester) async {
-      final radii = brandForuiTheme(brightness: Brightness.light).style.borderRadius;
+    testWidgets('the radius ramp is pinned to the brand tokens', (
+      tester,
+    ) async {
+      final radii = brandForuiTheme(
+        brightness: Brightness.light,
+      ).style.borderRadius;
 
       expect(radii.lg, BorderRadius.circular(AppRadii.field));
       expect(radii.xl, BorderRadius.circular(AppRadii.tile));
@@ -150,14 +163,20 @@ void main() {
     });
 
     testWidgets('the brand is flat — no shadow', (tester) async {
-      expect(brandForuiTheme(brightness: Brightness.light).style.shadow, isEmpty);
+      expect(
+        brandForuiTheme(brightness: Brightness.light).style.shadow,
+        isEmpty,
+      );
     });
 
-    testWidgets('compact shrinks rows, standing in for VisualDensity',
-        (tester) async {
+    testWidgets('compact shrinks rows, standing in for VisualDensity', (
+      tester,
+    ) async {
       final standard = brandForuiTheme(brightness: Brightness.light);
-      final compact =
-          brandForuiTheme(brightness: Brightness.light, compact: true);
+      final compact = brandForuiTheme(
+        brightness: Brightness.light,
+        compact: true,
+      );
 
       expect(compact.style.sizes.tile, lessThan(standard.style.sizes.tile));
       expect(
@@ -168,27 +187,36 @@ void main() {
   });
 
   group('brandForuiTheme typography', () {
-    testWidgets('body and display are set in Bricolage Grotesque',
-        (tester) async {
-      final typography = brandForuiTheme(brightness: Brightness.light).typography;
+    testWidgets('body and display are set in Bricolage Grotesque', (
+      tester,
+    ) async {
+      final typography = brandForuiTheme(
+        brightness: Brightness.light,
+      ).typography;
 
       expect(typography.body.fontFamily, contains('Bricolage'));
       expect(typography.body.sm.fontFamily, contains('Bricolage'));
       expect(typography.display.xl2.fontFamily, contains('Bricolage'));
     });
 
-    testWidgets('Bengali falls back to Hind Siliguri for Bangla glyphs',
-        (tester) async {
-      final bn =
-          brandForuiTheme(brightness: Brightness.light, locale: 'bn').typography;
+    testWidgets('Bengali falls back to Hind Siliguri for Bangla glyphs', (
+      tester,
+    ) async {
+      final bn = brandForuiTheme(
+        brightness: Brightness.light,
+        locale: 'bn',
+      ).typography;
 
       expect(bn.body.fontFamily, contains('HindSiliguri'));
       expect(bn.body.fontFamily, isNot(contains('Bricolage')));
     });
 
-    testWidgets('display carries the heading weight and negative tracking',
-        (tester) async {
-      final typography = brandForuiTheme(brightness: Brightness.light).typography;
+    testWidgets('display carries the heading weight and negative tracking', (
+      tester,
+    ) async {
+      final typography = brandForuiTheme(
+        brightness: Brightness.light,
+      ).typography;
 
       expect(typography.display.xl2.fontWeight, FontWeight.w700);
       expect(typography.display.xl2.letterSpacing, lessThan(0));
@@ -204,14 +232,16 @@ void main() {
       // migration in a way nothing else would catch.
       final theme = brandForuiTheme(brightness: Brightness.light);
 
-      await tester.pumpWidget(MaterialApp(
-        home: FTheme(
-          data: theme,
-          child: Builder(
-            builder: (context) => theme.icons.chevronRight(context),
+      await tester.pumpWidget(
+        MaterialApp(
+          home: FTheme(
+            data: theme,
+            child: Builder(
+              builder: (context) => theme.icons.chevronRight(context),
+            ),
           ),
         ),
-      ));
+      );
 
       expect(find.byType(HugeIcon), findsOneWidget);
     });
@@ -219,28 +249,34 @@ void main() {
     testWidgets('icon tokens forward their semantics label', (tester) async {
       final theme = brandForuiTheme(brightness: Brightness.light);
 
-      await tester.pumpWidget(MaterialApp(
-        home: FTheme(
-          data: theme,
-          child: Builder(
-            builder: (context) =>
-                theme.icons.check(context, semanticsLabel: 'Done'),
+      await tester.pumpWidget(
+        MaterialApp(
+          home: FTheme(
+            data: theme,
+            child: Builder(
+              builder: (context) =>
+                  theme.icons.check(context, semanticsLabel: 'Done'),
+            ),
           ),
         ),
-      ));
+      );
 
       expect(find.bySemanticsLabel('Done'), findsOneWidget);
     });
   });
 
-  testWidgets('the brand extension is reachable from the forui theme',
-      (tester) async {
+  testWidgets('the brand extension is reachable from the forui theme', (
+    tester,
+  ) async {
     // Registered on both themes from the same BrandTokens instance, so
     // context.brand and forui-side lookups cannot disagree.
     final theme = brandForuiTheme(brightness: Brightness.light);
 
     expect(theme.extension<BrandColors>().tints.first, AppColors.tintPeach);
-    expect(theme.colors.extension<BrandColors>().hairline, AppColors.hairlineLight);
+    expect(
+      theme.colors.extension<BrandColors>().hairline,
+      AppColors.hairlineLight,
+    );
   });
 
   group('tabs', () {
@@ -253,8 +289,9 @@ void main() {
       expect(indicator.color, AppColors.coral);
       expect(indicator.shape, isA<StadiumBorder>());
 
-      final selected =
-          style.labelTextStyle.resolve({FTabVariant.selected}).color;
+      final selected = style.labelTextStyle.resolve({
+        FTabVariant.selected,
+      }).color;
       final unselected = style.labelTextStyle.resolve(const {}).color;
 
       // The bug this guards: TabBarThemeData.labelColor takes precedence over
@@ -269,9 +306,9 @@ void main() {
     test('the strip has no track of its own', () {
       // Full-bleed only works because the track is gone; a filled track would
       // show its clipped corners at the screen edges.
-      final decoration = brandForuiTheme(brightness: Brightness.light)
-          .tabsStyle
-          .decoration as BoxDecoration;
+      final decoration =
+          brandForuiTheme(brightness: Brightness.light).tabsStyle.decoration
+              as BoxDecoration;
 
       expect(decoration.color, isNull);
       expect(decoration.border, isNull);

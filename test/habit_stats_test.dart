@@ -61,10 +61,7 @@ void main() {
 
     test('an unlogged today does not break yesterday\'s streak', () {
       final habit = buildHabit(target: 2, createdAt: ago(10));
-      final stats = HabitStats.compute(habit, [
-        log(ago(1), 2),
-        log(ago(2), 2),
-      ]);
+      final stats = HabitStats.compute(habit, [log(ago(1), 2), log(ago(2), 2)]);
 
       // Today is still in progress, so the streak counts back from yesterday.
       expect(stats.currentStreak, 2);
@@ -88,10 +85,7 @@ void main() {
 
     test('completion rate counts scheduled days only', () {
       final habit = buildHabit(target: 1, createdAt: ago(3));
-      final stats = HabitStats.compute(habit, [
-        log(ago(3), 1),
-        log(ago(2), 1),
-      ]);
+      final stats = HabitStats.compute(habit, [log(ago(3), 1), log(ago(2), 1)]);
 
       // 4 scheduled days (ago3..today), 2 successful.
       expect(stats.completionRate, closeTo(0.5, 0.001));
@@ -101,10 +95,7 @@ void main() {
   group('reduce habits', () {
     test('staying under the limit keeps the streak alive', () {
       final habit = buildHabit(goalType: 1, target: 2, createdAt: ago(3));
-      final stats = HabitStats.compute(habit, [
-        log(today, 1),
-        log(ago(1), 2),
-      ]);
+      final stats = HabitStats.compute(habit, [log(today, 1), log(ago(1), 2)]);
 
       // ago(2) and ago(3) have no logs at all, which counts as success.
       expect(stats.currentStreak, 4);

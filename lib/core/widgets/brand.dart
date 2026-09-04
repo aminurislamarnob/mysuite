@@ -53,12 +53,13 @@ class TintCard extends StatelessWidget {
     // High contrast collapses the tints to a flat canvas, so the card leans on
     // a real outline to stay separable.
     final flattened = brand.tints.toSet().length == 1;
-    final background = fill ??
+    final background =
+        fill ??
         (accent == null
             ? brand.tint(tintIndex)
             : (flattened
-                ? brand.tint(0)
-                : AppColors.wash(accent!, brightness: theme.brightness)));
+                  ? brand.tint(0)
+                  : AppColors.wash(accent!, brightness: theme.brightness)));
 
     final corners = BorderRadius.circular(radius);
     final body = Padding(padding: padding, child: child);
@@ -73,7 +74,8 @@ class TintCard extends StatelessWidget {
           borderRadius: corners,
           border: flattened
               ? Border.fromBorderSide(
-                  BorderSide(color: theme.colorScheme.onSurface, width: 1.2))
+                  BorderSide(color: theme.colorScheme.onSurface, width: 1.2),
+                )
               : const Border(),
         ),
         padding: .value(EdgeInsets.zero),
@@ -209,8 +211,9 @@ class BrandTopBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final pop = onLeading ?? () => Navigator.maybePop(context);
-    final titleStyle =
-        Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 17);
+    final titleStyle = Theme.of(
+      context,
+    ).textTheme.titleMedium?.copyWith(fontSize: 17);
 
     // FHeader.nested supplies the SafeArea, the header semantics and the
     // prefix/suffix layout. The brand keeps its own outlined circles as the
@@ -229,7 +232,11 @@ class BrandTopBar extends StatelessWidget implements PreferredSizeWidget {
       prefixes: [
         if (leadingIcon != null)
           CircleIconButton(
-              icon: leadingIcon!, onPressed: pop, tooltip: 'Back', size: 40),
+            icon: leadingIcon!,
+            onPressed: pop,
+            tooltip: 'Back',
+            size: 40,
+          ),
       ],
       suffixes: [
         if (trailingIcon != null)
@@ -318,8 +325,8 @@ class GreetingHeader extends StatelessWidget {
                     width: 50,
                     height: 50,
                     fit: BoxFit.cover,
-                    cacheWidth:
-                        (50 * MediaQuery.devicePixelRatioOf(context)).round(),
+                    cacheWidth: (50 * MediaQuery.devicePixelRatioOf(context))
+                        .round(),
                     errorBuilder: (context, _, _) => _gradient(),
                   ),
                 )
@@ -331,14 +338,18 @@ class GreetingHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(greeting,
-                  style: theme.textTheme.titleMedium?.copyWith(fontSize: 15),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis),
-              Text(subtitle,
-                  style: theme.textTheme.titleMedium?.copyWith(fontSize: 17),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis),
+              Text(
+                greeting,
+                style: theme.textTheme.titleMedium?.copyWith(fontSize: 15),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              Text(
+                subtitle,
+                style: theme.textTheme.titleMedium?.copyWith(fontSize: 17),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
           ),
         ),
@@ -394,15 +405,20 @@ class HeroBanner extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.titleLarge?.copyWith(
-                      fontSize: 20, height: 1.25, letterSpacing: -0.4),
+                    fontSize: 20,
+                    height: 1.25,
+                    letterSpacing: -0.4,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   footnote,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: context.muted, fontSize: 13),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: context.muted,
+                    fontSize: 13,
+                  ),
                 ),
               ],
             ),
@@ -412,7 +428,11 @@ class HeroBanner extends StatelessWidget {
           SizedBox(
             width: 108,
             height: 108,
-            child: AppIcon(icon, size: 76, color: accent.withValues(alpha: 0.28)),
+            child: AppIcon(
+              icon,
+              size: 76,
+              color: accent.withValues(alpha: 0.28),
+            ),
           ),
         ],
       ),
@@ -527,8 +547,10 @@ class PlanCard extends StatelessWidget {
                 value,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: context.muted, fontSize: 13),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: context.muted,
+                  fontSize: 13,
+                ),
               ),
             ],
           ),
@@ -569,8 +591,9 @@ class ProgressRing extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final over = value > 1.0;
-    final tone =
-        over ? theme.colorScheme.error : (color ?? theme.colorScheme.primary);
+    final tone = over
+        ? theme.colorScheme.error
+        : (color ?? theme.colorScheme.primary);
 
     return SizedBox(
       width: size,
@@ -794,7 +817,8 @@ class _SplinePainter extends CustomPainter {
       final x = values.length == 1
           ? plot.center.dx
           : plot.left + plot.width * (i / (values.length - 1));
-      final y = plot.bottom -
+      final y =
+          plot.bottom -
           plot.height * ((values[i] - min) / (max - min)).clamp(0.0, 1.0);
       return Offset(x, y);
     }
@@ -803,8 +827,11 @@ class _SplinePainter extends CustomPainter {
 
     // Vertical separators, one per sample, matching the reference grid.
     for (final p in points) {
-      canvas.drawLine(Offset(p.dx, plot.top), Offset(p.dx, plot.bottom),
-          gridPaint..color = grid);
+      canvas.drawLine(
+        Offset(p.dx, plot.top),
+        Offset(p.dx, plot.bottom),
+        gridPaint..color = grid,
+      );
     }
 
     final path = _spline(points);
@@ -815,15 +842,24 @@ class _SplinePainter extends CustomPainter {
       ..lineTo(points.first.dx, plot.bottom)
       ..close();
     canvas.save();
-    canvas.clipRect(Rect.fromLTRB(
-        plot.left, plot.top, plot.left + plot.width * progress, plot.bottom));
+    canvas.clipRect(
+      Rect.fromLTRB(
+        plot.left,
+        plot.top,
+        plot.left + plot.width * progress,
+        plot.bottom,
+      ),
+    );
     canvas.drawPath(
       fill,
       Paint()
         ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [color.withValues(alpha: 0.35), color.withValues(alpha: 0.02)],
+          colors: [
+            color.withValues(alpha: 0.35),
+            color.withValues(alpha: 0.02),
+          ],
         ).createShader(plot),
     );
     canvas.drawPath(
@@ -839,12 +875,20 @@ class _SplinePainter extends CustomPainter {
 
     // Day labels under each sample.
     for (var i = 0; i < points.length && i < labels.length; i++) {
-      _text(canvas, labels[i], Offset(points[i].dx - 12, plot.bottom + 5),
-          labelColor, 12);
+      _text(
+        canvas,
+        labels[i],
+        Offset(points[i].dx - 12, plot.bottom + 5),
+        labelColor,
+        12,
+      );
     }
 
     final index = highlight;
-    if (index != null && index >= 0 && index < points.length && progress > 0.99) {
+    if (index != null &&
+        index >= 0 &&
+        index < points.length &&
+        progress > 0.99) {
       final p = points[index];
       canvas.drawLine(
         p,
@@ -884,15 +928,14 @@ class _SplinePainter extends CustomPainter {
     return path;
   }
 
-  void _text(
-      Canvas canvas, String value, Offset at, Color color, double size) {
+  void _text(Canvas canvas, String value, Offset at, Color color, double size) {
     TextPainter(
-      text: TextSpan(
-        text: value,
-        style: TextStyle(color: color, fontSize: size),
-      ),
-      textDirection: textDirection,
-    )
+        text: TextSpan(
+          text: value,
+          style: TextStyle(color: color, fontSize: size),
+        ),
+        textDirection: textDirection,
+      )
       ..layout()
       ..paint(canvas, at);
   }
@@ -948,7 +991,8 @@ class DayStrip extends StatelessWidget {
         separatorBuilder: (_, _) => const SizedBox(width: 10),
         itemBuilder: (context, i) {
           final day = start.add(Duration(days: i));
-          final isSelected = day.year == selected.year &&
+          final isSelected =
+              day.year == selected.year &&
               day.month == selected.month &&
               day.day == selected.day;
           return _DayCell(
@@ -979,8 +1023,7 @@ class _DayCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final foreground =
-        selected ? Colors.white : theme.colorScheme.onSurface;
+    final foreground = selected ? Colors.white : theme.colorScheme.onSurface;
     return FTappable(
       onPress: onTap,
       selected: selected,
@@ -1047,15 +1090,21 @@ class MetricColumn extends StatelessWidget {
       children: [
         AppIcon(icon, size: 28, color: tone),
         const SizedBox(height: 14),
-        Text(value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.titleSmall?.copyWith(fontSize: 16)),
-        Text(caption,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: context.muted, fontSize: 13)),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.titleSmall?.copyWith(fontSize: 16),
+        ),
+        Text(
+          caption,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: context.muted,
+            fontSize: 13,
+          ),
+        ),
       ],
     );
   }
@@ -1132,10 +1181,7 @@ class CurvedNavBar extends StatelessWidget {
               ],
             ),
           ),
-          Positioned(
-            bottom: bottomInset + barHeight - 24,
-            child: centerAction,
-          ),
+          Positioned(bottom: bottomInset + barHeight - 24, child: centerAction),
         ],
       ),
     );
@@ -1191,10 +1237,7 @@ class _NavButton extends StatelessWidget {
       onChange: onSelected,
       child: FBottomNavigationBarItem(
         semanticsLabel: item.label,
-        style: .delta(
-          spacing: 4,
-          padding: .value(EdgeInsets.zero),
-        ),
+        style: .delta(spacing: 4, padding: .value(EdgeInsets.zero)),
         icon: AppIcon(
           selected ? (item.selectedIcon ?? item.icon) : item.icon,
           color: tone,
@@ -1237,10 +1280,22 @@ class _NavBarPainter extends CustomPainter {
       // The edge rises from the corners towards the notch shoulders.
       ..quadraticBezierTo(centre * 0.5, 0, centre - notch - 12, 0)
       // Then dips under the action button.
-      ..cubicTo(centre - notch + 6, 0, centre - notch + 4, notch * 0.72,
-          centre, notch * 0.72)
-      ..cubicTo(centre + notch - 4, notch * 0.72, centre + notch - 6, 0,
-          centre + notch + 12, 0)
+      ..cubicTo(
+        centre - notch + 6,
+        0,
+        centre - notch + 4,
+        notch * 0.72,
+        centre,
+        notch * 0.72,
+      )
+      ..cubicTo(
+        centre + notch - 4,
+        notch * 0.72,
+        centre + notch - 6,
+        0,
+        centre + notch + 12,
+        0,
+      )
       ..quadraticBezierTo(size.width - centre * 0.5, 0, size.width, lift);
 
     final fill = Path.from(top)

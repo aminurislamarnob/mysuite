@@ -121,104 +121,104 @@ class _HabitCard extends ConsumerWidget {
       onTap: () => _openDetail(context),
       onLongPress: () => HabitEditorSheet.show(context, habit: habit),
       child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(9),
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.14),
-                      shape: BoxShape.circle,
-                    ),
-                    child: AppIcon(
-                      AppIcons.habit(habit.icon),
-                      color: color,
-                      size: 20,
-                    ),
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(9),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.14),
+                    shape: BoxShape.circle,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          habit.name,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Row(
-                          children: [
-                            AppIcon(
-                              AppIcons.streak,
-                              size: 13,
-                              color: stats.currentStreak > 0
-                                  ? AppColors.warningLight
-                                  : muted,
-                            ),
-                            const SizedBox(width: 3),
-                            Text(
-                              '${stats.currentStreak} day streak',
-                              style: TextStyle(fontSize: 11, color: muted),
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              '${Fmt.percent(stats.completionRate)} complete',
-                              style: TextStyle(fontSize: 11, color: muted),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                  child: AppIcon(
+                    AppIcons.habit(habit.icon),
+                    color: color,
+                    size: 20,
                   ),
-                  // 2-tap logging: this button is the second tap.
-                  CircleIconButton(
-                    icon: AppIcons.addCircle,
-                    tooltip: isReduce ? 'Log one' : 'Add one',
-                    color: over ? AppColors.dangerLight : color,
-                    size: 40,
-                    onPressed: () async {
-                      await repo.addToDay(habit.id, 1);
-                      if (!context.mounted) return;
-                      final next = stats.todayAmount + 1;
-                      if (isReduce && next > habit.targetAmount) {
-                        brandToast(
-                          context,
-                          'That is ${next.toStringAsFixed(0)} today — '
-                          'your limit is ${habit.targetAmount.toStringAsFixed(0)}.',
-                        );
-                      }
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              LabeledProgress(
-                label: isReduce ? 'Daily limit' : 'Today',
-                trailing:
-                    '${_trim(stats.todayAmount)} / ${_trim(habit.targetAmount)}'
-                    '${habit.unit == null ? '' : ' ${habit.unit}'}',
-                value: progress,
-                color: over ? AppColors.dangerLight : color,
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 7 * 17.0,
-                child: ContributionHeatmap(
-                  days: 84,
-                  color: color,
-                  cell: 14,
-                  intensityFor: (day) => stats.intensityOn(day, habit),
-                  onTapDay: (day) => _editDay(context, ref, day, stats),
                 ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        habit.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          AppIcon(
+                            AppIcons.streak,
+                            size: 13,
+                            color: stats.currentStreak > 0
+                                ? AppColors.warningLight
+                                : muted,
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            '${stats.currentStreak} day streak',
+                            style: TextStyle(fontSize: 11, color: muted),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            '${Fmt.percent(stats.completionRate)} complete',
+                            style: TextStyle(fontSize: 11, color: muted),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                // 2-tap logging: this button is the second tap.
+                CircleIconButton(
+                  icon: AppIcons.addCircle,
+                  tooltip: isReduce ? 'Log one' : 'Add one',
+                  color: over ? AppColors.dangerLight : color,
+                  size: 40,
+                  onPressed: () async {
+                    await repo.addToDay(habit.id, 1);
+                    if (!context.mounted) return;
+                    final next = stats.todayAmount + 1;
+                    if (isReduce && next > habit.targetAmount) {
+                      brandToast(
+                        context,
+                        'That is ${next.toStringAsFixed(0)} today — '
+                        'your limit is ${habit.targetAmount.toStringAsFixed(0)}.',
+                      );
+                    }
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            LabeledProgress(
+              label: isReduce ? 'Daily limit' : 'Today',
+              trailing:
+                  '${_trim(stats.todayAmount)} / ${_trim(habit.targetAmount)}'
+                  '${habit.unit == null ? '' : ' ${habit.unit}'}',
+              value: progress,
+              color: over ? AppColors.dangerLight : color,
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 7 * 17.0,
+              child: ContributionHeatmap(
+                days: 84,
+                color: color,
+                cell: 14,
+                intensityFor: (day) => stats.intensityOn(day, habit),
+                onTapDay: (day) => _editDay(context, ref, day, stats),
               ),
-            ],
-          ),
+            ),
+          ],
+        ),
       ),
     );
   }

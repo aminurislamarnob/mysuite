@@ -594,44 +594,44 @@ class _KanbanCard extends StatelessWidget {
       padding: EdgeInsets.zero,
       onTap: () => TaskEditorSheet.show(context, task: task),
       child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              Container(
-                width: 4,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: priorityColor(task.priority),
-                  borderRadius: BorderRadius.circular(2),
-                ),
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            Container(
+              width: 4,
+              height: 28,
+              decoration: BoxDecoration(
+                color: priorityColor(task.priority),
+                borderRadius: BorderRadius.circular(2),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      task.title,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        decoration: task.isCompleted
-                            ? TextDecoration.lineThrough
-                            : null,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    task.title,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      decoration: task.isCompleted
+                          ? TextDecoration.lineThrough
+                          : null,
                     ),
-                    if (task.dueDate != null)
-                      Text(
-                        Fmt.relativeDay(task.dueDate!),
-                        style: TextStyle(fontSize: 11, color: muted),
-                      ),
-                  ],
-                ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (task.dueDate != null)
+                    Text(
+                      Fmt.relativeDay(task.dueDate!),
+                      style: TextStyle(fontSize: 11, color: muted),
+                    ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
+        ),
       ),
     );
   }

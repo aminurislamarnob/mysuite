@@ -147,16 +147,8 @@ Future<void> newNoteFlow(
 
 /// Kept as a positional shorthand for this screen's two call sites; the dialog
 /// itself is the shared [brandConfirm].
-Future<bool> confirmDialog(
-  BuildContext context,
-  String title,
-  String body,
-) => brandConfirm(
-  context,
-  title: title,
-  message: body,
-  confirmLabel: 'Confirm',
-);
+Future<bool> confirmDialog(BuildContext context, String title, String body) =>
+    brandConfirm(context, title: title, message: body, confirmLabel: 'Confirm');
 
 class _NoteCard extends ConsumerWidget {
   final Note note;
@@ -181,87 +173,85 @@ class _NoteCard extends ConsumerWidget {
       },
       onLongPress: () => _showActions(context, repo),
       child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(
-                      note.title,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    note.title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  if (note.isPinned)
-                    const AppIcon(
-                      AppIcons.pin,
-                      size: 14,
-                      color: AppColors.noteAccent,
-                    ),
-                  if (note.isLocked)
-                    AppIcon(AppIcons.lock, size: 14, color: muted),
-                ],
-              ),
-              if (preview.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(
-                  preview,
-                  style: TextStyle(color: muted, fontSize: 13, height: 1.35),
-                  maxLines: 6,
-                  overflow: TextOverflow.ellipsis,
                 ),
+                if (note.isPinned)
+                  const AppIcon(
+                    AppIcons.pin,
+                    size: 14,
+                    color: AppColors.noteAccent,
+                  ),
+                if (note.isLocked)
+                  AppIcon(AppIcons.lock, size: 14, color: muted),
               ],
-              tagsAsync.maybeWhen(
-                data: (tags) => tags.isEmpty
-                    ? const SizedBox.shrink()
-                    : Padding(
-                        padding: const EdgeInsets.only(top: 10),
-                        child: Wrap(
-                          spacing: 6,
-                          runSpacing: 4,
-                          children: tags
-                              .map(
-                                (t) => Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Color(
-                                      t.color,
-                                    ).withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(999),
-                                  ),
-                                  child: Text(
-                                    '#${t.name}',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: Color(t.color),
-                                    ),
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                        ),
-                      ),
-                orElse: () => const SizedBox.shrink(),
-              ),
-              const SizedBox(height: 10),
+            ),
+            if (preview.isNotEmpty) ...[
+              const SizedBox(height: 8),
               Text(
-                scope == NoteScope.trash && note.deletedAt != null
-                    ? 'Deleted ${Fmt.relativeDay(note.deletedAt!)}'
-                    : Fmt.relativeDay(note.updatedAt),
-                style: TextStyle(fontSize: 11, color: muted),
+                preview,
+                style: TextStyle(color: muted, fontSize: 13, height: 1.35),
+                maxLines: 6,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
-          ),
+            tagsAsync.maybeWhen(
+              data: (tags) => tags.isEmpty
+                  ? const SizedBox.shrink()
+                  : Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: tags
+                            .map(
+                              (t) => Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Color(t.color).withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Text(
+                                  '#${t.name}',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Color(t.color),
+                                  ),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+              orElse: () => const SizedBox.shrink(),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              scope == NoteScope.trash && note.deletedAt != null
+                  ? 'Deleted ${Fmt.relativeDay(note.deletedAt!)}'
+                  : Fmt.relativeDay(note.updatedAt),
+              style: TextStyle(fontSize: 11, color: muted),
+            ),
+          ],
+        ),
       ),
     );
   }

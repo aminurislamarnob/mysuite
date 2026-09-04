@@ -84,11 +84,16 @@ class NotificationService {
 
   Future<bool> requestPermissions() async {
     await init();
-    final android = _plugin.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
-    final ios = _plugin.resolvePlatformSpecificImplementation<
-        IOSFlutterLocalNotificationsPlugin>();
-    final granted = await android?.requestNotificationsPermission() ??
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    final ios = _plugin
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >();
+    final granted =
+        await android?.requestNotificationsPermission() ??
         await ios?.requestPermissions(alert: true, badge: true, sound: true) ??
         true;
     await android?.requestExactAlarmsPermission();
@@ -163,9 +168,7 @@ class NotificationService {
     required String mealHint,
     required DateTime when,
   }) {
-    final body = mealHint.isEmpty
-        ? dosageLabel
-        : '$dosageLabel • $mealHint';
+    final body = mealHint.isEmpty ? dosageLabel : '$dosageLabel • $mealHint';
     return _schedule(
       id: _IdRange.medicine + doseId,
       title: 'Time for $medicineName',
@@ -204,8 +207,13 @@ class NotificationService {
   }) async {
     await init();
     final now = DateTime.now();
-    var when = DateTime(now.year, now.month, now.day,
-        minutesFromMidnight ~/ 60, minutesFromMidnight % 60);
+    var when = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      minutesFromMidnight ~/ 60,
+      minutesFromMidnight % 60,
+    );
     if (when.isBefore(now)) when = when.add(const Duration(days: 1));
     if (_inQuietHours(when)) return;
 

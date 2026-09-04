@@ -43,10 +43,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/onboarding',
-        builder: (_, _) => const OnboardingScreen(),
-      ),
+      GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingScreen()),
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => AppShell(navigationShell: shell),
         branches: [
@@ -54,31 +51,36 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             navigatorKey: _dashboardKey,
             routes: [
               GoRoute(
-                  path: '/dashboard',
-                  builder: (_, _) => const DashboardScreen()),
+                path: '/dashboard',
+                builder: (_, _) => const DashboardScreen(),
+              ),
             ],
           ),
           StatefulShellBranch(
             navigatorKey: _modulesKey,
             routes: [
               GoRoute(
-                  path: '/modules', builder: (_, _) => const ModulesScreen()),
+                path: '/modules',
+                builder: (_, _) => const ModulesScreen(),
+              ),
             ],
           ),
           StatefulShellBranch(
             navigatorKey: _insightsKey,
             routes: [
               GoRoute(
-                  path: '/insights',
-                  builder: (_, _) => const InsightsScreen()),
+                path: '/insights',
+                builder: (_, _) => const InsightsScreen(),
+              ),
             ],
           ),
           StatefulShellBranch(
             navigatorKey: _settingsKey,
             routes: [
               GoRoute(
-                  path: '/settings',
-                  builder: (_, _) => const SettingsScreen()),
+                path: '/settings',
+                builder: (_, _) => const SettingsScreen(),
+              ),
             ],
           ),
         ],
@@ -130,8 +132,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(path: '/search', builder: (_, _) => const SearchScreen()),
-      GoRoute(
-          path: '/reminders', builder: (_, _) => const RemindersScreen()),
+      GoRoute(path: '/reminders', builder: (_, _) => const RemindersScreen()),
     ],
     errorBuilder: (_, state) => BrandScaffold(
       header: const BrandTopBar(title: 'Not found', leadingIcon: AppIcons.back),

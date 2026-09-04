@@ -85,6 +85,6 @@ class AppColors {
   /// hand-picked [tints] so a module card sits happily next to a brand card.
   static Color wash(Color accent, {Brightness brightness = Brightness.light}) =>
       brightness == Brightness.dark
-          ? Color.alphaBlend(accent.withValues(alpha: 0.14), surfaceDark)
-          : Color.alphaBlend(accent.withValues(alpha: 0.07), Colors.white);
+      ? Color.alphaBlend(accent.withValues(alpha: 0.14), surfaceDark)
+      : Color.alphaBlend(accent.withValues(alpha: 0.07), Colors.white);
 }

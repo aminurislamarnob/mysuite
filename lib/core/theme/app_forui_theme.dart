@@ -90,7 +90,8 @@ FThemeData brandForuiThemeFrom(BrandTokens t) {
   );
 
   return FThemeData(
-    debugLabel: 'mySuite ${t.isDark ? 'dark' : 'light'}'
+    debugLabel:
+        'mySuite ${t.isDark ? 'dark' : 'light'}'
         '${t.highContrast ? ' highContrast' : ''}${t.compact ? ' compact' : ''}',
     colors: colors,
     typography: typography,
@@ -120,23 +121,24 @@ FDialogStyle _dialogStyle(
   FColors colors,
   FTypography typography,
   FStyle style,
-) => FDialogStyleDelta.delta(
-  decoration: DecorationDelta.shapeDelta(
-    color: colors.background,
-    shape: RoundedSuperellipseBorder(
-      side: BorderSide(color: colors.border, width: style.borderWidth),
-      borderRadius: BorderRadius.circular(AppRadii.card),
-    ),
-  ),
-)(
-  FDialogStyle.inherit(
-    style: style,
-    colors: colors,
-    typography: typography,
-    hapticFeedback: const FHapticFeedback(),
-    touch: true,
-  ),
-);
+) =>
+    FDialogStyleDelta.delta(
+      decoration: DecorationDelta.shapeDelta(
+        color: colors.background,
+        shape: RoundedSuperellipseBorder(
+          side: BorderSide(color: colors.border, width: style.borderWidth),
+          borderRadius: BorderRadius.circular(AppRadii.card),
+        ),
+      ),
+    )(
+      FDialogStyle.inherit(
+        style: style,
+        colors: colors,
+        typography: typography,
+        hapticFeedback: const FHapticFeedback(),
+        touch: true,
+      ),
+    );
 
 /// The tab strip, restyled as a row of [Pill]s.
 ///
@@ -209,8 +211,9 @@ FColors _colors(BrandTokens t) {
   final tints = t.brand.tints;
   return FColors(
     brightness: t.brightness,
-    systemOverlayStyle:
-        dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+    systemOverlayStyle: dark
+        ? SystemUiOverlayStyle.light
+        : SystemUiOverlayStyle.dark,
     // Matches the scrim Material's showDialog/showModalBottomSheet use today.
     barrier: const Color(0x8A000000),
     background: t.background,
@@ -242,57 +245,97 @@ FColors _colors(BrandTokens t) {
 FTypography _typography(BrandTokens t) {
   final family = t.fontFamily;
 
-  TextStyle s(double size, double height, {FontWeight? weight, double? tracking}) =>
-      TextStyle(
-        fontFamily: family,
-        fontSize: size,
-        height: height,
-        leadingDistribution: TextLeadingDistribution.even,
-        fontWeight: weight,
-        letterSpacing: tracking,
-      );
+  TextStyle s(
+    double size,
+    double height, {
+    FontWeight? weight,
+    double? tracking,
+  }) => TextStyle(
+    fontFamily: family,
+    fontSize: size,
+    height: height,
+    leadingDistribution: TextLeadingDistribution.even,
+    fontWeight: weight,
+    letterSpacing: tracking,
+  );
 
   // Tighter tracking the larger the type, mirroring app_theme.dart's -1 → -0.4.
   double tracking(double size) => switch (size) {
-        >= 48 => -1,
-        >= 36 => -0.8,
-        >= 30 => -0.6,
-        >= 22 => -0.5,
-        >= 18 => -0.4,
-        _ => -0.2,
-      };
+    >= 48 => -1,
+    >= 36 => -0.8,
+    >= 30 => -0.6,
+    >= 22 => -0.5,
+    >= 18 => -0.4,
+    _ => -0.2,
+  };
 
   FTypeface face({required bool heading}) => FTypeface(
-        fontFamily: family,
-        xs3: s(10, 1, weight: heading ? FontWeight.w700 : null),
-        xs2: s(12, 1, weight: heading ? FontWeight.w700 : null),
-        xs: s(14, 1.25, weight: heading ? FontWeight.w700 : null),
-        sm: s(16, 1.5, weight: heading ? FontWeight.w700 : null),
-        md: s(18, 1.75,
-            weight: heading ? FontWeight.w700 : null,
-            tracking: heading ? tracking(18) : null),
-        lg: s(20, 1.75,
-            weight: heading ? FontWeight.w700 : null,
-            tracking: heading ? tracking(20) : null),
-        xl: s(22, 2,
-            weight: heading ? FontWeight.w700 : null,
-            tracking: heading ? tracking(22) : null),
-        xl2: s(30, 2.25,
-            weight: heading ? FontWeight.w700 : null,
-            tracking: heading ? tracking(30) : null),
-        xl3: s(36, 2.5,
-            weight: heading ? FontWeight.w700 : null,
-            tracking: heading ? tracking(36) : null),
-        xl4: s(48, 1,
-            weight: heading ? FontWeight.w700 : null,
-            tracking: heading ? tracking(48) : null),
-        xl5: s(60, 1,
-            weight: heading ? FontWeight.w700 : null,
-            tracking: heading ? tracking(60) : null),
-        xl6: s(72, 1, weight: heading ? FontWeight.w700 : null, tracking: heading ? -1 : null),
-        xl7: s(96, 1, weight: heading ? FontWeight.w700 : null, tracking: heading ? -1 : null),
-        xl8: s(108, 1, weight: heading ? FontWeight.w700 : null, tracking: heading ? -1 : null),
-      );
+    fontFamily: family,
+    xs3: s(10, 1, weight: heading ? FontWeight.w700 : null),
+    xs2: s(12, 1, weight: heading ? FontWeight.w700 : null),
+    xs: s(14, 1.25, weight: heading ? FontWeight.w700 : null),
+    sm: s(16, 1.5, weight: heading ? FontWeight.w700 : null),
+    md: s(
+      18,
+      1.75,
+      weight: heading ? FontWeight.w700 : null,
+      tracking: heading ? tracking(18) : null,
+    ),
+    lg: s(
+      20,
+      1.75,
+      weight: heading ? FontWeight.w700 : null,
+      tracking: heading ? tracking(20) : null,
+    ),
+    xl: s(
+      22,
+      2,
+      weight: heading ? FontWeight.w700 : null,
+      tracking: heading ? tracking(22) : null,
+    ),
+    xl2: s(
+      30,
+      2.25,
+      weight: heading ? FontWeight.w700 : null,
+      tracking: heading ? tracking(30) : null,
+    ),
+    xl3: s(
+      36,
+      2.5,
+      weight: heading ? FontWeight.w700 : null,
+      tracking: heading ? tracking(36) : null,
+    ),
+    xl4: s(
+      48,
+      1,
+      weight: heading ? FontWeight.w700 : null,
+      tracking: heading ? tracking(48) : null,
+    ),
+    xl5: s(
+      60,
+      1,
+      weight: heading ? FontWeight.w700 : null,
+      tracking: heading ? tracking(60) : null,
+    ),
+    xl6: s(
+      72,
+      1,
+      weight: heading ? FontWeight.w700 : null,
+      tracking: heading ? -1 : null,
+    ),
+    xl7: s(
+      96,
+      1,
+      weight: heading ? FontWeight.w700 : null,
+      tracking: heading ? -1 : null,
+    ),
+    xl8: s(
+      108,
+      1,
+      weight: heading ? FontWeight.w700 : null,
+      tracking: heading ? -1 : null,
+    ),
+  );
 
   return FTypography(display: face(heading: true), body: face(heading: false));
 }
@@ -332,4 +375,5 @@ final _icons = FIcons(
 );
 
 FIconBuilder _glyph(HugeIconData icon) =>
-    (_, {String? semanticsLabel}) => AppIcon(icon, semanticsLabel: semanticsLabel);
+    (_, {String? semanticsLabel}) =>
+        AppIcon(icon, semanticsLabel: semanticsLabel);

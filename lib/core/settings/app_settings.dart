@@ -8,31 +8,31 @@ enum AppModule { notes, medicine, habits, tasks, expenses, focus }
 
 extension AppModuleX on AppModule {
   String get label => switch (this) {
-        AppModule.notes => 'Notes',
-        AppModule.medicine => 'Medicine',
-        AppModule.habits => 'Habits',
-        AppModule.tasks => 'Tasks',
-        AppModule.expenses => 'Expenses',
-        AppModule.focus => 'Focus',
-      };
+    AppModule.notes => 'Notes',
+    AppModule.medicine => 'Medicine',
+    AppModule.habits => 'Habits',
+    AppModule.tasks => 'Tasks',
+    AppModule.expenses => 'Expenses',
+    AppModule.focus => 'Focus',
+  };
 
   String get route => switch (this) {
-        AppModule.notes => '/notes',
-        AppModule.medicine => '/medicine',
-        AppModule.habits => '/habits',
-        AppModule.tasks => '/tasks',
-        AppModule.expenses => '/expenses',
-        AppModule.focus => '/focus',
-      };
+    AppModule.notes => '/notes',
+    AppModule.medicine => '/medicine',
+    AppModule.habits => '/habits',
+    AppModule.tasks => '/tasks',
+    AppModule.expenses => '/expenses',
+    AppModule.focus => '/focus',
+  };
 
   String get blurb => switch (this) {
-        AppModule.notes => 'Rich notes, folders and tags',
-        AppModule.medicine => 'Doses, schedules and adherence',
-        AppModule.habits => 'Streaks, heatmaps and limits',
-        AppModule.tasks => 'Due dates, projects and views',
-        AppModule.expenses => 'Budgets, accounts and reports',
-        AppModule.focus => 'Pomodoro and focus stats',
-      };
+    AppModule.notes => 'Rich notes, folders and tags',
+    AppModule.medicine => 'Doses, schedules and adherence',
+    AppModule.habits => 'Streaks, heatmaps and limits',
+    AppModule.tasks => 'Due dates, projects and views',
+    AppModule.expenses => 'Budgets, accounts and reports',
+    AppModule.focus => 'Pomodoro and focus stats',
+  };
 }
 
 @immutable
@@ -133,8 +133,9 @@ final sharedPrefsProvider = Provider<SharedPreferences>(
   (ref) => throw UnimplementedError('sharedPrefsProvider must be overridden'),
 );
 
-final settingsProvider =
-    StateNotifierProvider<SettingsNotifier, AppSettings>((ref) {
+final settingsProvider = StateNotifierProvider<SettingsNotifier, AppSettings>((
+  ref,
+) {
   return SettingsNotifier(ref.watch(sharedPrefsProvider));
 });
 
@@ -174,8 +175,8 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 
     return AppSettings(
       enabledModules: parseModules(_kModules, AppModule.values.toSet()),
-      themeMode: ThemeMode.values[
-          (_prefs.getInt(_kTheme) ?? ThemeMode.system.index)
+      themeMode:
+          ThemeMode.values[(_prefs.getInt(_kTheme) ?? ThemeMode.system.index)
               .clamp(0, ThemeMode.values.length - 1)],
       highContrast: _prefs.getBool(_kContrast) ?? false,
       reduceMotion: _prefs.getBool(_kMotion) ?? false,
@@ -190,7 +191,8 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       dndEnabled: _prefs.getBool(_kDnd) ?? false,
       dndStartMinutes: _prefs.getInt(_kDndStart) ?? 22 * 60,
       dndEndMinutes: _prefs.getInt(_kDndEnd) ?? 7 * 60,
-      dashboardOrder: _prefs.getStringList(_kDashOrder) ??
+      dashboardOrder:
+          _prefs.getStringList(_kDashOrder) ??
           const ['medicine', 'tasks', 'habits', 'expenses', 'focus', 'notes'],
     );
   }
@@ -269,7 +271,10 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     if (start != null) _prefs.setInt(_kDndStart, start);
     if (end != null) _prefs.setInt(_kDndEnd, end);
     state = state.copyWith(
-        dndEnabled: enabled, dndStartMinutes: start, dndEndMinutes: end);
+      dndEnabled: enabled,
+      dndStartMinutes: start,
+      dndEndMinutes: end,
+    );
   }
 
   void setDashboardOrder(List<String> order) {

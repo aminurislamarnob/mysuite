@@ -473,9 +473,8 @@ class _SubtaskList extends ConsumerWidget {
                   value: s.isCompleted,
                   color: AppColors.taskAccent,
                   semanticsLabel: s.title,
-                  onChanged: (v) => ref
-                      .read(taskRepositoryProvider)
-                      .setCompleted(s.id, v),
+                  onChanged: (v) =>
+                      ref.read(taskRepositoryProvider).setCompleted(s.id, v),
                 ),
                 title: Text(
                   s.title,

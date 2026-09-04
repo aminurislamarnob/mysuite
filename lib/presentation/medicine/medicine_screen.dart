@@ -1041,11 +1041,7 @@ class _ProfileDrawer extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            BrandField(
-              controller: name,
-              label: 'Name',
-              autofocus: true,
-            ),
+            BrandField(controller: name, label: 'Name', autofocus: true),
             const SizedBox(height: 12),
             BrandField(
               controller: relation,

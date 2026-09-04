@@ -9,7 +9,9 @@ Widget _host(Widget child) => MaterialApp(
   theme: AppTheme.light(),
   home: FTheme(
     data: brandForuiTheme(brightness: Brightness.light),
-    child: Scaffold(body: Align(alignment: Alignment.topCenter, child: child)),
+    child: Scaffold(
+      body: Align(alignment: Alignment.topCenter, child: child),
+    ),
   ),
 );
 
