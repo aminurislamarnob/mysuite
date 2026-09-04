@@ -31,3 +31,23 @@ defaults.
 ```bash
 flutter test
 ```
+
+## Formatting
+
+The repo is `dart format` clean, and stays that way:
+
+```bash
+dart format .
+```
+
+One reformat already rewrote 911 lines across 22 files without changing
+any code. `git blame` credits a line to whatever commit last touched it,
+so those lines would otherwise all point at the reformat instead of at
+the commit that put the code there. `.git-blame-ignore-revs` lists that
+commit — but blame only reads it if the clone opts in:
+
+```bash
+git config blame.ignoreRevsFile .git-blame-ignore-revs
+```
+
+Run that once per clone. GitHub's web blame reads the file with no setup.
