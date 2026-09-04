@@ -1,0 +1,21 @@
+# Commits that moved text without changing code.
+#
+# `git blame` credits a line to whatever commit last touched it, so a
+# repo-wide reformat makes every reflowed line look like it was written
+# on the day of the reformat. Listing that commit here tells blame to
+# walk past it to the commit that actually changed the code.
+#
+# This file is only half of it. Blame reads it locally only if the clone
+# is configured to:
+#
+#     git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# GitHub's web blame reads it without any configuration.
+#
+# Add only commits that provably changed no code, and only after they are
+# pushed — a rebased or amended SHA listed here makes blame fail.
+# Full 40-character SHAs; short ones are rejected.
+
+# Let the formatter have the files it had been losing to
+# `dart format` across 22 files; whitespace and trailing commas only.
+ee3f38bd5f7766e204079757c0e5140b249e2be9
