@@ -150,12 +150,11 @@ void main() {
       );
     });
 
-    testWidgets('drops the inner edges so the outline does not close', (
-      tester,
-    ) async {
-      // The regression this guards: the tile's visible outline is a
-      // RoundedSuperellipseBorder inside `contentDecoration`, so setting only
-      // `shape` squared the background and left every row still ringed.
+    testWidgets('contributes a divider, not an outline', (tester) async {
+      // Two regressions guarded here. The tile's visible outline lives in
+      // `contentDecoration`, not `shape`, so setting only `shape` left every
+      // row still ringed. And a tile that keeps its own fill inside a card of
+      // a different tint reads as a card within a card.
       await pumpBranded(
         tester,
         const TileGroup(
@@ -167,23 +166,50 @@ void main() {
         ),
       );
 
-      BoxBorder? borderOf(String label) => bordersOf(
-        tester,
-        find.ancestor(of: find.text(label), matching: find.byType(BrandTile)),
-      ).firstOrNull;
+      Border borderOf(String label) =>
+          bordersOf(
+                tester,
+                find.ancestor(
+                  of: find.text(label),
+                  matching: find.byType(BrandTile),
+                ),
+              ).firstOrNull!
+              as Border;
 
-      // Only the first row draws a top; the rest inherit the row above's
-      // bottom as their divider.
-      expect((borderOf('first')! as Border).top.style, BorderStyle.solid);
-      expect((borderOf('middle')! as Border).top.style, BorderStyle.none);
-      expect((borderOf('last')! as Border).top.style, BorderStyle.none);
-
-      // Every row keeps its sides, so the group reads as one card.
-      for (final label in ['first', 'middle', 'last']) {
-        final b = borderOf(label)! as Border;
-        expect(b.left.style, BorderStyle.solid, reason: label);
-        expect(b.right.style, BorderStyle.solid, reason: label);
+      // Only the edge between rows is drawn; the enclosing card owns the rest.
+      for (final label in ['first', 'middle']) {
+        final b = borderOf(label);
         expect(b.bottom.style, BorderStyle.solid, reason: label);
+        for (final side in [b.top, b.left, b.right]) {
+          expect(side.style, BorderStyle.none, reason: label);
+        }
+      }
+      // The last row has nothing below it to divide from.
+      final last = borderOf('last');
+      for (final side in [last.top, last.left, last.right, last.bottom]) {
+        expect(side.style, BorderStyle.none);
+      }
+    });
+
+    testWidgets('grouped tiles do not paint their own fill', (tester) async {
+      await pumpBranded(
+        tester,
+        const TileGroup(
+          children: [
+            BrandTile(title: Text('a')),
+            BrandTile(title: Text('b')),
+          ],
+        ),
+      );
+
+      // Anything opaque here would stack a second card on the one the group
+      // already sits inside.
+      final fills = fillsOf(
+        tester,
+        find.ancestor(of: find.text('a'), matching: find.byType(BrandTile)),
+      ).nonNulls;
+      for (final c in fills) {
+        expect(c.a, 0, reason: 'grouped tile painted $c');
       }
     });
 

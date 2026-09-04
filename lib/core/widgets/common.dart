@@ -662,9 +662,13 @@ class BrandTile extends StatelessWidget {
         // outline is a RoundedSuperellipseBorder inside `contentDecoration`,
         // which is why overriding `shape` alone left six outlined rows.
         shape: RoundedRectangleBorder(borderRadius: slot.radius),
+        // Both layers, or the lower one still paints: forui stacks
+        // `contentDecoration` above `backgroundColor`.
+        backgroundColor: slot.fills ? null : .delta([.all(Colors.transparent)]),
         contentDecoration: .delta([
           .all(
             DecorationDelta.boxDelta(
+              color: slot.fills ? null : Colors.transparent,
               border: slot.border(context.brand.hairline),
               borderRadius: slot.radius,
             ),
@@ -694,17 +698,26 @@ enum TilePosition {
   middle,
   last;
 
+  /// Whether the tile paints its own fill.
+  ///
+  /// A tile on its own is a card and fills itself. In a group the enclosing
+  /// card is the card, so the tiles go transparent — otherwise a group sitting
+  /// on a card of a different tint reads as a card inside a card, which is
+  /// what the dashboard's tinted sections were showing.
+  bool get fills => this == TilePosition.only;
+
   /// The edges this tile draws.
   ///
-  /// A tile's outline is what made a run of them read as separate cards, so in
-  /// a group the inner edges are dropped: every tile keeps its sides, only the
-  /// first draws a top, and the bottom doubles as the divider to the next row.
+  /// A tile on its own is a card and outlines itself. In a group the enclosing
+  /// card already draws the boundary, so a tile contributes nothing but the
+  /// divider to the row below it — an outline here would sit just inside the
+  /// card's own edge as a second, fainter rectangle.
   Border border(Color color) {
     final side = BorderSide(color: color);
     return switch (this) {
-      TilePosition.only || TilePosition.first => Border.fromBorderSide(side),
-      TilePosition.middle ||
-      TilePosition.last => Border(left: side, right: side, bottom: side),
+      TilePosition.only => Border.fromBorderSide(side),
+      TilePosition.first || TilePosition.middle => Border(bottom: side),
+      TilePosition.last => const Border(),
     };
   }
 
