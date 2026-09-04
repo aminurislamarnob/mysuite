@@ -548,7 +548,7 @@ class _ExpensesWidget extends ConsumerWidget {
           TintCard(
             tintIndex: 1,
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-            child: Column(
+            child: TileGroup(
               children: [
                 for (final e in todays)
                   Builder(
@@ -674,7 +674,7 @@ class _NotesWidget extends ConsumerWidget {
           TintCard(
             tintIndex: 2,
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-            child: Column(
+            child: TileGroup(
               children: [
                 for (final n in notes)
                   BrandTile(

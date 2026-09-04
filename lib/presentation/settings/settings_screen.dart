@@ -291,7 +291,7 @@ class SettingsScreen extends ConsumerWidget {
                 BrandAccordion(
                   leading: AppIcons.modules,
                   title: 'Lock individual modules',
-                  child: Column(
+                  child: TileGroup(
                     children: AppModule.values
                         .map(
                           (m) => BrandSwitchTile(
