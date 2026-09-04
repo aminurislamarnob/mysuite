@@ -50,33 +50,24 @@ class TintCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final brand = context.brand;
-    // High contrast collapses the tints to a flat canvas, so the card leans on
-    // a real outline to stay separable.
-    final flattened = brand.tints.toSet().length == 1;
     final background =
         fill ??
         (accent == null
             ? brand.tint(tintIndex)
-            : (flattened
-                  ? brand.tint(0)
-                  : AppColors.wash(accent!, brightness: theme.brightness)));
+            : AppColors.wash(accent!, brightness: theme.brightness));
 
     final corners = BorderRadius.circular(radius);
     final body = Padding(padding: padding, child: child);
 
     return FCard(
-      // The tint rotation, the radius and the high-contrast outline are brand
-      // decisions, so they are passed explicitly rather than inherited from
-      // forui's card style — which is a bordered, unfilled, small-radius surface.
+      // The tint rotation and the radius are brand decisions, so they are
+      // passed explicitly rather than inherited from forui's card style —
+      // which is a bordered, unfilled, small-radius surface.
       style: .delta(
         decoration: .boxDelta(
           color: background,
           borderRadius: corners,
-          border: flattened
-              ? Border.fromBorderSide(
-                  BorderSide(color: theme.colorScheme.onSurface, width: 1.2),
-                )
-              : const Border(),
+          border: const Border(),
         ),
         padding: .value(EdgeInsets.zero),
       ),

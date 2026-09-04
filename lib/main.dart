@@ -70,12 +70,10 @@ class _MySuiteAppState extends ConsumerState<MySuiteApp> {
       title: 'mySuite',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(
-        highContrast: settings.highContrast,
         compact: settings.compactDensity,
         locale: settings.locale,
       ),
       darkTheme: AppTheme.dark(
-        highContrast: settings.highContrast,
         compact: settings.compactDensity,
         locale: settings.locale,
       ),
@@ -111,7 +109,6 @@ class _MySuiteAppState extends ConsumerState<MySuiteApp> {
           child: FTheme(
             data: brandForuiTheme(
               brightness: brightness,
-              highContrast: settings.highContrast,
               compact: settings.compactDensity,
               locale: settings.locale,
             ),

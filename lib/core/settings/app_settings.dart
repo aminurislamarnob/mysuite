@@ -39,7 +39,6 @@ extension AppModuleX on AppModule {
 class AppSettings {
   final Set<AppModule> enabledModules;
   final ThemeMode themeMode;
-  final bool highContrast;
   final bool reduceMotion;
   final bool compactDensity;
   final double textScale;
@@ -64,7 +63,6 @@ class AppSettings {
       AppModule.focus,
     },
     this.themeMode = ThemeMode.system,
-    this.highContrast = false,
     this.reduceMotion = false,
     this.compactDensity = false,
     this.textScale = 1.0,
@@ -92,7 +90,6 @@ class AppSettings {
   AppSettings copyWith({
     Set<AppModule>? enabledModules,
     ThemeMode? themeMode,
-    bool? highContrast,
     bool? reduceMotion,
     bool? compactDensity,
     double? textScale,
@@ -110,7 +107,6 @@ class AppSettings {
     return AppSettings(
       enabledModules: enabledModules ?? this.enabledModules,
       themeMode: themeMode ?? this.themeMode,
-      highContrast: highContrast ?? this.highContrast,
       reduceMotion: reduceMotion ?? this.reduceMotion,
       compactDensity: compactDensity ?? this.compactDensity,
       textScale: textScale ?? this.textScale,
@@ -148,7 +144,6 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 
   static const _kModules = 'enabled_modules';
   static const _kTheme = 'theme_mode';
-  static const _kContrast = 'high_contrast';
   static const _kMotion = 'reduce_motion';
   static const _kDensity = 'compact_density';
   static const _kScale = 'text_scale';
@@ -178,7 +173,6 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       themeMode:
           ThemeMode.values[(_prefs.getInt(_kTheme) ?? ThemeMode.system.index)
               .clamp(0, ThemeMode.values.length - 1)],
-      highContrast: _prefs.getBool(_kContrast) ?? false,
       reduceMotion: _prefs.getBool(_kMotion) ?? false,
       compactDensity: _prefs.getBool(_kDensity) ?? false,
       textScale: _prefs.getDouble(_kScale) ?? 1.0,
@@ -219,11 +213,6 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   void setThemeMode(ThemeMode mode) {
     _prefs.setInt(_kTheme, mode.index);
     state = state.copyWith(themeMode: mode);
-  }
-
-  void setHighContrast(bool v) {
-    _prefs.setBool(_kContrast, v);
-    state = state.copyWith(highContrast: v);
   }
 
   void setReduceMotion(bool v) {

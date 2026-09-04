@@ -92,7 +92,6 @@ class BrandColors extends ThemeExtension<BrandColors> {
 @immutable
 class BrandTokens {
   final Brightness brightness;
-  final bool highContrast;
   final bool compact;
   final String locale;
 
@@ -116,13 +115,8 @@ class BrandTokens {
   /// Tints, hairline and canvas — the values with no [ColorScheme] slot.
   final BrandColors brand;
 
-  /// Cards are normally borderless; the pastel fill separates them. At high
-  /// contrast the fill disappears, so a real outline takes over.
-  final BorderSide cardBorder;
-
   const BrandTokens({
     required this.brightness,
-    required this.highContrast,
     required this.compact,
     required this.locale,
     required this.text,
@@ -134,7 +128,6 @@ class BrandTokens {
     required this.secondary,
     required this.error,
     required this.brand,
-    required this.cardBorder,
   });
 
   bool get isDark => brightness == Brightness.dark;
@@ -224,63 +217,39 @@ class AppTheme {
   /// `brandForuiTheme()` all read from it.
   static BrandTokens tokens({
     required Brightness brightness,
-    bool highContrast = false,
     bool compact = false,
     String locale = 'en',
   }) {
     final dark = brightness == Brightness.dark;
 
-    final text = highContrast
-        ? (dark ? Colors.white : Colors.black)
-        : (dark ? AppColors.textDark : AppColors.textLight);
-    final muted = highContrast
-        ? (dark ? const Color(0xFFD8D0CE) : const Color(0xFF3D3D3D))
-        : (dark ? AppColors.mutedDark : AppColors.mutedLight);
-
     return BrandTokens(
       brightness: brightness,
-      highContrast: highContrast,
       compact: compact,
       locale: locale,
-      text: text,
-      muted: muted,
-      background: highContrast
-          ? (dark ? Colors.black : Colors.white)
-          : (dark ? AppColors.backgroundDark : AppColors.backgroundLight),
+      text: dark ? AppColors.textDark : AppColors.textLight,
+      muted: dark ? AppColors.mutedDark : AppColors.mutedLight,
+      background: dark
+          ? AppColors.backgroundDark
+          : AppColors.backgroundLight,
       surface: dark ? AppColors.surfaceDark : AppColors.surfaceLight,
       primary: dark ? AppColors.primaryDark : AppColors.primaryLight,
       onPrimary: dark ? const Color(0xFF3A1206) : Colors.white,
       secondary: dark ? AppColors.coralSoft : AppColors.coralDeep,
       error: dark ? AppColors.dangerDark : AppColors.dangerLight,
       brand: BrandColors(
-        tints: highContrast
-            // Pastel fills wash out at high contrast, so cards fall back to
-            // flat and lean on the stronger outline instead.
-            ? (dark
-                  ? const [Colors.black, Colors.black, Colors.black]
-                  : const [Colors.white, Colors.white, Colors.white])
-            : (dark ? AppColors.tintsDark : AppColors.tints),
-        hairline: highContrast
-            ? (dark ? const Color(0xFF6E6E6E) : const Color(0xFF9A9A9A))
-            : (dark ? AppColors.hairlineDark : AppColors.hairlineLight),
-        canvas: dark
-            ? (highContrast ? Colors.black : AppColors.backgroundDark)
-            : Colors.white,
+        tints: dark ? AppColors.tintsDark : AppColors.tints,
+        hairline: dark ? AppColors.hairlineDark : AppColors.hairlineLight,
+        canvas: dark ? AppColors.backgroundDark : Colors.white,
       ),
-      cardBorder: highContrast
-          ? BorderSide(color: text, width: 1.2)
-          : BorderSide.none,
     );
   }
 
   static ThemeData light({
-    bool highContrast = false,
     bool compact = false,
     String locale = 'en',
   }) {
     final t = tokens(
       brightness: Brightness.light,
-      highContrast: highContrast,
       compact: compact,
       locale: locale,
     );
@@ -303,13 +272,11 @@ class AppTheme {
   }
 
   static ThemeData dark({
-    bool highContrast = false,
     bool compact = false,
     String locale = 'en',
   }) {
     final t = tokens(
       brightness: Brightness.dark,
-      highContrast: highContrast,
       compact: compact,
       locale: locale,
     );
@@ -339,9 +306,7 @@ class AppTheme {
     final onPrimary = t.onPrimary;
     final brand = t.brand;
     final compact = t.compact;
-    final highContrast = t.highContrast;
     final locale = t.locale;
-    final cardBorder = t.cardBorder;
 
     final base = brightness == Brightness.light
         ? ThemeData.light()
@@ -363,7 +328,7 @@ class AppTheme {
       extensions: [brand],
       splashFactory: InkSparkle.splashFactory,
       dividerTheme: DividerThemeData(
-        color: highContrast ? muted : brand.hairline,
+        color: brand.hairline,
         space: 1,
         thickness: 1,
       ),
@@ -382,7 +347,6 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadii.tile),
-          side: cardBorder,
         ),
         margin: EdgeInsets.zero,
       ),
@@ -390,16 +354,13 @@ class AppTheme {
       // draw their own stadium. Same reason `elevatedButtonTheme` went.
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: highContrast ? surface : brand.tints.first,
+        fillColor: brand.tints.first,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 14,
         ),
         border: field(Colors.transparent, 0),
-        enabledBorder: field(
-          highContrast ? text : Colors.transparent,
-          highContrast ? 1.2 : 0,
-        ),
+        enabledBorder: field(Colors.transparent, 0),
         focusedBorder: field(primary, 1.6),
         errorBorder: field(scheme.error, 1.2),
         focusedErrorBorder: field(scheme.error, 1.6),
@@ -421,7 +382,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: text,
-          side: BorderSide(color: highContrast ? text : brand.hairline),
+          side: BorderSide(color: brand.hairline),
           shape: const StadiumBorder(),
           textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),

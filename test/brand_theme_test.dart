@@ -21,16 +21,12 @@ Future<void> pumpBranded(
   WidgetTester tester,
   Widget child, {
   ThemeData? theme,
-  bool highContrast = false,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
-      theme: theme ?? AppTheme.light(highContrast: highContrast),
+      theme: theme ?? AppTheme.light(),
       home: FTheme(
-        data: brandForuiTheme(
-          brightness: Brightness.light,
-          highContrast: highContrast,
-        ),
+        data: brandForuiTheme(brightness: Brightness.light),
         child: FToaster(
           child: FTooltipGroup(
             child: Scaffold(body: Center(child: child)),
@@ -141,16 +137,6 @@ void main() {
       expect(theme.scaffoldBackgroundColor, AppColors.backgroundLight);
     });
 
-    testWidgets(
-      'high contrast flattens the tints so the outline can take over',
-      (tester) async {
-        final brand = AppTheme.light(
-          highContrast: true,
-        ).extension<BrandColors>()!;
-        // All three collapse to one colour; TintCard keys its border off that.
-        expect(brand.tints.toSet(), hasLength(1));
-      },
-    );
   });
 
   testWidgets('context.brand falls back when no theme registered it', (
@@ -215,14 +201,10 @@ void main() {
     expect(fills, contains(AppColors.tintApricot));
   });
 
-  testWidgets('TintCard outlines itself when the tints are flattened', (
+  testWidgets('TintCard stays borderless — the tint carries the separation', (
     tester,
   ) async {
-    await pumpBranded(
-      tester,
-      const TintCard(child: Text('a')),
-      highContrast: true,
-    );
+    await pumpBranded(tester, const TintCard(child: Text('a')));
 
     final borders = tester
         .widgetList<DecoratedBox>(
@@ -238,10 +220,8 @@ void main() {
         .where((b) => b.top.width > 0)
         .toList();
 
-    // The pastel fill is gone at high contrast, so a real outline has to appear.
-    expect(borders, isNotEmpty);
-    expect(borders.first.top.style, BorderStyle.solid);
-    expect(fillsOf(tester, find.byType(TintCard)), contains(Colors.white));
+    expect(borders, isEmpty);
+    expect(fillsOf(tester, find.byType(TintCard)), contains(AppColors.tintPeach));
   });
 
   testWidgets('ProgressRing renders an overrun in the error colour', (

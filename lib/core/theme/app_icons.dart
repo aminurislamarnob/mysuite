@@ -261,7 +261,6 @@ class AppIcons {
   static const themeSystem = HugeIcons.strokeRoundedSmartPhone01;
   static const lightMode = HugeIcons.strokeRoundedSun03;
   static const darkMode = HugeIcons.strokeRoundedMoon02;
-  static const highContrast = HugeIcons.strokeRoundedEye;
   static const compact = HugeIcons.strokeRoundedMenu02;
   static const reduceMotion = HugeIcons.strokeRoundedPauseCircle;
   static const textSize = HugeIcons.strokeRoundedTextFont;

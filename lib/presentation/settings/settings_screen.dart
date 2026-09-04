@@ -86,12 +86,6 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                 ),
                 BrandSwitchTile(
-                  leading: const AppIcon(AppIcons.highContrast),
-                  title: 'High contrast',
-                  value: settings.highContrast,
-                  onChanged: notifier.setHighContrast,
-                ),
-                BrandSwitchTile(
                   leading: const AppIcon(AppIcons.compact),
                   title: 'Compact density',
                   value: settings.compactDensity,

@@ -18,11 +18,10 @@ import 'app_theme.dart';
 /// right brands the whole library at once.
 FThemeData brandForuiTheme({
   required Brightness brightness,
-  bool highContrast = false,
   bool compact = false,
   String locale = 'en',
 }) {
-  // Memoised on the four inputs. `MaterialApp.builder` rebuilds this on every
+  // Memoised on the three inputs. `MaterialApp.builder` rebuilds this on every
   // settings change, and forui's styles hold `Tween`s, which have no value
   // equality — so a freshly built theme never compares equal to the last one.
   // Widgets that watch their inherited style for change then treat every
@@ -30,13 +29,12 @@ FThemeData brandForuiTheme({
   // `FAccordionItem.didChangeDependencies` resets the reveal animation to
   // `initiallyExpanded`. Flipping any switch in Settings closed the "Lock
   // individual modules" list under itself.
-  final key = (brightness, highContrast, compact, locale);
+  final key = (brightness, compact, locale);
   if (_cacheKey == key) return _cached!;
 
   final theme = brandForuiThemeFrom(
     AppTheme.tokens(
       brightness: brightness,
-      highContrast: highContrast,
       compact: compact,
       locale: locale,
     ),
@@ -46,7 +44,7 @@ FThemeData brandForuiTheme({
   return theme;
 }
 
-(Brightness, bool, bool, String)? _cacheKey;
+(Brightness, bool, String)? _cacheKey;
 FThemeData? _cached;
 
 /// Builds the forui theme from already-resolved [BrandTokens].
@@ -81,9 +79,7 @@ FThemeData brandForuiThemeFrom(BrandTokens t) {
     sizes: sizes,
     tappableStyle: FTappableStyle(),
     borderRadius: _borderRadius,
-    // A visible outline is the whole high-contrast strategy: the pastel fills
-    // flatten, so the border has to carry the separation.
-    borderWidth: t.highContrast ? 1.2 : 1,
+    borderWidth: 1,
     pagePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     // The brand is flat — every Material sub-theme sets elevation 0.
     shadow: const [],
@@ -92,7 +88,7 @@ FThemeData brandForuiThemeFrom(BrandTokens t) {
   return FThemeData(
     debugLabel:
         'mySuite ${t.isDark ? 'dark' : 'light'}'
-        '${t.highContrast ? ' highContrast' : ''}${t.compact ? ' compact' : ''}',
+        '${t.compact ? ' compact' : ''}',
     colors: colors,
     typography: typography,
     style: style,
@@ -163,13 +159,7 @@ FTabsStyle _tabsStyle(
   indicatorSize: FTabBarIndicatorSize.tab,
   indicatorDecoration: ShapeDecoration(
     color: t.primary,
-    shape: StadiumBorder(
-      // At high contrast the fill alone is not enough separation, matching how
-      // cards grow an outline there.
-      side: t.highContrast
-          ? BorderSide(color: t.text, width: style.borderWidth)
-          : BorderSide.none,
-    ),
+    shape: const StadiumBorder(),
   ),
   labelTextStyle: FVariants.from(
     typography.body.sm.copyWith(

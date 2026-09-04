@@ -46,20 +46,6 @@ void main() {
       expect(colors.secondary, isNot(AppColors.coralDeep));
     });
 
-    testWidgets('high contrast flattens the card and strengthens the border', (
-      tester,
-    ) async {
-      final plain = brandForuiTheme(brightness: Brightness.light);
-      final hc = brandForuiTheme(
-        brightness: Brightness.light,
-        highContrast: true,
-      );
-
-      expect(hc.colors.card, Colors.white);
-      expect(hc.colors.border, isNot(plain.colors.border));
-      // The outline is what carries separation once the fill is gone.
-      expect(hc.style.borderWidth, greaterThan(plain.style.borderWidth));
-    });
   });
 
   group('brandForuiTheme identity', () {

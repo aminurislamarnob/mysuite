@@ -316,13 +316,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 .read(settingsProvider.notifier)
                 .setThemeMode(ThemeMode.dark),
           ),
-          const SizedBox(height: 20),
-          BrandSwitchTile(
-            title: 'High contrast',
-            subtitle: 'Stronger borders and text',
-            value: settings.highContrast,
-            onChanged: ref.read(settingsProvider.notifier).setHighContrast,
-          ),
         ],
       ),
     );
