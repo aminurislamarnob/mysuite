@@ -93,7 +93,8 @@ class QuickAddButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
+    final scheme = Theme.of(context).colorScheme;
+    final primary = scheme.primary;
     return BrandTooltip(
       message: 'Quick add',
       semanticsLabel: 'Quick add',
@@ -113,10 +114,12 @@ class QuickAddButton extends StatelessWidget {
               ),
             ],
           ),
-          child: const SizedBox(
+          child: SizedBox(
             width: 58,
             height: 58,
-            child: AppIcon(AppIcons.add, color: Colors.white, size: 30),
+            // Not white: on coral that is 3.25:1, and the palette already says
+            // what belongs on its primary.
+            child: AppIcon(AppIcons.add, color: scheme.onPrimary, size: 30),
           ),
         ),
       ),

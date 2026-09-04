@@ -83,9 +83,14 @@ class AppColors {
   // Module accents
   // ---------------------------------------------------------------------------
 
-  /// Note and habit share a hue with warning and success, so they share the
-  /// value too — one colour that satisfies the stricter of the two bars.
-  static const noteAccent = warningLight; // amber
+  /// Habit shares a hue with success, and neither is held to a stricter bar
+  /// than the other, so one value serves both.
+  ///
+  /// Note used to do the same with [warningLight] and paid for it: `warning`
+  /// is drawn as 11px text on the medicine screen, so it carries the 4.5:1
+  /// body-copy bar, while `note` is only ever an icon or a fill. Holding an
+  /// icon to a text bar cost it a fifth of its brightness for nothing.
+  static const noteAccent = Color(0xFFC38131); // amber
   static const medicineAccent = coral; // the flagship module carries the brand
   static const habitAccent = successLight; // moss green
   static const taskAccent = Color(0xFF5B7CE0); // muted indigo
