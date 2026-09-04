@@ -643,6 +643,7 @@ class BrandTile extends StatelessWidget {
     final padding = dense
         ? const EdgeInsetsGeometryDelta.value(densePadding)
         : null;
+    final slot = _TileSlot.of(context);
     return FTile(
       title: title,
       subtitle: subtitle,
@@ -656,9 +657,19 @@ class BrandTile extends StatelessWidget {
       style: .delta(
         // A lone tile rounds all four corners; one inside a [TileGroup] rounds
         // only the corners that are actually the group's outer edge.
-        shape: RoundedRectangleBorder(
-          borderRadius: _TileSlot.of(context).radius,
-        ),
+        //
+        // Both of these matter. `shape` is the outer background; the visible
+        // outline is a RoundedSuperellipseBorder inside `contentDecoration`,
+        // which is why overriding `shape` alone left six outlined rows.
+        shape: RoundedRectangleBorder(borderRadius: slot.radius),
+        contentDecoration: .delta([
+          .all(
+            DecorationDelta.boxDelta(
+              border: slot.border(context.brand.hairline),
+              borderRadius: slot.radius,
+            ),
+          ),
+        ]),
         contentStyle: .delta(
           suffixedPadding: padding,
           unsuffixedPadding: padding,
@@ -682,6 +693,20 @@ enum TilePosition {
   first,
   middle,
   last;
+
+  /// The edges this tile draws.
+  ///
+  /// A tile's outline is what made a run of them read as separate cards, so in
+  /// a group the inner edges are dropped: every tile keeps its sides, only the
+  /// first draws a top, and the bottom doubles as the divider to the next row.
+  Border border(Color color) {
+    final side = BorderSide(color: color);
+    return switch (this) {
+      TilePosition.only || TilePosition.first => Border.fromBorderSide(side),
+      TilePosition.middle ||
+      TilePosition.last => Border(left: side, right: side, bottom: side),
+    };
+  }
 
   /// A run of tiles reads as one card, so only the ends round. The outer
   /// corners take the card radius rather than the tile radius so a group

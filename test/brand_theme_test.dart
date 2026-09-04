@@ -63,6 +63,18 @@ List<BorderRadiusGeometry?> radiiOf(WidgetTester tester, Finder of) => tester
     .map((b) => b.borderRadius)
     .toList();
 
+/// The borders a widget subtree paints. The visible tile outline lives here,
+/// in `contentDecoration`, not in the tile's `shape`.
+List<BoxBorder?> bordersOf(WidgetTester tester, Finder of) => tester
+    .widgetList<DecoratedBox>(
+      find.descendant(of: of, matching: find.byType(DecoratedBox)),
+    )
+    .map((d) => d.decoration)
+    .whereType<BoxDecoration>()
+    .map((d) => d.border)
+    .nonNulls
+    .toList();
+
 void main() {
   group('AppIcon', () {
     testWidgets('holds its size inside a tight box instead of stretching', (
@@ -138,6 +150,43 @@ void main() {
       );
     });
 
+    testWidgets('drops the inner edges so the outline does not close', (
+      tester,
+    ) async {
+      // The regression this guards: the tile's visible outline is a
+      // RoundedSuperellipseBorder inside `contentDecoration`, so setting only
+      // `shape` squared the background and left every row still ringed.
+      await pumpBranded(
+        tester,
+        const TileGroup(
+          children: [
+            BrandTile(title: Text('first')),
+            BrandTile(title: Text('middle')),
+            BrandTile(title: Text('last')),
+          ],
+        ),
+      );
+
+      BoxBorder? borderOf(String label) => bordersOf(
+        tester,
+        find.ancestor(of: find.text(label), matching: find.byType(BrandTile)),
+      ).firstOrNull;
+
+      // Only the first row draws a top; the rest inherit the row above's
+      // bottom as their divider.
+      expect((borderOf('first')! as Border).top.style, BorderStyle.solid);
+      expect((borderOf('middle')! as Border).top.style, BorderStyle.none);
+      expect((borderOf('last')! as Border).top.style, BorderStyle.none);
+
+      // Every row keeps its sides, so the group reads as one card.
+      for (final label in ['first', 'middle', 'last']) {
+        final b = borderOf(label)! as Border;
+        expect(b.left.style, BorderStyle.solid, reason: label);
+        expect(b.right.style, BorderStyle.solid, reason: label);
+        expect(b.bottom.style, BorderStyle.solid, reason: label);
+      }
+    });
+
     testWidgets('a lone tile still rounds all four corners', (tester) async {
       await pumpBranded(
         tester,
@@ -145,6 +194,17 @@ void main() {
       );
 
       expect(radiusOf(tester, 'alone'), BorderRadius.circular(AppRadii.field));
+      // A tile on its own is a card, so it keeps all four edges.
+      final border =
+          bordersOf(tester, find.byType(BrandTile)).firstOrNull! as Border;
+      for (final side in [
+        border.top,
+        border.left,
+        border.right,
+        border.bottom,
+      ]) {
+        expect(side.style, BorderStyle.solid);
+      }
     });
 
     testWidgets('a tile outside a group keeps every corner', (tester) async {
