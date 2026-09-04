@@ -51,6 +51,18 @@ List<Color?> fillsOf(WidgetTester tester, Finder of) => tester
     .map((d) => d.color)
     .toList();
 
+/// The corner radii of every shape a widget subtree paints, in paint order.
+List<BorderRadiusGeometry?> radiiOf(WidgetTester tester, Finder of) => tester
+    .widgetList<DecoratedBox>(
+      find.descendant(of: of, matching: find.byType(DecoratedBox)),
+    )
+    .map((d) => d.decoration)
+    .whereType<ShapeDecoration>()
+    .map((d) => d.shape)
+    .whereType<RoundedRectangleBorder>()
+    .map((b) => b.borderRadius)
+    .toList();
+
 void main() {
   group('AppIcon', () {
     testWidgets('holds its size inside a tight box instead of stretching', (
@@ -90,6 +102,72 @@ void main() {
       );
 
       expect(tester.getSize(find.byType(AppIcon)), const Size(30, 30));
+    });
+  });
+
+  group('TileGroup', () {
+    BorderRadiusGeometry? radiusOf(WidgetTester tester, String label) =>
+        radiiOf(
+          tester,
+          find.ancestor(of: find.text(label), matching: find.byType(BrandTile)),
+        ).firstOrNull;
+
+    testWidgets('rounds only the ends, so a run reads as one card', (
+      tester,
+    ) async {
+      await pumpBranded(
+        tester,
+        const TileGroup(
+          children: [
+            BrandTile(title: Text('first')),
+            BrandTile(title: Text('middle')),
+            BrandTile(title: Text('last')),
+          ],
+        ),
+      );
+
+      expect(
+        radiusOf(tester, 'first'),
+        const BorderRadius.vertical(top: Radius.circular(AppRadii.tile)),
+      );
+      // The seam between rows is a divider, not a pair of cut corners.
+      expect(radiusOf(tester, 'middle'), BorderRadius.zero);
+      expect(
+        radiusOf(tester, 'last'),
+        const BorderRadius.vertical(bottom: Radius.circular(AppRadii.tile)),
+      );
+    });
+
+    testWidgets('a lone tile still rounds all four corners', (tester) async {
+      await pumpBranded(
+        tester,
+        const TileGroup(children: [BrandTile(title: Text('alone'))]),
+      );
+
+      expect(radiusOf(tester, 'alone'), BorderRadius.circular(AppRadii.field));
+    });
+
+    testWidgets('a tile outside a group keeps every corner', (tester) async {
+      // TileColumn stacks are meant to read as separate cards, so grouping
+      // must not reach them.
+      await pumpBranded(
+        tester,
+        const TileColumn(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            BrandTile(title: Text('a')),
+            BrandTile(title: Text('b')),
+          ],
+        ),
+      );
+
+      for (final label in ['a', 'b']) {
+        expect(
+          radiusOf(tester, label),
+          BorderRadius.circular(AppRadii.field),
+          reason: label,
+        );
+      }
     });
   });
 

@@ -35,7 +35,7 @@ class SettingsScreen extends ConsumerWidget {
           const SectionHeader('Modules'),
           TintCard(
             padding: EdgeInsets.zero,
-            child: Column(
+            child: TileGroup(
               children: AppModule.values
                   .map(
                     (m) => BrandSwitchTile(
@@ -70,7 +70,7 @@ class SettingsScreen extends ConsumerWidget {
           const SectionHeader('Appearance'),
           TintCard(
             padding: EdgeInsets.zero,
-            child: Column(
+            child: TileGroup(
               children: [
                 BrandTile(
                   leading: const AppIcon(AppIcons.themeMode),
@@ -125,7 +125,7 @@ class SettingsScreen extends ConsumerWidget {
           const SectionHeader('Language & region'),
           TintCard(
             padding: EdgeInsets.zero,
-            child: Column(
+            child: TileGroup(
               children: [
                 BrandTile(
                   leading: const AppIcon(AppIcons.language),
@@ -151,7 +151,7 @@ class SettingsScreen extends ConsumerWidget {
           const SectionHeader('Notifications'),
           TintCard(
             padding: EdgeInsets.zero,
-            child: Column(
+            child: TileGroup(
               children: [
                 BrandTile(
                   leading: const AppIcon(AppIcons.notificationsActive),
@@ -245,7 +245,7 @@ class SettingsScreen extends ConsumerWidget {
           const SectionHeader('Security'),
           TintCard(
             padding: EdgeInsets.zero,
-            child: Column(
+            child: TileGroup(
               children: [
                 BrandSwitchTile(
                   leading: const AppIcon(AppIcons.lock),
@@ -323,7 +323,7 @@ class SettingsScreen extends ConsumerWidget {
           const SectionHeader('Data'),
           TintCard(
             padding: EdgeInsets.zero,
-            child: Column(
+            child: TileGroup(
               children: [
                 _exportTile(
                   context,
@@ -369,7 +369,7 @@ class SettingsScreen extends ConsumerWidget {
           const SectionHeader('About'),
           TintCard(
             padding: EdgeInsets.zero,
-            child: Column(
+            child: TileGroup(
               children: [
                 const BrandTile(
                   leading: AppIcon(AppIcons.info),

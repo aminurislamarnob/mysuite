@@ -121,7 +121,7 @@ class _LoanCard extends ConsumerWidget {
       padding: const EdgeInsets.only(bottom: 10),
       child: TintCard(
         padding: EdgeInsets.zero,
-        child: Column(
+        child: TileGroup(
           children: [
             BrandTile(
               dense: true,

@@ -46,7 +46,7 @@ class PeopleScreen extends ConsumerWidget {
           const SectionHeader('Household'),
           TintCard(
             padding: EdgeInsets.zero,
-            child: Column(
+            child: TileGroup(
               children: [for (final p in household) _PersonRow(person: p)],
             ),
           ),
@@ -61,7 +61,7 @@ class PeopleScreen extends ConsumerWidget {
           else
             TintCard(
               padding: EdgeInsets.zero,
-              child: Column(
+              child: TileGroup(
                 children: [for (final p in contacts) _PersonRow(person: p)],
               ),
             ),

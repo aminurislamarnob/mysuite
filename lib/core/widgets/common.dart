@@ -654,8 +654,10 @@ class BrandTile extends StatelessWidget {
       enabled: enabled,
       semanticsLabel: semanticsLabel,
       style: .delta(
+        // A lone tile rounds all four corners; one inside a [TileGroup] rounds
+        // only the corners that are actually the group's outer edge.
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadii.field),
+          borderRadius: _TileSlot.of(context).radius,
         ),
         contentStyle: .delta(
           suffixedPadding: padding,
@@ -671,6 +673,77 @@ class BrandTile extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Where a tile sits in a [TileGroup], which decides which corners it rounds.
+enum TilePosition {
+  /// Not in a group, or the only tile in one: rounds all four corners.
+  only,
+  first,
+  middle,
+  last;
+
+  /// A run of tiles reads as one card, so only the ends round. The outer
+  /// corners take the card radius rather than the tile radius so a group
+  /// sitting flush inside a [TintCard] meets its clip exactly instead of
+  /// leaving a notch.
+  BorderRadius get radius => switch (this) {
+    TilePosition.only => BorderRadius.circular(AppRadii.field),
+    TilePosition.first => const BorderRadius.vertical(
+      top: Radius.circular(AppRadii.tile),
+    ),
+    TilePosition.middle => BorderRadius.zero,
+    TilePosition.last => const BorderRadius.vertical(
+      bottom: Radius.circular(AppRadii.tile),
+    ),
+  };
+}
+
+class _TileSlot extends InheritedWidget {
+  final TilePosition position;
+
+  const _TileSlot({required this.position, required super.child});
+
+  static TilePosition of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_TileSlot>()?.position ??
+      TilePosition.only;
+
+  @override
+  bool updateShouldNotify(_TileSlot old) => old.position != position;
+}
+
+/// A run of [BrandTile]s that reads as one card rather than a stack of islands.
+///
+/// Every tile draws its own rounded background, which is right for a tile on
+/// its own and wrong for six in a row: the corners cut in at every boundary and
+/// the group looks like separate cards that happen to touch. This rounds the
+/// first tile's top, the last tile's bottom, and squares everything between.
+///
+/// Use it wherever tiles are stacked flush inside a [TintCard]. For tiles that
+/// are meant to read as separate cards, with a gap between them, use
+/// [TileColumn].
+class TileGroup extends StatelessWidget {
+  final List<Widget> children;
+
+  const TileGroup({super.key, required this.children});
+
+  @override
+  Widget build(BuildContext context) => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      for (final (i, child) in children.indexed)
+        _TileSlot(
+          position: children.length == 1
+              ? TilePosition.only
+              : i == 0
+              ? TilePosition.first
+              : i == children.length - 1
+              ? TilePosition.last
+              : TilePosition.middle,
+          child: child,
+        ),
+    ],
+  );
 }
 
 /// A column of [BrandTile]s with [cardGap] between them.
