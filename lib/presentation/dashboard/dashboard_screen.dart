@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/people/people_repository.dart';
 import '../../core/settings/app_settings.dart';
-import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
@@ -126,7 +125,7 @@ class _NextUpBanner extends ConsumerWidget {
           footnote:
               '${Fmt.time(next.dose.scheduledTime)} · ${next.dosageLabel}',
           icon: AppIcons.medicineForm(next.medicine.form),
-          accent: AppColors.medicineAccent,
+          accent: context.brand.medicine,
           onTap: () => context.push('/medicine'),
         );
       }
@@ -144,7 +143,7 @@ class _NextUpBanner extends ConsumerWidget {
               ? 'Due today'
               : 'Due ${Fmt.due(due, withTime: next.hasDueTime)}',
           icon: AppIcons.tasks,
-          accent: AppColors.taskAccent,
+          accent: context.brand.task,
           onTap: () => context.push('/tasks'),
         );
       }
@@ -159,7 +158,7 @@ class _NextUpBanner extends ConsumerWidget {
             ? 'Nothing focused yet today'
             : '${Fmt.duration(stats.today)} focused so far',
         icon: AppIcons.focus,
-        accent: AppColors.focusAccent,
+        accent: context.brand.focus,
         onTap: () => context.push('/focus'),
       );
     }
@@ -169,7 +168,7 @@ class _NextUpBanner extends ConsumerWidget {
       headline: 'Nothing needs you right now',
       footnote: Fmt.fullDate(DateTime.now()),
       icon: AppIcons.checkCircle,
-      accent: AppColors.habitAccent,
+      accent: context.brand.habit,
       onTap: () => context.push('/insights'),
     );
   }
@@ -197,7 +196,7 @@ class _TodaySummary extends ConsumerWidget {
       add(
         (tint) => PlanCard(
           icon: AppIcons.medicine,
-          accent: AppColors.medicineAccent,
+          accent: context.brand.medicine,
           label: 'Medicine',
           value: remaining == 0 ? 'All taken' : '$remaining left',
           tintIndex: tint,
@@ -211,7 +210,7 @@ class _TodaySummary extends ConsumerWidget {
       add(
         (tint) => PlanCard(
           icon: AppIcons.tasks,
-          accent: AppColors.taskAccent,
+          accent: context.brand.task,
           label: 'Tasks',
           value: open == 0 ? 'All done' : '$open due',
           tintIndex: tint,
@@ -224,7 +223,7 @@ class _TodaySummary extends ConsumerWidget {
       add(
         (tint) => PlanCard(
           icon: AppIcons.focus,
-          accent: AppColors.focusAccent,
+          accent: context.brand.focus,
           label: 'Focus',
           value: Fmt.duration(stats?.today ?? Duration.zero),
           tintIndex: tint,
@@ -240,7 +239,7 @@ class _TodaySummary extends ConsumerWidget {
       add(
         (tint) => PlanCard(
           icon: AppIcons.expenses,
-          accent: AppColors.expenseAccent,
+          accent: context.brand.expense,
           label: 'Spent',
           value: Fmt.compactMoney(spentToday, currency),
           tintIndex: tint,
@@ -260,7 +259,7 @@ class _TodaySummary extends ConsumerWidget {
       add(
         (tint) => PlanCard(
           icon: AppIcons.habits,
-          accent: AppColors.habitAccent,
+          accent: context.brand.habit,
           label: 'Habits',
           value: habits.isEmpty ? 'None yet' : '$done / ${habits.length}',
           tintIndex: tint,
@@ -606,7 +605,7 @@ class _FocusWidget extends ConsumerWidget {
           onAction: () => context.push('/focus'),
         ),
         TintCard(
-          accent: AppColors.focusAccent,
+          accent: context.brand.focus,
           child: Row(
             children: [
               ProgressRing(
@@ -614,7 +613,7 @@ class _FocusWidget extends ConsumerWidget {
                 size: 84,
                 thickness: 10,
                 dashedGuide: false,
-                color: AppColors.focusAccent,
+                color: context.brand.focus,
                 center: FittedBox(
                   child: Text(
                     Fmt.percent(goal == 0 ? 0 : stats.today.inMinutes / goal),
@@ -679,9 +678,9 @@ class _NotesWidget extends ConsumerWidget {
               children: [
                 for (final n in notes)
                   BrandTile(
-                    leading: const AppIcon(
+                    leading: AppIcon(
                       AppIcons.notes,
-                      color: AppColors.noteAccent,
+                      color: context.brand.note,
                       size: 22,
                     ),
                     title: Text(

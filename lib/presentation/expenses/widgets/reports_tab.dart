@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/settings/app_settings.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/common.dart';
@@ -50,7 +50,7 @@ class ReportsTab extends ConsumerWidget {
                     Expanded(
                       child: StatTile(
                         icon: AppIcons.arrowDown,
-                        color: AppColors.successLight,
+                        color: context.brand.success,
                         label: 'Income',
                         value: Fmt.compactMoney(report.income, currency),
                       ),
@@ -59,7 +59,7 @@ class ReportsTab extends ConsumerWidget {
                     Expanded(
                       child: StatTile(
                         icon: AppIcons.arrowUp,
-                        color: AppColors.dangerLight,
+                        color: context.brand.danger,
                         label: 'Expense',
                         value: Fmt.compactMoney(report.expense, currency),
                       ),
@@ -69,8 +69,8 @@ class ReportsTab extends ConsumerWidget {
                       child: StatTile(
                         icon: AppIcons.savings,
                         color: report.net >= 0
-                            ? AppColors.successLight
-                            : AppColors.dangerLight,
+                            ? context.brand.success
+                            : context.brand.danger,
                         label: 'Net',
                         value: Fmt.compactMoney(report.net, currency),
                       ),
@@ -190,13 +190,13 @@ class ReportsTab extends ConsumerWidget {
                               barRods: [
                                 BarChartRodData(
                                   toY: trend[i].expense,
-                                  color: AppColors.expenseAccent,
+                                  color: context.brand.expense,
                                   width: 10,
                                   borderRadius: BorderRadius.circular(3),
                                 ),
                                 BarChartRodData(
                                   toY: trend[i].income,
-                                  color: AppColors.successLight,
+                                  color: context.brand.success,
                                   width: 10,
                                   borderRadius: BorderRadius.circular(3),
                                 ),
@@ -210,9 +210,9 @@ class ReportsTab extends ConsumerWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _legend(AppColors.expenseAccent, 'Expense'),
+                    _legend(context.brand.expense, 'Expense'),
                     const SizedBox(width: 16),
-                    _legend(AppColors.successLight, 'Income'),
+                    _legend(context.brand.success, 'Income'),
                   ],
                 ),
               ],

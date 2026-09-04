@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/widgets/brand.dart';
 import '../../core/widgets/common.dart';
@@ -156,7 +156,7 @@ class _CameraScanScreenState extends State<CameraScanScreen> {
             Text(
               _error!,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.dangerLight),
+              style: TextStyle(color: context.brand.danger),
             ),
           ],
           const SizedBox(height: 28),

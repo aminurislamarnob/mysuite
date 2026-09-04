@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/services/export_service.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/brand.dart';
@@ -188,7 +188,7 @@ class _TodayTab extends ConsumerWidget {
               Expanded(
                 child: StatTile(
                   icon: AppIcons.today,
-                  color: AppColors.medicineAccent,
+                  color: context.brand.medicine,
                   label: 'Today',
                   value: Fmt.percent(adherence.daily),
                 ),
@@ -197,7 +197,7 @@ class _TodayTab extends ConsumerWidget {
               Expanded(
                 child: StatTile(
                   icon: AppIcons.calendarWeek,
-                  color: AppColors.medicineAccent,
+                  color: context.brand.medicine,
                   label: 'This week',
                   value: Fmt.percent(adherence.weekly),
                 ),
@@ -206,7 +206,7 @@ class _TodayTab extends ConsumerWidget {
               Expanded(
                 child: StatTile(
                   icon: AppIcons.insights,
-                  color: AppColors.medicineAccent,
+                  color: context.brand.medicine,
                   label: '30 days',
                   value: Fmt.percent(adherence.monthly),
                 ),
@@ -219,7 +219,7 @@ class _TodayTab extends ConsumerWidget {
           _alert(
             context,
             icon: AppIcons.warning,
-            color: AppColors.warningLight,
+            color: context.brand.warning,
             title:
                 '${conflicts.length} timing conflict'
                 '${conflicts.length == 1 ? '' : 's'} this month',
@@ -238,7 +238,7 @@ class _TodayTab extends ConsumerWidget {
           _alert(
             context,
             icon: AppIcons.inventory,
-            color: AppColors.warningLight,
+            color: context.brand.warning,
             title: '${f.medicine.name} runs out ${Fmt.relativeDay(f.date!)}',
             body:
                 '${f.medicine.inventory} ${f.medicine.dosageUnit} left. Plan a refill.',
@@ -252,7 +252,7 @@ class _TodayTab extends ConsumerWidget {
           _alert(
             context,
             icon: AppIcons.inventory,
-            color: AppColors.warningLight,
+            color: context.brand.warning,
             title: '${m.name} is low',
             body: 'Only ${m.inventory} ${m.dosageUnit} left.',
           ),
@@ -344,12 +344,12 @@ class DoseTile extends ConsumerWidget {
           leading: Container(
             padding: const EdgeInsets.all(9),
             decoration: BoxDecoration(
-              color: AppColors.medicineAccent.withValues(alpha: 0.12),
+              color: context.brand.medicine.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
             child: AppIcon(
               AppIcons.medicineForm(view.medicine.form),
-              color: AppColors.medicineAccent,
+              color: context.brand.medicine,
               size: 20,
             ),
           ),
@@ -370,7 +370,7 @@ class DoseTile extends ConsumerWidget {
             ].join(' · '),
             style: TextStyle(
               fontSize: 11,
-              color: missed ? AppColors.dangerLight : muted,
+              color: missed ? context.brand.danger : muted,
             ),
           ),
           trailing: Row(
@@ -387,7 +387,7 @@ class DoseTile extends ConsumerWidget {
               CircleIconButton(
                 icon: taken ? AppIcons.checkCircle : AppIcons.circle,
                 tooltip: taken ? 'Mark not taken' : 'Mark taken',
-                color: taken ? AppColors.successLight : muted,
+                color: taken ? context.brand.success : muted,
                 size: 40,
                 onPressed: () => repo.setDoseStatus(
                   view.dose.id,
@@ -477,9 +477,9 @@ class _CalendarTab extends ConsumerWidget {
                   margin: const EdgeInsets.all(2),
                   decoration: BoxDecoration(
                     color: isSel
-                        ? AppColors.medicineAccent
+                        ? context.brand.medicine
                         : isToday
-                        ? AppColors.medicineAccent.withValues(alpha: 0.1)
+                        ? context.brand.medicine.withValues(alpha: 0.1)
                         : null,
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -508,10 +508,10 @@ class _CalendarTab extends ConsumerWidget {
                             color: isSel
                                 ? Colors.white
                                 : allTaken
-                                ? AppColors.successLight
+                                ? context.brand.success
                                 : anyMissed
-                                ? AppColors.dangerLight
-                                : AppColors.medicineAccent,
+                                ? context.brand.danger
+                                : context.brand.medicine,
                           ),
                         ),
                     ],
@@ -746,10 +746,10 @@ class _TableTab extends ConsumerWidget {
                                   decoration: BoxDecoration(
                                     color:
                                         (taken
-                                                ? AppColors.successLight
+                                                ? context.brand.success
                                                 : skipped
                                                 ? muted
-                                                : AppColors.medicineAccent)
+                                                : context.brand.medicine)
                                             .withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
@@ -764,10 +764,10 @@ class _TableTab extends ConsumerWidget {
                                             : AppIcons.circle,
                                         size: 11,
                                         color: taken
-                                            ? AppColors.successLight
+                                            ? context.brand.success
                                             : skipped
                                             ? muted
-                                            : AppColors.medicineAccent,
+                                            : context.brand.medicine,
                                       ),
                                       const SizedBox(width: 3),
                                       Text(
@@ -832,14 +832,12 @@ class _MedicinesTab extends ConsumerWidget {
                       leading: Container(
                         padding: const EdgeInsets.all(9),
                         decoration: BoxDecoration(
-                          color: AppColors.medicineAccent.withValues(
-                            alpha: 0.12,
-                          ),
+                          color: context.brand.medicine.withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
                         child: AppIcon(
                           AppIcons.medicineForm(m.form),
-                          color: AppColors.medicineAccent,
+                          color: context.brand.medicine,
                           size: 20,
                         ),
                       ),
@@ -859,7 +857,7 @@ class _MedicinesTab extends ConsumerWidget {
                             '${m.inventory} ${m.dosageUnit} in stock',
                             style: TextStyle(
                               fontSize: 11,
-                              color: low ? AppColors.warningLight : muted,
+                              color: low ? context.brand.warning : muted,
                               fontWeight: low ? FontWeight.w600 : null,
                             ),
                           ),
@@ -943,8 +941,8 @@ class _ProfileDrawer extends ConsumerWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          const DrawerHeader(
-            decoration: BoxDecoration(color: AppColors.medicineAccent),
+          DrawerHeader(
+            decoration: BoxDecoration(color: context.brand.medicine),
             child: Align(
               alignment: Alignment.bottomLeft,
               child: Text(

@@ -6,7 +6,7 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../../core/database/app_database.dart';
 import '../../../core/people/people_repository.dart';
 import '../../../core/settings/app_settings.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/brand.dart';
@@ -299,7 +299,7 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
           CircleIconButton(
             icon: _listening ? AppIcons.micOff : AppIcons.mic,
             tooltip: 'Voice entry',
-            color: _listening ? AppColors.dangerLight : null,
+            color: _listening ? context.brand.danger : null,
             size: 40,
             onPressed: _voiceEntry,
           ),

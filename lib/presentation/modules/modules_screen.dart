@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/settings/app_settings.dart';
-import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/brand.dart';
@@ -13,15 +12,29 @@ class ModulesScreen extends ConsumerWidget {
   const ModulesScreen({super.key});
 
   /// Icon and accent colour for each module, shared with onboarding.
-  static (HugeIconData, Color) metaFor(AppModule m) => _meta[m]!;
+  ///
+  /// The icon is fixed but the accent moves with the palette, so this takes a
+  /// context rather than being the const map it used to be.
+  static (HugeIconData, Color) metaFor(BuildContext context, AppModule m) =>
+      (_icons[m]!, accentFor(context.brand, m));
 
-  static const _meta = <AppModule, (HugeIconData, Color)>{
-    AppModule.notes: (AppIcons.notes, AppColors.noteAccent),
-    AppModule.medicine: (AppIcons.medicine, AppColors.medicineAccent),
-    AppModule.habits: (AppIcons.habits, AppColors.habitAccent),
-    AppModule.tasks: (AppIcons.tasks, AppColors.taskAccent),
-    AppModule.expenses: (AppIcons.expenses, AppColors.expenseAccent),
-    AppModule.focus: (AppIcons.focus, AppColors.focusAccent),
+  static const _icons = <AppModule, HugeIconData>{
+    AppModule.notes: AppIcons.notes,
+    AppModule.medicine: AppIcons.medicine,
+    AppModule.habits: AppIcons.habits,
+    AppModule.tasks: AppIcons.tasks,
+    AppModule.expenses: AppIcons.expenses,
+    AppModule.focus: AppIcons.focus,
+  };
+
+  /// The accent the active palette gives [m].
+  static Color accentFor(BrandColors brand, AppModule m) => switch (m) {
+    AppModule.notes => brand.note,
+    AppModule.medicine => brand.medicine,
+    AppModule.habits => brand.habit,
+    AppModule.tasks => brand.task,
+    AppModule.expenses => brand.expense,
+    AppModule.focus => brand.focus,
   };
 
   @override
@@ -55,7 +68,7 @@ class ModulesScreen extends ConsumerWidget {
                       Builder(
                         builder: (context) {
                           final m = enabled[i];
-                          final (icon, color) = _meta[m]!;
+                          final (icon, color) = metaFor(context, m);
                           return _ModuleCard(
                             module: m,
                             icon: icon,
@@ -71,7 +84,7 @@ class ModulesScreen extends ConsumerWidget {
                   const SizedBox(height: 30),
                   const SectionHeader('Switched off'),
                   ...disabled.map((m) {
-                    final (icon, color) = _meta[m]!;
+                    final (icon, color) = metaFor(context, m);
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: TintCard(

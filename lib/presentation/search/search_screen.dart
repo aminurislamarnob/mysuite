@@ -6,6 +6,7 @@ import '../../core/settings/app_settings.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/widgets/brand.dart';
 import '../../core/widgets/common.dart';
+import '../../core/theme/app_theme.dart';
 import 'search_provider.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
@@ -140,13 +141,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: hit.kind.color.withValues(alpha: 0.13),
+                      color: hit.kind
+                          .color(context.brand)
+                          .withValues(alpha: 0.13),
                       shape: BoxShape.circle,
                     ),
                     child: AppIcon(
                       hit.kind.icon,
                       size: 18,
-                      color: hit.kind.color,
+                      color: hit.kind.color(context.brand),
                     ),
                   ),
                   title: Text(
@@ -161,7 +164,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   ),
                   trailing: Text(
                     hit.kind.label,
-                    style: TextStyle(fontSize: 10, color: hit.kind.color),
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: hit.kind.color(context.brand),
+                    ),
                   ),
                   onTap: () => _open(hit),
                 ),

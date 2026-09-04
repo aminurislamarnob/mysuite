@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/services/notification_service.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/brand.dart';
@@ -471,7 +471,7 @@ class _SubtaskList extends ConsumerWidget {
               (s) => BrandTile(
                 leading: BrandCheckbox(
                   value: s.isCompleted,
-                  color: AppColors.taskAccent,
+                  color: context.brand.task,
                   semanticsLabel: s.title,
                   onChanged: (v) =>
                       ref.read(taskRepositoryProvider).setCompleted(s.id, v),

@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/settings/app_settings.dart';
-import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/brand.dart';
@@ -139,7 +138,7 @@ Future<void> showQuickAdd(BuildContext context, WidgetRef ref) {
           if (settings.isEnabled(AppModule.tasks))
             _tile(
               icon: AppIcons.tasks,
-              color: AppColors.taskAccent,
+              color: context.brand.task,
               title: 'Add task',
               onTap: () {
                 Navigator.pop(sheetContext);
@@ -149,7 +148,7 @@ Future<void> showQuickAdd(BuildContext context, WidgetRef ref) {
           if (settings.isEnabled(AppModule.expenses))
             _tile(
               icon: AppIcons.expenses,
-              color: AppColors.expenseAccent,
+              color: context.brand.expense,
               title: 'Add expense',
               onTap: () {
                 Navigator.pop(sheetContext);
@@ -159,7 +158,7 @@ Future<void> showQuickAdd(BuildContext context, WidgetRef ref) {
           if (settings.isEnabled(AppModule.habits))
             _tile(
               icon: AppIcons.habits,
-              color: AppColors.habitAccent,
+              color: context.brand.habit,
               title: 'Log habit',
               subtitle: 'One tap per habit',
               onTap: () {
@@ -170,7 +169,7 @@ Future<void> showQuickAdd(BuildContext context, WidgetRef ref) {
           if (settings.isEnabled(AppModule.medicine))
             _tile(
               icon: AppIcons.medicine,
-              color: AppColors.medicineAccent,
+              color: context.brand.medicine,
               title: 'Mark medicine taken',
               onTap: () {
                 Navigator.pop(sheetContext);
@@ -180,7 +179,7 @@ Future<void> showQuickAdd(BuildContext context, WidgetRef ref) {
           if (settings.isEnabled(AppModule.notes))
             _tile(
               icon: AppIcons.notes,
-              color: AppColors.noteAccent,
+              color: context.brand.note,
               title: 'New note',
               onTap: () {
                 Navigator.pop(sheetContext);
@@ -190,7 +189,7 @@ Future<void> showQuickAdd(BuildContext context, WidgetRef ref) {
           if (settings.isEnabled(AppModule.focus))
             _tile(
               icon: AppIcons.focus,
-              color: AppColors.focusAccent,
+              color: context.brand.focus,
               title: 'Start focus session',
               onTap: () {
                 Navigator.pop(sheetContext);
@@ -200,7 +199,7 @@ Future<void> showQuickAdd(BuildContext context, WidgetRef ref) {
           if (settings.isEnabled(AppModule.expenses))
             _tile(
               icon: AppIcons.transfer,
-              color: AppColors.primaryLight,
+              color: Theme.of(context).colorScheme.primary,
               title: 'Transfer money',
               onTap: () {
                 Navigator.pop(sheetContext);
@@ -322,7 +321,7 @@ Future<void> _showDosePicker(BuildContext context, WidgetRef ref) async {
           return BrandTile(
             leading: AppIcon(
               AppIcons.medicineForm(v.medicine.form),
-              color: AppColors.medicineAccent,
+              color: context.brand.medicine,
             ),
             title: Text(v.medicine.name),
             subtitle: Text(

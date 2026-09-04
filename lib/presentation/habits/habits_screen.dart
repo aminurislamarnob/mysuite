@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/database/app_database.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/settings/app_settings.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/brand.dart';
@@ -60,7 +60,7 @@ class HabitsScreen extends ConsumerWidget {
                         Expanded(
                           child: StatTile(
                             icon: AppIcons.quick,
-                            color: AppColors.warningLight,
+                            color: context.brand.warning,
                             label: 'Caffeine today',
                             value: '${caffeine.toStringAsFixed(0)} mg',
                             sublabel: caffeine > 400
@@ -73,7 +73,7 @@ class HabitsScreen extends ConsumerWidget {
                         Expanded(
                           child: StatTile(
                             icon: AppIcons.savings,
-                            color: AppColors.expenseAccent,
+                            color: context.brand.expense,
                             label: 'Habit spend today',
                             value: Fmt.money(cost, currency),
                           ),
@@ -158,7 +158,7 @@ class _HabitCard extends ConsumerWidget {
                             AppIcons.streak,
                             size: 13,
                             color: stats.currentStreak > 0
-                                ? AppColors.warningLight
+                                ? context.brand.warning
                                 : muted,
                           ),
                           const SizedBox(width: 3),
@@ -180,7 +180,7 @@ class _HabitCard extends ConsumerWidget {
                 CircleIconButton(
                   icon: AppIcons.addCircle,
                   tooltip: isReduce ? 'Log one' : 'Add one',
-                  color: over ? AppColors.dangerLight : color,
+                  color: over ? context.brand.danger : color,
                   size: 40,
                   onPressed: () async {
                     await repo.addToDay(habit.id, 1);
@@ -204,7 +204,7 @@ class _HabitCard extends ConsumerWidget {
                   '${_trim(stats.todayAmount)} / ${_trim(habit.targetAmount)}'
                   '${habit.unit == null ? '' : ' ${habit.unit}'}',
               value: progress,
-              color: over ? AppColors.dangerLight : color,
+              color: over ? context.brand.danger : color,
             ),
             const SizedBox(height: 12),
             SizedBox(
@@ -309,7 +309,7 @@ class _HabitDetailSheet extends ConsumerWidget {
               Expanded(
                 child: StatTile(
                   icon: AppIcons.streak,
-                  color: AppColors.warningLight,
+                  color: context.brand.warning,
                   label: 'Current streak',
                   value: '${stats.currentStreak}',
                   sublabel: 'Best ${stats.bestStreak}',
@@ -354,7 +354,7 @@ class _HabitDetailSheet extends ConsumerWidget {
             const SizedBox(height: 12),
             StatTile(
               icon: AppIcons.savings,
-              color: AppColors.expenseAccent,
+              color: context.brand.expense,
               label: 'Cost this month',
               value: Fmt.money(stats.costThisMonth(habit), currency),
               sublabel:

@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers/database_provider.dart';
 import '../../core/settings/app_settings.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/utils/formatters.dart';
 
@@ -29,13 +29,15 @@ extension ResultKindX on ResultKind {
     ResultKind.focus => AppIcons.focus,
   };
 
-  Color get color => switch (this) {
-    ResultKind.note => AppColors.noteAccent,
-    ResultKind.task => AppColors.taskAccent,
-    ResultKind.habit => AppColors.habitAccent,
-    ResultKind.medicine => AppColors.medicineAccent,
-    ResultKind.expense => AppColors.expenseAccent,
-    ResultKind.focus => AppColors.focusAccent,
+  /// The accent the active palette gives this result kind. A method, not a
+  /// getter: the colour now lives in the theme, and this file has no context.
+  Color color(BrandColors brand) => switch (this) {
+    ResultKind.note => brand.note,
+    ResultKind.task => brand.task,
+    ResultKind.habit => brand.habit,
+    ResultKind.medicine => brand.medicine,
+    ResultKind.expense => brand.expense,
+    ResultKind.focus => brand.focus,
   };
 
   AppModule get module => switch (this) {

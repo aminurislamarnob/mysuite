@@ -4,7 +4,7 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/database/app_database.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/brand.dart';
@@ -124,7 +124,7 @@ Future<void> newNoteFlow(
         children: NoteTemplate.all
             .map(
               (t) => BrandTile(
-                leading: AppIcon(t.icon, color: AppColors.noteAccent),
+                leading: AppIcon(t.icon, color: context.brand.note),
                 title: Text(t.name),
                 onTap: () => Navigator.pop(context, t),
               ),
@@ -192,11 +192,7 @@ class _NoteCard extends ConsumerWidget {
                   ),
                 ),
                 if (note.isPinned)
-                  const AppIcon(
-                    AppIcons.pin,
-                    size: 14,
-                    color: AppColors.noteAccent,
-                  ),
+                  AppIcon(AppIcons.pin, size: 14, color: context.brand.note),
                 if (note.isLocked)
                   AppIcon(AppIcons.lock, size: 14, color: muted),
               ],
@@ -364,8 +360,8 @@ class _NotesDrawer extends ConsumerWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          const DrawerHeader(
-            decoration: BoxDecoration(color: AppColors.noteAccent),
+          DrawerHeader(
+            decoration: BoxDecoration(color: context.brand.note),
             child: Align(
               alignment: Alignment.bottomLeft,
               child: Text(

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/settings/app_settings.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/brand.dart';
@@ -45,7 +45,7 @@ class BillsTab extends ConsumerWidget {
                     padding: const EdgeInsets.only(bottom: 16),
                     child: StatTile(
                       icon: AppIcons.subscription,
-                      color: AppColors.expenseAccent,
+                      color: context.brand.expense,
                       label: 'Subscriptions',
                       value: '${Fmt.money(subsTotal, currency)}/month',
                       sublabel:
@@ -67,8 +67,8 @@ class BillsTab extends ConsumerWidget {
                               ? AppIcons.subscription
                               : AppIcons.bills,
                           color: overdue
-                              ? AppColors.dangerLight
-                              : AppColors.expenseAccent,
+                              ? context.brand.danger
+                              : context.brand.expense,
                         ),
                         title: Text(
                           b.name,
@@ -79,7 +79,7 @@ class BillsTab extends ConsumerWidget {
                           'due ${Fmt.relativeDay(b.nextDueDate)}',
                           style: TextStyle(
                             fontSize: 11,
-                            color: overdue ? AppColors.dangerLight : null,
+                            color: overdue ? context.brand.danger : null,
                           ),
                         ),
                         trailing: Row(

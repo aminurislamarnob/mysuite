@@ -52,9 +52,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
       }
     });
 
-    final accent = state.isBreak
-        ? AppColors.successLight
-        : AppColors.focusAccent;
+    final accent = state.isBreak ? context.brand.success : context.brand.focus;
 
     return BrandScaffold(
       header: BrandTopBar(
@@ -156,7 +154,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
                 icon: AppIcons.streak,
                 value: '${stats.streakDays}',
                 caption: 'Day streak',
-                color: AppColors.warningLight,
+                color: context.brand.warning,
               ),
             ],
           ),
@@ -197,7 +195,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
             trailing:
                 '${Fmt.duration(stats.today)} / ${Fmt.durationFromMinutes(goal)}',
             value: goal == 0 ? 0 : stats.today.inMinutes / goal,
-            color: AppColors.focusAccent,
+            color: context.brand.focus,
           ),
           Align(
             alignment: Alignment.centerRight,
@@ -300,7 +298,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
         const SizedBox(width: 28),
         _RoundAction(
           label: state.running ? 'Pause' : 'Resume',
-          color: state.running ? AppColors.warningLight : accent,
+          color: state.running ? context.brand.warning : accent,
           size: 84,
           onPressed: state.running ? notifier.pause : notifier.start,
         ),
@@ -568,7 +566,7 @@ class _FocusStatsSheet extends ConsumerWidget {
                 child: StatTile(
                   tintIndex: 0,
                   icon: AppIcons.today,
-                  color: AppColors.focusAccent,
+                  color: context.brand.focus,
                   label: 'Today',
                   value: Fmt.duration(stats.today),
                   sublabel: '${stats.sessionsToday} sessions',
@@ -579,7 +577,7 @@ class _FocusStatsSheet extends ConsumerWidget {
                 child: StatTile(
                   tintIndex: 1,
                   icon: AppIcons.calendarWeek,
-                  color: AppColors.focusAccent,
+                  color: context.brand.focus,
                   label: 'This week',
                   value: Fmt.duration(stats.week),
                   sublabel: '${stats.sessionsWeek} sessions',
@@ -590,7 +588,7 @@ class _FocusStatsSheet extends ConsumerWidget {
                 child: StatTile(
                   tintIndex: 2,
                   icon: AppIcons.streak,
-                  color: AppColors.warningLight,
+                  color: context.brand.warning,
                   label: 'Streak',
                   value: '${stats.streakDays}',
                   sublabel: 'days',
@@ -605,7 +603,7 @@ class _FocusStatsSheet extends ConsumerWidget {
                 child: StatTile(
                   tintIndex: 3,
                   icon: AppIcons.session,
-                  color: AppColors.focusAccent,
+                  color: context.brand.focus,
                   label: 'All time',
                   value: Fmt.duration(stats.total),
                 ),
@@ -615,7 +613,7 @@ class _FocusStatsSheet extends ConsumerWidget {
                 child: StatTile(
                   tintIndex: 4,
                   icon: AppIcons.lightMode,
-                  color: AppColors.warningLight,
+                  color: context.brand.warning,
                   label: 'Best hour',
                   value: stats.bestHour == null
                       ? '—'
@@ -630,7 +628,7 @@ class _FocusStatsSheet extends ConsumerWidget {
           SizedBox(
             height: 7 * 17.0,
             child: ContributionHeatmap(
-              color: AppColors.focusAccent,
+              color: context.brand.focus,
               intensityFor: (day) {
                 final d = stats.byDay[Fmt.dateOnly(day)];
                 if (d == null || d == Duration.zero) return 0;
@@ -652,7 +650,7 @@ class _FocusStatsSheet extends ConsumerWidget {
                     child: BrandTile(
                       leading: AppIcon(
                         s.isCompleted ? AppIcons.checkCircle : AppIcons.session,
-                        color: s.isCompleted ? AppColors.successLight : muted,
+                        color: s.isCompleted ? context.brand.success : muted,
                         size: 20,
                       ),
                       title: Text(
@@ -667,10 +665,10 @@ class _FocusStatsSheet extends ConsumerWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           if (s.rating != null) ...[
-                            const AppIcon(
+                            AppIcon(
                               AppIcons.star,
                               size: 12,
-                              color: AppColors.warningLight,
+                              color: context.brand.warning,
                             ),
                             Text(
                               '${s.rating}',

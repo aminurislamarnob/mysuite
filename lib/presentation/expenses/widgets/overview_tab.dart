@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/people/people_repository.dart';
 import '../../../core/settings/app_settings.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/brand.dart';
@@ -35,8 +35,8 @@ class OverviewTab extends ConsumerWidget {
                 '${Fmt.money(overall.spent, currency)} / ${Fmt.money(overall.budget.amount, currency)}',
             value: overall.fraction,
             color: overall.alertTier >= 80
-                ? AppColors.warningLight
-                : AppColors.successLight,
+                ? context.brand.warning
+                : context.brand.success,
           ),
         ],
         const SizedBox(height: 24),
@@ -105,7 +105,7 @@ class _SummaryCard extends ConsumerWidget {
               Expanded(
                 child: _Flow(
                   icon: AppIcons.arrowDown,
-                  color: AppColors.successLight,
+                  color: context.brand.success,
                   label: 'In',
                   value: report == null
                       ? '—'
@@ -115,7 +115,7 @@ class _SummaryCard extends ConsumerWidget {
               Expanded(
                 child: _Flow(
                   icon: AppIcons.arrowUp,
-                  color: AppColors.dangerLight,
+                  color: context.brand.danger,
                   label: 'Out',
                   value: report == null
                       ? '—'
@@ -249,9 +249,9 @@ class _TxTile extends ConsumerWidget {
     final isLoan = TxKind.isLoan(tx.kind);
 
     final color = switch (tx.kind) {
-      TxKind.income => AppColors.successLight,
-      TxKind.transfer => AppColors.primaryLight,
-      _ when isLoan => AppColors.primaryLight,
+      TxKind.income => context.brand.success,
+      TxKind.transfer => Theme.of(context).colorScheme.primary,
+      _ when isLoan => Theme.of(context).colorScheme.primary,
       _ => Color(cat?.color ?? 0xFF6C6C6C),
     };
     final icon = switch (tx.kind) {
@@ -290,7 +290,7 @@ class _TxTile extends ConsumerWidget {
           alignment: Alignment.centerRight,
           padding: const EdgeInsets.only(right: 20),
           decoration: BoxDecoration(
-            color: AppColors.dangerLight,
+            color: context.brand.danger,
             borderRadius: BorderRadius.circular(20),
           ),
           child: const AppIcon(AppIcons.delete, color: Colors.white),
@@ -325,7 +325,7 @@ class _TxTile extends ConsumerWidget {
             style: TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 15,
-              color: inbound ? AppColors.successLight : null,
+              color: inbound ? context.brand.success : null,
             ),
           ),
         ),

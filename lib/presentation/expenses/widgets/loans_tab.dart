@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/settings/app_settings.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/brand.dart';
@@ -50,7 +50,7 @@ class LoansTab extends ConsumerWidget {
                   Expanded(
                     child: StatTile(
                       icon: AppIcons.arrowDown,
-                      color: AppColors.successLight,
+                      color: context.brand.success,
                       label: 'Owed to me',
                       value: Fmt.compactMoney(totals.owedToMe, currency),
                     ),
@@ -59,7 +59,7 @@ class LoansTab extends ConsumerWidget {
                   Expanded(
                     child: StatTile(
                       icon: AppIcons.arrowUp,
-                      color: AppColors.dangerLight,
+                      color: context.brand.danger,
                       label: 'I owe',
                       value: Fmt.compactMoney(totals.iOwe, currency),
                     ),
@@ -104,7 +104,7 @@ class _LoanCard extends ConsumerWidget {
     final overdue = !row.isSettled && days != null && days < 0;
     final color = row.isSettled
         ? muted
-        : (row.isLent ? AppColors.successLight : AppColors.dangerLight);
+        : (row.isLent ? context.brand.success : context.brand.danger);
 
     final subtitle = [
       if (row.isSettled)
@@ -149,7 +149,7 @@ class _LoanCard extends ConsumerWidget {
                 subtitle,
                 style: TextStyle(
                   fontSize: 11,
-                  color: overdue ? AppColors.dangerLight : muted,
+                  color: overdue ? context.brand.danger : muted,
                 ),
               ),
               trailing: Row(

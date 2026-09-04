@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/services/notification_service.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/brand.dart';
@@ -559,7 +559,7 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
               Expanded(
                 child: StatTile(
                   icon: AppIcons.medicine,
-                  color: AppColors.medicineAccent,
+                  color: context.brand.medicine,
                   label: 'Total doses',
                   value: '${preview.length}',
                 ),
@@ -569,8 +569,8 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
                 child: StatTile(
                   icon: AppIcons.inventory,
                   color: runOut == null
-                      ? AppColors.successLight
-                      : AppColors.warningLight,
+                      ? context.brand.success
+                      : context.brand.warning,
                   label: 'Stock',
                   value: runOut == null ? 'Enough' : 'Runs out',
                   sublabel: runOut == null
@@ -610,17 +610,13 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
   Widget _warning(String message) => Container(
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: AppColors.warningLight.withValues(alpha: 0.12),
+      color: context.brand.warning.withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: AppColors.warningLight.withValues(alpha: 0.4)),
+      border: Border.all(color: context.brand.warning.withValues(alpha: 0.4)),
     ),
     child: Row(
       children: [
-        const AppIcon(
-          AppIcons.warning,
-          size: 18,
-          color: AppColors.warningLight,
-        ),
+        AppIcon(AppIcons.warning, size: 18, color: context.brand.warning),
         const SizedBox(width: 10),
         Expanded(child: Text(message, style: const TextStyle(fontSize: 12))),
       ],

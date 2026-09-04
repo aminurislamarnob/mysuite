@@ -273,28 +273,37 @@ class GreetingHeader extends StatelessWidget {
     this.onAvatarTap,
   });
 
-  /// The coral circle, standing in for a photo that is absent or unreadable.
-  Widget _gradient() => Container(
-    width: 50,
-    height: 50,
-    alignment: Alignment.center,
-    decoration: const BoxDecoration(
-      shape: BoxShape.circle,
-      gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [AppColors.coralSoft, AppColors.coral],
+  /// The brand-coloured circle standing in for a photo that is absent or
+  /// unreadable.
+  Widget _gradient(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    return Container(
+      width: 50,
+      height: 50,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          // A lighter tint of the brand into the brand itself, so the fallback
+          // avatar follows the palette instead of staying coral.
+          colors: [
+            Color.alphaBlend(primary.withValues(alpha: 0.55), Colors.white),
+            primary,
+          ],
+        ),
       ),
-    ),
-    child: Text(
-      initials.isEmpty ? 'mS' : initials,
-      style: const TextStyle(
-        color: Colors.white,
-        fontWeight: FontWeight.w700,
-        fontSize: 18,
+      child: Text(
+        initials.isEmpty ? 'mS' : initials,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w700,
+          fontSize: 18,
+        ),
       ),
-    ),
-  );
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -318,10 +327,10 @@ class GreetingHeader extends StatelessWidget {
                     fit: BoxFit.cover,
                     cacheWidth: (50 * MediaQuery.devicePixelRatioOf(context))
                         .round(),
-                    errorBuilder: (context, _, _) => _gradient(),
+                    errorBuilder: (context, _, _) => _gradient(context),
                   ),
                 )
-              : _gradient(),
+              : _gradient(context),
         ),
         const SizedBox(width: 14),
         Expanded(

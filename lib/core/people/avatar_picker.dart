@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../theme/app_colors.dart';
+import '../theme/app_theme.dart';
 import '../theme/app_icons.dart';
 import '../widgets/common.dart';
 
@@ -34,6 +34,10 @@ Future<AvatarChoice?> pickAvatar(
   BuildContext context, {
   required bool hasPhoto,
 }) async {
+  // Read up front: the cropper is configured after two awaits, and the context
+  // may well be gone by then.
+  final primary = Theme.of(context).colorScheme.primary;
+
   final action = await brandSheet<String>(
     context: context,
     builder: (sheetContext) => SheetScaffold(
@@ -52,13 +56,10 @@ Future<AvatarChoice?> pickAvatar(
           ),
           if (hasPhoto)
             BrandTile(
-              leading: const AppIcon(
-                AppIcons.delete,
-                color: AppColors.dangerLight,
-              ),
-              title: const Text(
+              leading: AppIcon(AppIcons.delete, color: context.brand.danger),
+              title: Text(
                 'Remove photo',
-                style: TextStyle(color: AppColors.dangerLight),
+                style: TextStyle(color: context.brand.danger),
               ),
               onTap: () => Navigator.pop(sheetContext, 'remove'),
             ),
@@ -91,9 +92,9 @@ Future<AvatarChoice?> pickAvatar(
     uiSettings: [
       AndroidUiSettings(
         toolbarTitle: 'Crop photo',
-        toolbarColor: AppColors.coral,
+        toolbarColor: primary,
         toolbarWidgetColor: Colors.white,
-        activeControlsWidgetColor: AppColors.coral,
+        activeControlsWidgetColor: primary,
         cropStyle: CropStyle.circle,
         lockAspectRatio: true,
         hideBottomControls: true,

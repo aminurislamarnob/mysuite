@@ -40,10 +40,35 @@ class BrandColors extends ThemeExtension<BrandColors> {
   /// The page background behind the cards.
   final Color canvas;
 
+  /// The three status hues. Read these rather than [AppColors] directly: only
+  /// the theme knows which brightness is in play, and the light variants on a
+  /// charcoal page are the bug this extension exists to prevent.
+  final Color success;
+  final Color warning;
+  final Color danger;
+
+  /// One accent per feature module, so a note stays amber and a task stays
+  /// indigo wherever they surface.
+  final Color note;
+  final Color medicine;
+  final Color habit;
+  final Color task;
+  final Color expense;
+  final Color focus;
+
   const BrandColors({
     required this.tints,
     required this.hairline,
     required this.canvas,
+    required this.success,
+    required this.warning,
+    required this.danger,
+    required this.note,
+    required this.medicine,
+    required this.habit,
+    required this.task,
+    required this.expense,
+    required this.focus,
   });
 
   /// The pastel fill for the card at [index] in a row or grid.
@@ -58,15 +83,46 @@ class BrandColors extends ThemeExtension<BrandColors> {
       tints: tints,
       hairline: dark ? AppColors.hairlineDark : AppColors.hairlineLight,
       canvas: theme.scaffoldBackgroundColor,
+      success: dark ? AppColors.successDark : AppColors.successLight,
+      warning: dark ? AppColors.warningDark : AppColors.warningLight,
+      danger: dark ? AppColors.dangerDark : AppColors.dangerLight,
+      note: dark ? AppColors.noteAccentDark : AppColors.noteAccent,
+      medicine: dark ? AppColors.medicineAccentDark : AppColors.medicineAccent,
+      habit: dark ? AppColors.habitAccentDark : AppColors.habitAccent,
+      task: dark ? AppColors.taskAccentDark : AppColors.taskAccent,
+      expense: dark ? AppColors.expenseAccentDark : AppColors.expenseAccent,
+      focus: dark ? AppColors.focusAccentDark : AppColors.focusAccent,
     );
   }
 
   @override
-  BrandColors copyWith({List<Color>? tints, Color? hairline, Color? canvas}) {
+  BrandColors copyWith({
+    List<Color>? tints,
+    Color? hairline,
+    Color? canvas,
+    Color? success,
+    Color? warning,
+    Color? danger,
+    Color? note,
+    Color? medicine,
+    Color? habit,
+    Color? task,
+    Color? expense,
+    Color? focus,
+  }) {
     return BrandColors(
       tints: tints ?? this.tints,
       hairline: hairline ?? this.hairline,
       canvas: canvas ?? this.canvas,
+      success: success ?? this.success,
+      warning: warning ?? this.warning,
+      danger: danger ?? this.danger,
+      note: note ?? this.note,
+      medicine: medicine ?? this.medicine,
+      habit: habit ?? this.habit,
+      task: task ?? this.task,
+      expense: expense ?? this.expense,
+      focus: focus ?? this.focus,
     );
   }
 
@@ -80,6 +136,15 @@ class BrandColors extends ThemeExtension<BrandColors> {
       ],
       hairline: Color.lerp(hairline, other.hairline, t)!,
       canvas: Color.lerp(canvas, other.canvas, t)!,
+      success: Color.lerp(success, other.success, t)!,
+      warning: Color.lerp(warning, other.warning, t)!,
+      danger: Color.lerp(danger, other.danger, t)!,
+      note: Color.lerp(note, other.note, t)!,
+      medicine: Color.lerp(medicine, other.medicine, t)!,
+      habit: Color.lerp(habit, other.habit, t)!,
+      task: Color.lerp(task, other.task, t)!,
+      expense: Color.lerp(expense, other.expense, t)!,
+      focus: Color.lerp(focus, other.focus, t)!,
     );
   }
 }
@@ -228,9 +293,7 @@ class AppTheme {
       locale: locale,
       text: dark ? AppColors.textDark : AppColors.textLight,
       muted: dark ? AppColors.mutedDark : AppColors.mutedLight,
-      background: dark
-          ? AppColors.backgroundDark
-          : AppColors.backgroundLight,
+      background: dark ? AppColors.backgroundDark : AppColors.backgroundLight,
       surface: dark ? AppColors.surfaceDark : AppColors.surfaceLight,
       primary: dark ? AppColors.primaryDark : AppColors.primaryLight,
       onPrimary: dark ? const Color(0xFF3A1206) : Colors.white,
@@ -240,14 +303,22 @@ class AppTheme {
         tints: dark ? AppColors.tintsDark : AppColors.tints,
         hairline: dark ? AppColors.hairlineDark : AppColors.hairlineLight,
         canvas: dark ? AppColors.backgroundDark : Colors.white,
+        success: dark ? AppColors.successDark : AppColors.successLight,
+        warning: dark ? AppColors.warningDark : AppColors.warningLight,
+        danger: dark ? AppColors.dangerDark : AppColors.dangerLight,
+        note: dark ? AppColors.noteAccentDark : AppColors.noteAccent,
+        medicine: dark
+            ? AppColors.medicineAccentDark
+            : AppColors.medicineAccent,
+        habit: dark ? AppColors.habitAccentDark : AppColors.habitAccent,
+        task: dark ? AppColors.taskAccentDark : AppColors.taskAccent,
+        expense: dark ? AppColors.expenseAccentDark : AppColors.expenseAccent,
+        focus: dark ? AppColors.focusAccentDark : AppColors.focusAccent,
       ),
     );
   }
 
-  static ThemeData light({
-    bool compact = false,
-    String locale = 'en',
-  }) {
+  static ThemeData light({bool compact = false, String locale = 'en'}) {
     final t = tokens(
       brightness: Brightness.light,
       compact: compact,
@@ -271,10 +342,7 @@ class AppTheme {
     );
   }
 
-  static ThemeData dark({
-    bool compact = false,
-    String locale = 'en',
-  }) {
+  static ThemeData dark({bool compact = false, String locale = 'en'}) {
     final t = tokens(
       brightness: Brightness.dark,
       compact: compact,

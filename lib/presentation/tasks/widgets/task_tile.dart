@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/services/notification_service.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/brand.dart';
@@ -44,12 +44,16 @@ Widget _slideAction({
   );
 }
 
-Color priorityColor(int priority) => switch (priority) {
-  1 => AppColors.dangerLight,
-  2 => AppColors.warningLight,
-  3 => AppColors.taskAccent,
-  _ => AppColors.mutedLight,
-};
+/// The chip colour for a task priority. Takes the resolved palette rather than
+/// a context so it stays callable from anywhere a [BrandColors] is already in
+/// hand.
+Color priorityColor(BrandColors brand, Color muted, int priority) =>
+    switch (priority) {
+      1 => brand.danger,
+      2 => brand.warning,
+      3 => brand.task,
+      _ => muted,
+    };
 
 class TaskTile extends ConsumerWidget {
   final Task task;
@@ -82,7 +86,7 @@ class TaskTile extends ConsumerWidget {
         children: [
           _slideAction(
             onPressed: (_) => context.push('/focus', extra: task.id),
-            background: AppColors.focusAccent,
+            background: context.brand.focus,
             icon: AppIcons.play,
             label: 'Focus',
           ),
@@ -94,7 +98,7 @@ class TaskTile extends ConsumerWidget {
         children: [
           _slideAction(
             onPressed: (_) => TaskEditorSheet.show(context, task: task),
-            background: AppColors.primaryLight,
+            background: Theme.of(context).colorScheme.primary,
             icon: AppIcons.edit,
             label: 'Edit',
           ),
@@ -105,7 +109,7 @@ class TaskTile extends ConsumerWidget {
                   .read(notificationServiceProvider)
                   .cancelTaskReminder(task.id);
             },
-            background: AppColors.dangerLight,
+            background: context.brand.danger,
             icon: AppIcons.delete,
             label: 'Delete',
           ),
@@ -142,7 +146,11 @@ class TaskTile extends ConsumerWidget {
               width: 10,
               height: 10,
               decoration: BoxDecoration(
-                color: priorityColor(task.priority),
+                color: priorityColor(
+                  context.brand,
+                  context.muted,
+                  task.priority,
+                ),
                 shape: BoxShape.circle,
               ),
             ),
@@ -165,7 +173,7 @@ class TaskTile extends ConsumerWidget {
         _chip(
           icon: AppIcons.calendar,
           label: Fmt.due(task.dueDate!, withTime: task.hasDueTime),
-          color: overdue ? AppColors.dangerLight : muted,
+          color: overdue ? context.brand.danger : muted,
         ),
       );
     }
@@ -193,7 +201,7 @@ class TaskTile extends ConsumerWidget {
         _chip(
           icon: AppIcons.focus,
           label: Fmt.durationFromMinutes(task.loggedMinutes),
-          color: AppColors.focusAccent,
+          color: context.brand.focus,
         ),
       );
     }

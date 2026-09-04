@@ -81,6 +81,17 @@ class AppColors {
   static const expenseAccent = Color(0xFF9A6DD7); // warm violet
   static const focusAccent = Color(0xFF3AAFB9); // teal
 
+  /// The dark-mode twins. Note and habit share a hue with warning and success,
+  /// so they reuse those already-tuned darks; the rest apply the same lift the
+  /// existing pairs use — saturation x0.85, value x1.10 — which is what keeps a
+  /// saturated light accent from vibrating against the charcoal page.
+  static const noteAccentDark = warningDark;
+  static const medicineAccentDark = primaryDark;
+  static const habitAccentDark = successDark;
+  static const taskAccentDark = Color(0xFF7E9CF6);
+  static const expenseAccentDark = Color(0xFFB58DEC);
+  static const focusAccentDark = Color(0xFF59C2CC);
+
   /// A soft page-card fill derived from any accent, matching the density of the
   /// hand-picked [tints] so a module card sits happily next to a brand card.
   static Color wash(Color accent, {Brightness brightness = Brightness.light}) =>

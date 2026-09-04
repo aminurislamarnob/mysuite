@@ -33,11 +33,7 @@ FThemeData brandForuiTheme({
   if (_cacheKey == key) return _cached!;
 
   final theme = brandForuiThemeFrom(
-    AppTheme.tokens(
-      brightness: brightness,
-      compact: compact,
-      locale: locale,
-    ),
+    AppTheme.tokens(brightness: brightness, compact: compact, locale: locale),
   );
   _cacheKey = key;
   _cached = theme;

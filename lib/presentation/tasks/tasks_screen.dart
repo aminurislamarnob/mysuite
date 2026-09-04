@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import '../../core/database/app_database.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/brand.dart';
@@ -172,14 +172,14 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
             CircleIconButton(
               icon: AppIcons.mic,
               tooltip: 'Dictate',
-              color: _listening ? AppColors.dangerLight : null,
+              color: _listening ? context.brand.danger : null,
               size: 40,
               onPressed: _dictate,
             ),
             CircleIconButton(
               icon: AppIcons.arrowUp,
               tooltip: 'Add',
-              color: AppColors.taskAccent,
+              color: context.brand.task,
               size: 40,
               onPressed: _submitQuickAdd,
             ),
@@ -372,9 +372,9 @@ class _CalendarView extends ConsumerWidget {
                   margin: const EdgeInsets.all(2),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? AppColors.taskAccent
+                        ? context.brand.task
                         : isToday
-                        ? AppColors.taskAccent.withValues(alpha: 0.12)
+                        ? context.brand.task.withValues(alpha: 0.12)
                         : null,
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -399,7 +399,7 @@ class _CalendarView extends ConsumerWidget {
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? Colors.white
-                                : AppColors.taskAccent,
+                                : context.brand.task,
                             shape: BoxShape.circle,
                           ),
                         )
@@ -436,10 +436,12 @@ class _CalendarView extends ConsumerWidget {
 class _KanbanView extends ConsumerWidget {
   const _KanbanView();
 
-  static const _columns = [
-    (0, 'To Do', AppColors.mutedLight),
-    (1, 'Doing', AppColors.warningLight),
-    (2, 'Done', AppColors.successLight),
+  /// The three board columns. The colours move with the palette, so this is
+  /// resolved per build rather than held as a const.
+  static List<(int, String, Color)> _columnsOf(BuildContext context) => [
+    (0, 'To Do', context.muted),
+    (1, 'Doing', context.brand.warning),
+    (2, 'Done', context.brand.success),
   ];
 
   @override
@@ -455,7 +457,7 @@ class _KanbanView extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 96),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: _columns.map((col) {
+            children: _columnsOf(context).map((col) {
               final (status, label, color) = col;
               // "Done" is driven by completion, not just the board column, so
               // completing a task anywhere moves it here.
@@ -601,7 +603,11 @@ class _KanbanCard extends StatelessWidget {
               width: 4,
               height: 28,
               decoration: BoxDecoration(
-                color: priorityColor(task.priority),
+                color: priorityColor(
+                  context.brand,
+                  context.muted,
+                  task.priority,
+                ),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -660,25 +666,25 @@ class _MatrixView extends ConsumerWidget {
           (
             'Do first',
             'Urgent & important',
-            AppColors.dangerLight,
+            context.brand.danger,
             tasks.where((t) => urgent(t) && important(t)).toList(),
           ),
           (
             'Schedule',
             'Important, not urgent',
-            AppColors.taskAccent,
+            context.brand.task,
             tasks.where((t) => !urgent(t) && important(t)).toList(),
           ),
           (
             'Delegate',
             'Urgent, not important',
-            AppColors.warningLight,
+            context.brand.warning,
             tasks.where((t) => urgent(t) && !important(t)).toList(),
           ),
           (
             'Eliminate',
             'Neither',
-            AppColors.mutedLight,
+            context.muted,
             tasks.where((t) => !urgent(t) && !important(t)).toList(),
           ),
         ];
@@ -796,8 +802,8 @@ class _ProjectDrawer extends ConsumerWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          const DrawerHeader(
-            decoration: BoxDecoration(color: AppColors.taskAccent),
+          DrawerHeader(
+            decoration: BoxDecoration(color: context.brand.task),
             child: Align(
               alignment: Alignment.bottomLeft,
               child: Text(

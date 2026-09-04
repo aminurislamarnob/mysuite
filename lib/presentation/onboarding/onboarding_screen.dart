@@ -8,7 +8,6 @@ import '../../core/people/people_repository.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/security_service.dart';
 import '../../core/settings/app_settings.dart';
-import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/brand.dart';
@@ -188,7 +187,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             Builder(
               builder: (context) {
                 final m = AppModule.values[i];
-                final (icon, color) = ModulesScreen.metaFor(m);
+                final (icon, color) = ModulesScreen.metaFor(context, m);
                 return Padding(
                   // Wider than a list row's gutter: these are tall feature
                   // cards, and 10 reads cramped under that much weight.
@@ -329,7 +328,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       child: Column(
         children: [
           ...AppModule.values.map((m) {
-            final (icon, color) = ModulesScreen.metaFor(m);
+            final (icon, color) = ModulesScreen.metaFor(context, m);
             final on = _modules.contains(m);
             return Padding(
               padding: const EdgeInsets.only(bottom: cardGap),
@@ -439,14 +438,18 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             },
           ),
           const SizedBox(height: 24),
-          const TintCard(
-            accent: AppColors.coral,
-            padding: EdgeInsets.all(16),
+          TintCard(
+            accent: Theme.of(context).colorScheme.primary,
+            padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                AppIcon(AppIcons.privacy, size: 20, color: AppColors.coral),
-                SizedBox(width: 12),
-                Expanded(
+                AppIcon(
+                  AppIcons.privacy,
+                  size: 20,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
                   child: Text(
                     'Everything stays on this device. Nothing is uploaded.',
                     style: TextStyle(fontSize: 13, height: 1.4),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/settings/app_settings.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/brand.dart';
@@ -293,7 +293,7 @@ class _NotBudgetedState extends ConsumerState<_NotBudgeted> {
     // same figure without the warning colour.
     final month = ref.watch(reportMonthProvider);
     final past = month.isBefore(Fmt.startOfMonth(DateTime.now()));
-    final accent = past ? muted : AppColors.warningLight;
+    final accent = past ? muted : context.brand.warning;
 
     final shown = _expanded
         ? slices
@@ -433,8 +433,8 @@ class _BudgetRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final p = progress;
     final tierColor = switch (p.alertTier) {
-      100 => AppColors.dangerLight,
-      80 => AppColors.warningLight,
+      100 => context.brand.danger,
+      80 => context.brand.warning,
       _ => Color(p.color),
     };
 
@@ -464,7 +464,7 @@ class _BudgetRow extends ConsumerWidget {
                   fontSize: 11,
                   color: p.remaining >= 0
                       ? Theme.of(context).colorScheme.outline
-                      : AppColors.dangerLight,
+                      : context.brand.danger,
                 ),
               ),
               const Spacer(),

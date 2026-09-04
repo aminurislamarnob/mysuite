@@ -7,7 +7,6 @@ import '../../core/services/export_service.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/security_service.dart';
 import '../../core/settings/app_settings.dart';
-import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/brand.dart';
@@ -593,14 +592,3 @@ class _ProfileCard extends ConsumerWidget {
     );
   }
 }
-
-/// Colour reference kept close to the settings screen so accent previews and
-/// the module list stay in sync with the design tokens.
-const moduleAccent = <AppModule, Color>{
-  AppModule.notes: AppColors.noteAccent,
-  AppModule.medicine: AppColors.medicineAccent,
-  AppModule.habits: AppColors.habitAccent,
-  AppModule.tasks: AppColors.taskAccent,
-  AppModule.expenses: AppColors.expenseAccent,
-  AppModule.focus: AppColors.focusAccent,
-};

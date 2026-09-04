@@ -93,33 +93,72 @@ void main() {
   });
 
   group('BrandColors', () {
+    test('dark resolves the dark variant of every slot, not the light one', () {
+      // The bug this extension exists to prevent: before the migration, 80
+      // unguarded `AppColors.*Light` references outside the theme layer meant
+      // dark mode rendered light-mode reds, greens and greys throughout.
+      final light = AppTheme.light().extension<BrandColors>()!;
+      final dark = AppTheme.dark().extension<BrandColors>()!;
+
+      expect(dark.success, AppColors.successDark);
+      expect(dark.warning, AppColors.warningDark);
+      expect(dark.danger, AppColors.dangerDark);
+      expect(dark.note, AppColors.noteAccentDark);
+      expect(dark.medicine, AppColors.medicineAccentDark);
+      expect(dark.habit, AppColors.habitAccentDark);
+      expect(dark.task, AppColors.taskAccentDark);
+      expect(dark.expense, AppColors.expenseAccentDark);
+      expect(dark.focus, AppColors.focusAccentDark);
+
+      // And that they are genuinely different from the light ones — a dark
+      // variant aliased back to its light twin would pass the checks above.
+      for (final pair in [
+        (light.success, dark.success),
+        (light.warning, dark.warning),
+        (light.danger, dark.danger),
+        (light.note, dark.note),
+        (light.medicine, dark.medicine),
+        (light.habit, dark.habit),
+        (light.task, dark.task),
+        (light.expense, dark.expense),
+        (light.focus, dark.focus),
+      ]) {
+        expect(pair.$2, isNot(pair.$1));
+      }
+    });
+
     test('tint wraps around the rotation instead of running off the end', () {
-      const brand = BrandColors(
-        tints: AppColors.tints,
-        hairline: AppColors.hairlineLight,
-        canvas: Colors.white,
-      );
+      final brand = _brandOf(Colors.white, tints: AppColors.tints);
 
       expect(brand.tint(0), AppColors.tintPeach);
       expect(brand.tint(3), brand.tint(0));
       expect(brand.tint(7), brand.tint(1));
     });
 
-    test('lerp interpolates every tint, not just the first', () {
-      const a = BrandColors(
-        tints: [Colors.black, Colors.black, Colors.black],
-        hairline: Colors.black,
-        canvas: Colors.black,
-      );
-      const b = BrandColors(
-        tints: [Colors.white, Colors.white, Colors.white],
-        hairline: Colors.white,
-        canvas: Colors.white,
-      );
+    test('lerp interpolates every slot, not just the tints', () {
+      final a = _brandOf(Colors.black);
+      final b = _brandOf(Colors.white);
 
       final mid = a.lerp(b, 1.0);
+
+      // Every field, so a slot added later without a matching lerp line fails
+      // here rather than silently freezing mid-transition.
       expect(mid.tints, everyElement(Colors.white));
-      expect(mid.hairline, Colors.white);
+      for (final c in [
+        mid.hairline,
+        mid.canvas,
+        mid.success,
+        mid.warning,
+        mid.danger,
+        mid.note,
+        mid.medicine,
+        mid.habit,
+        mid.task,
+        mid.expense,
+        mid.focus,
+      ]) {
+        expect(c, Colors.white);
+      }
     });
 
     // Building a theme resolves the Google font, which needs a live binding —
@@ -484,3 +523,21 @@ void main() {
 }
 
 void _noop() {}
+
+/// A [BrandColors] with every slot set to [c], for the structural tests above.
+/// Naming each field rather than spreading a default keeps the analyzer honest:
+/// a new slot breaks this helper, which is the reminder to cover it.
+BrandColors _brandOf(Color c, {List<Color>? tints}) => BrandColors(
+  tints: tints ?? [c, c, c],
+  hairline: c,
+  canvas: c,
+  success: c,
+  warning: c,
+  danger: c,
+  note: c,
+  medicine: c,
+  habit: c,
+  task: c,
+  expense: c,
+  focus: c,
+);

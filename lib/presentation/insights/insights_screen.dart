@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/settings/app_settings.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/brand.dart';
@@ -58,7 +58,7 @@ class InsightsScreen extends ConsumerWidget {
                   child: StatTile(
                     tintIndex: 0,
                     icon: AppIcons.checkCircle,
-                    color: AppColors.taskAccent,
+                    color: context.brand.task,
                     label: 'Completed (7d)',
                     value: '${taskStats.completed}',
                   ),
@@ -68,7 +68,7 @@ class InsightsScreen extends ConsumerWidget {
                   child: StatTile(
                     tintIndex: 1,
                     icon: AppIcons.pending,
-                    color: AppColors.warningLight,
+                    color: context.brand.warning,
                     label: 'Still open',
                     value: '${taskStats.open}',
                   ),
@@ -78,7 +78,7 @@ class InsightsScreen extends ConsumerWidget {
                   child: StatTile(
                     tintIndex: 2,
                     icon: AppIcons.error,
-                    color: AppColors.dangerLight,
+                    color: context.brand.danger,
                     label: 'Overdue',
                     value: '${taskStats.overdue}',
                   ),
@@ -94,7 +94,7 @@ class InsightsScreen extends ConsumerWidget {
             SizedBox(
               height: 7 * 17.0,
               child: ContributionHeatmap(
-                color: AppColors.taskAccent,
+                color: context.brand.task,
                 intensityFor: (day) {
                   final n = taskStats.perDay[Fmt.dateOnly(day)] ?? 0;
                   return n == 0 ? 0 : (n / 5).clamp(0.2, 1.0);
@@ -111,8 +111,8 @@ class InsightsScreen extends ConsumerWidget {
               trailing: Fmt.percent(adherence.monthly),
               value: adherence.monthly,
               color: adherence.monthly >= 0.9
-                  ? AppColors.successLight
-                  : AppColors.warningLight,
+                  ? context.brand.success
+                  : context.brand.warning,
             ),
             if (adherence.totalMisses > 0)
               Padding(
@@ -135,7 +135,7 @@ class InsightsScreen extends ConsumerWidget {
                   child: StatTile(
                     tintIndex: 3,
                     icon: AppIcons.focus,
-                    color: AppColors.focusAccent,
+                    color: context.brand.focus,
                     label: 'This week',
                     value: Fmt.duration(focusStats.week),
                     sublabel: '${focusStats.sessionsWeek} sessions',
@@ -146,7 +146,7 @@ class InsightsScreen extends ConsumerWidget {
                   child: StatTile(
                     tintIndex: 4,
                     icon: AppIcons.lightMode,
-                    color: AppColors.warningLight,
+                    color: context.brand.warning,
                     label: 'Peak hour',
                     value: focusStats.bestHour == null
                         ? '—'
@@ -166,7 +166,7 @@ class InsightsScreen extends ConsumerWidget {
                   child: StatTile(
                     tintIndex: 5,
                     icon: AppIcons.arrowUp,
-                    color: AppColors.dangerLight,
+                    color: context.brand.danger,
                     label: 'Spent',
                     value: Fmt.compactMoney(report.expense, currency),
                     sublabel: report.changeVsPrevious == null
@@ -181,8 +181,8 @@ class InsightsScreen extends ConsumerWidget {
                     tintIndex: 6,
                     icon: AppIcons.savings,
                     color: report.net >= 0
-                        ? AppColors.successLight
-                        : AppColors.dangerLight,
+                        ? context.brand.success
+                        : context.brand.danger,
                     label: 'Net',
                     value: Fmt.compactMoney(report.net, currency),
                   ),
@@ -302,10 +302,10 @@ class _DigestCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const AppIcon(
+                AppIcon(
                   AppIcons.sparkle,
                   size: 18,
-                  color: AppColors.primaryLight,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
                 const SizedBox(width: 8),
                 Text(

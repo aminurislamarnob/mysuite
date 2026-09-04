@@ -9,7 +9,7 @@ import '../../core/database/app_database.dart';
 import '../../core/services/export_service.dart';
 import '../../core/services/notification_service.dart';
 import '../../core/services/security_service.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/brand.dart';
@@ -283,7 +283,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
             CircleIconButton(
               icon: _listening ? AppIcons.micOff : AppIcons.mic,
               tooltip: _listening ? 'Stop dictation' : 'Dictate',
-              color: _listening ? AppColors.dangerLight : null,
+              color: _listening ? context.brand.danger : null,
               size: 40,
               onPressed: _toggleDictation,
             ),

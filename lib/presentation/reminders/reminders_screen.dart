@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/settings/app_settings.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/brand.dart';
@@ -11,6 +11,7 @@ import '../../core/widgets/common.dart';
 import '../expenses/providers/expenses_provider.dart';
 import '../habits/repository/habit_repository.dart';
 import '../medicine/repository/medicine_repository.dart';
+import '../modules/modules_screen.dart';
 import '../notes/repository/note_repository.dart';
 import '../tasks/repository/task_repository.dart';
 
@@ -20,17 +21,30 @@ class ReminderItem {
   final String subtitle;
   final DateTime at;
   final HugeIconData icon;
-  final Color color;
   final String route;
+
+  /// Which module this reminder came from. The accent is resolved from the
+  /// active palette at render time — this provider has no context, and pinning
+  /// a colour here would freeze it to whichever palette was live at build.
+  final AppModule module;
+
+  /// A colour of the item's own, for the one case that has one: a habit
+  /// carries a user-picked colour that outranks the module accent.
+  final Color? colorOverride;
 
   const ReminderItem({
     required this.title,
     required this.subtitle,
     required this.at,
     required this.icon,
-    required this.color,
+    required this.module,
     required this.route,
+    this.colorOverride,
   });
+
+  /// The accent to draw this reminder with.
+  Color accent(BrandColors brand) =>
+      colorOverride ?? ModulesScreen.accentFor(brand, module);
 }
 
 /// Collects every scheduled reminder across modules into one chronological
@@ -56,7 +70,7 @@ final remindersProvider = FutureProvider<List<ReminderItem>>((ref) async {
           subtitle: '${med.dosage.toStringAsFixed(0)} ${med.dosageUnit}',
           at: d.scheduledTime,
           icon: AppIcons.medicine,
-          color: AppColors.medicineAccent,
+          module: AppModule.medicine,
           route: '/medicine',
         ),
       );
@@ -72,7 +86,7 @@ final remindersProvider = FutureProvider<List<ReminderItem>>((ref) async {
           subtitle: 'Task reminder',
           at: t.reminderTime!,
           icon: AppIcons.checkCircle,
-          color: AppColors.taskAccent,
+          module: AppModule.tasks,
           route: '/tasks',
         ),
       );
@@ -88,7 +102,7 @@ final remindersProvider = FutureProvider<List<ReminderItem>>((ref) async {
           subtitle: 'Note reminder',
           at: n.reminderAt!,
           icon: AppIcons.notes,
-          color: AppColors.noteAccent,
+          module: AppModule.notes,
           route: '/notes',
         ),
       );
@@ -111,7 +125,8 @@ final remindersProvider = FutureProvider<List<ReminderItem>>((ref) async {
           subtitle: 'Daily habit nudge',
           at: when,
           icon: AppIcons.habits,
-          color: Color(h.color),
+          module: AppModule.habits,
+          colorOverride: Color(h.color),
           route: '/habits',
         ),
       );
@@ -135,7 +150,7 @@ final remindersProvider = FutureProvider<List<ReminderItem>>((ref) async {
               '${l.outstanding.toStringAsFixed(0)} outstanding',
           at: due,
           icon: AppIcons.transfer,
-          color: AppColors.expenseAccent,
+          module: AppModule.expenses,
           route: '/expenses',
         ),
       );
@@ -150,7 +165,7 @@ final remindersProvider = FutureProvider<List<ReminderItem>>((ref) async {
               '${settings.currencySymbol}${b.amount.toStringAsFixed(0)} due',
           at: b.nextDueDate,
           icon: AppIcons.bills,
-          color: AppColors.expenseAccent,
+          module: AppModule.expenses,
           route: '/expenses',
         ),
       );
@@ -213,10 +228,16 @@ class RemindersScreen extends ConsumerWidget {
                           leading: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: r.color.withValues(alpha: 0.13),
+                              color: r
+                                  .accent(context.brand)
+                                  .withValues(alpha: 0.13),
                               shape: BoxShape.circle,
                             ),
-                            child: AppIcon(r.icon, size: 18, color: r.color),
+                            child: AppIcon(
+                              r.icon,
+                              size: 18,
+                              color: r.accent(context.brand),
+                            ),
                           ),
                           title: Text(
                             r.title,
