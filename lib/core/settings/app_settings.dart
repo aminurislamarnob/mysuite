@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../ai/ai_provider.dart';
 import '../theme/app_palette.dart';
 
 /// The six toggleable feature modules. Disabling one hides it from the modules
@@ -55,6 +56,14 @@ class AppSettings {
   final int dndStartMinutes;
   final int dndEndMinutes;
   final List<String> dashboardOrder;
+  final AiProvider aiProvider;
+
+  /// Empty means "the provider's default"; see [effectiveAiModel].
+  final String aiModel;
+
+  /// Skip the preview when every parsed entry resolved cleanly. Anything with
+  /// a warning still previews, so the switch never writes a guess.
+  final bool aiAutoSave;
 
   const AppSettings({
     this.enabledModules = const {
@@ -87,9 +96,15 @@ class AppSettings {
       'focus',
       'notes',
     ],
+    this.aiProvider = AiProvider.anthropic,
+    this.aiModel = '',
+    this.aiAutoSave = false,
   });
 
   bool isEnabled(AppModule m) => enabledModules.contains(m);
+
+  String get effectiveAiModel =>
+      aiModel.isEmpty ? aiProvider.defaultModel : aiModel;
 
   AppSettings copyWith({
     Set<AppModule>? enabledModules,
@@ -108,6 +123,9 @@ class AppSettings {
     int? dndStartMinutes,
     int? dndEndMinutes,
     List<String>? dashboardOrder,
+    AiProvider? aiProvider,
+    String? aiModel,
+    bool? aiAutoSave,
   }) {
     return AppSettings(
       enabledModules: enabledModules ?? this.enabledModules,
@@ -126,6 +144,9 @@ class AppSettings {
       dndStartMinutes: dndStartMinutes ?? this.dndStartMinutes,
       dndEndMinutes: dndEndMinutes ?? this.dndEndMinutes,
       dashboardOrder: dashboardOrder ?? this.dashboardOrder,
+      aiProvider: aiProvider ?? this.aiProvider,
+      aiModel: aiModel ?? this.aiModel,
+      aiAutoSave: aiAutoSave ?? this.aiAutoSave,
     );
   }
 }
@@ -164,6 +185,9 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   static const _kDndStart = 'dnd_start';
   static const _kDndEnd = 'dnd_end';
   static const _kDashOrder = 'dashboard_order';
+  static const _kAiProvider = 'ai_provider';
+  static const _kAiModel = 'ai_model';
+  static const _kAiAutoSave = 'ai_auto_save';
 
   AppSettings _load() {
     Set<AppModule> parseModules(String key, Set<AppModule> fallback) {
@@ -197,6 +221,9 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       dashboardOrder:
           _prefs.getStringList(_kDashOrder) ??
           const ['medicine', 'tasks', 'habits', 'expenses', 'focus', 'notes'],
+      aiProvider: AiProviderX.byName(_prefs.getString(_kAiProvider)),
+      aiModel: _prefs.getString(_kAiModel) ?? '',
+      aiAutoSave: _prefs.getBool(_kAiAutoSave) ?? false,
     );
   }
 
@@ -283,5 +310,28 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   void setDashboardOrder(List<String> order) {
     _prefs.setStringList(_kDashOrder, order);
     state = state.copyWith(dashboardOrder: order);
+  }
+
+  /// A model name belongs to one provider, so switching provider drops it
+  /// rather than sending a Gemini model name to OpenAI.
+  void setAiProvider(AiProvider p) {
+    _prefs.setString(_kAiProvider, p.name);
+    _prefs.remove(_kAiModel);
+    state = state.copyWith(aiProvider: p, aiModel: '');
+  }
+
+  void setAiModel(String v) {
+    final trimmed = v.trim();
+    if (trimmed.isEmpty) {
+      _prefs.remove(_kAiModel);
+    } else {
+      _prefs.setString(_kAiModel, trimmed);
+    }
+    state = state.copyWith(aiModel: trimmed);
+  }
+
+  void setAiAutoSave(bool v) {
+    _prefs.setBool(_kAiAutoSave, v);
+    state = state.copyWith(aiAutoSave: v);
   }
 }

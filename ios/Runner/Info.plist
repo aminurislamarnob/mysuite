@@ -71,9 +71,9 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Attach a photo of a receipt or prescription to your records.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Dictate notes, tasks and expenses instead of typing.</string>
+	<string>Speak commands and dictate into any module instead of typing.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>Turn what you say into notes, tasks and expense entries on-device.</string>
+	<string>Turn what you say into tasks, expenses, notes, medicines, habits and focus sessions. Recognition runs on-device; if you add an AI provider key in Settings, the transcript is sent to that provider.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Unlock mySuite and your locked notes with Face ID.</string>
 </dict>
