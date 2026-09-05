@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import '../settings/app_settings.dart';
 import 'ai_client.dart';
 import 'ai_provider.dart';
+import 'ai_request_context.dart';
 import 'api_key_store.dart';
 import 'clients/anthropic_client.dart';
 import 'clients/gemini_client.dart';
@@ -15,6 +16,12 @@ final httpClientProvider = Provider<http.Client>((ref) {
   ref.onDispose(client.close);
   return client;
 });
+
+/// A fresh snapshot of the user's names for one command. Auto-disposed so
+/// the lists are re-read for every request rather than cached across edits.
+final aiRequestContextProvider = FutureProvider.autoDispose<AiRequestContext>(
+  (ref) => buildAiRequestContext(ref),
+);
 
 /// The client for the configured provider, or null when no key is saved,
 /// which is the signal to fall back to the offline parser. Rebuilds when the

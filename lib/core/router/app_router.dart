@@ -6,6 +6,7 @@ import '../theme/app_icons.dart';
 import '../widgets/brand.dart';
 import '../widgets/common.dart';
 
+import '../../presentation/ai/assistant_screen.dart';
 import '../../presentation/dashboard/dashboard_screen.dart';
 import '../../presentation/expenses/expenses_screen.dart';
 import '../../presentation/focus/focus_screen.dart';
@@ -132,6 +133,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(path: '/search', builder: (_, _) => const SearchScreen()),
+      GoRoute(
+        // Not lock-gated: the assistant asks for an unlock itself, only when
+        // a parsed entry is about to land in a locked module.
+        path: '/assistant',
+        builder: (_, state) =>
+            AssistantScreen(initialTranscript: state.extra as String?),
+      ),
       GoRoute(path: '/reminders', builder: (_, _) => const RemindersScreen()),
     ],
     errorBuilder: (_, state) => BrandScaffold(
