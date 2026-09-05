@@ -41,7 +41,9 @@ OpenAI, Gemini or DeepSeek, with the user's own API key. The key is
 stored in the platform keychain, never in SharedPreferences. What is
 sent is the transcript plus the names of the user's categories,
 accounts, people, habits and projects, so the model can copy them
-exactly; nothing else leaves the device. Without a key, an offline
+exactly; nothing else leaves the device. (The keychain plugin needs
+`libsecret-1-dev` installed to build the Linux desktop target.)
+Without a key, an offline
 parser built on the existing quick-add and expense parsers handles the
 command instead, in English and Banglish (Bangla script needs a
 provider).
