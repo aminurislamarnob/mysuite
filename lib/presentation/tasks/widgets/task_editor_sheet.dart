@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/ai/ai_drafts.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../core/theme/app_theme.dart';
@@ -13,16 +14,28 @@ import '../repository/task_repository.dart';
 import '../utils/recurrence.dart';
 
 /// Full create/edit form for a task, presented as a bottom sheet.
+///
+/// Pops with the saved task's id, so a caller that prefilled the form (the
+/// assistant's preview card) can tell a save from a dismissal.
 class TaskEditorSheet extends ConsumerStatefulWidget {
   final Task? task;
   final int? projectId;
 
-  const TaskEditorSheet({super.key, this.task, this.projectId});
+  /// Prefill for a new task; ignored when editing an existing one.
+  final TaskDraft? draft;
 
-  static Future<void> show(BuildContext context, {Task? task, int? projectId}) {
-    return brandSheet(
+  const TaskEditorSheet({super.key, this.task, this.projectId, this.draft});
+
+  static Future<int?> show(
+    BuildContext context, {
+    Task? task,
+    int? projectId,
+    TaskDraft? draft,
+  }) {
+    return brandSheet<int>(
       context: context,
-      builder: (_) => TaskEditorSheet(task: task, projectId: projectId),
+      builder: (_) =>
+          TaskEditorSheet(task: task, projectId: projectId, draft: draft),
     );
   }
 
@@ -50,15 +63,18 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
   void initState() {
     super.initState();
     final t = widget.task;
-    _title = TextEditingController(text: t?.title ?? '');
-    _description = TextEditingController(text: t?.description ?? '');
-    _tags = TextEditingController();
-    _dueDate = t?.dueDate;
-    _hasTime = t?.hasDueTime ?? false;
-    _reminder = t?.reminderTime;
-    _priority = t?.priority ?? 4;
-    _projectId = t?.projectId ?? widget.projectId;
-    _recurrence = t?.recurrenceRule;
+    final d = t == null ? widget.draft : null;
+    _title = TextEditingController(text: t?.title ?? d?.title ?? '');
+    _description = TextEditingController(
+      text: t?.description ?? d?.description ?? '',
+    );
+    _tags = TextEditingController(text: d?.tags.join(', ') ?? '');
+    _dueDate = t?.dueDate ?? d?.dueDate;
+    _hasTime = t?.hasDueTime ?? d?.hasDueTime ?? false;
+    _reminder = t?.reminderTime ?? d?.reminder;
+    _priority = t?.priority ?? d?.priority ?? 4;
+    _projectId = t?.projectId ?? d?.projectId ?? widget.projectId;
+    _recurrence = t?.recurrenceRule ?? d?.recurrenceRule;
     _estimate = t?.estimateMinutes;
     if (t != null) _loadTags(t.id);
   }
@@ -134,7 +150,7 @@ class _TaskEditorSheetState extends ConsumerState<TaskEditorSheet> {
       await notifier.cancelTaskReminder(id);
     }
 
-    if (mounted) Navigator.pop(context);
+    if (mounted) Navigator.pop(context, id);
   }
 
   @override

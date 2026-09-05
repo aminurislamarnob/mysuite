@@ -1,8 +1,8 @@
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
 
+import '../../../core/ai/speech_service.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/people/people_repository.dart';
 import '../../../core/settings/app_settings.dart';
@@ -33,6 +33,13 @@ class ExpenseEntrySheet extends ConsumerStatefulWidget {
   final double? initialAmount;
   final String? receiptPath;
 
+  /// Prefill for a new transaction, used by the assistant's preview card.
+  /// Ignored when [existing] is set, which carries its own values.
+  final int? initialCategoryId;
+  final int? initialAccountId;
+  final int? initialPersonId;
+  final DateTime? initialDate;
+
   /// The row being rewritten; null when adding.
   final Expense? existing;
 
@@ -42,30 +49,43 @@ class ExpenseEntrySheet extends ConsumerStatefulWidget {
     this.initialNote,
     this.initialAmount,
     this.receiptPath,
+    this.initialCategoryId,
+    this.initialAccountId,
+    this.initialPersonId,
+    this.initialDate,
     this.existing,
   });
 
-  static Future<void> show(
+  /// Pops with the new row's id, or null when dismissed.
+  static Future<int?> show(
     BuildContext context, {
     int kind = TxKind.expense,
     String? note,
     double? amount,
     String? receiptPath,
+    int? categoryId,
+    int? accountId,
+    int? personId,
+    DateTime? date,
   }) {
-    return brandSheet(
+    return brandSheet<int>(
       context: context,
       builder: (_) => ExpenseEntrySheet(
         initialKind: kind,
         initialNote: note,
         initialAmount: amount,
         receiptPath: receiptPath,
+        initialCategoryId: categoryId,
+        initialAccountId: accountId,
+        initialPersonId: personId,
+        initialDate: date,
       ),
     );
   }
 
   /// Reopens the sheet on an existing transaction, prefilled.
-  static Future<void> edit(BuildContext context, Expense tx) {
-    return brandSheet(
+  static Future<int?> edit(BuildContext context, Expense tx) {
+    return brandSheet<int>(
       context: context,
       builder: (_) => ExpenseEntrySheet(
         initialKind: tx.kind,
@@ -85,7 +105,6 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
   late final TextEditingController _amount;
   late final TextEditingController _note;
   late final TextEditingController _name;
-  final _speech = stt.SpeechToText();
 
   late int _kind;
   int? _categoryId;
@@ -121,6 +140,11 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
       _transferAccountId = existing.transferAccountId;
       _personId = existing.personId;
       _date = existing.date;
+    } else {
+      _categoryId = widget.initialCategoryId;
+      _accountId = widget.initialAccountId;
+      _personId = widget.initialPersonId;
+      if (widget.initialDate != null) _date = widget.initialDate!;
     }
   }
 
@@ -129,28 +153,29 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
     _amount.dispose();
     _note.dispose();
     _name.dispose();
-    _speech.stop();
+    if (_listening) ref.read(speechServiceProvider).stop();
     super.dispose();
   }
 
   Future<void> _voiceEntry() async {
+    final speech = ref.read(speechServiceProvider);
     if (_listening) {
-      await _speech.stop();
+      await speech.stop();
       setState(() => _listening = false);
       return;
     }
-    if (!await _speech.initialize()) {
+    final started = await speech.listen(
+      onResult: (words, isFinal) {
+        if (!isFinal || !mounted) return;
+        setState(() => _listening = false);
+        _applyVoice(words);
+      },
+    );
+    if (!started) {
       _toast('Speech recognition is unavailable on this device.');
       return;
     }
     setState(() => _listening = true);
-    await _speech.listen(
-      onResult: (r) {
-        if (!r.finalResult) return;
-        setState(() => _listening = false);
-        _applyVoice(r.recognizedWords);
-      },
-    );
   }
 
   void _applyVoice(String phrase) {
@@ -215,7 +240,7 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
         _toast('Name the bill first.');
         return;
       }
-      await ref
+      final billId = await ref
           .read(expenseRepositoryProvider)
           .createRecurring(
             RecurringExpensesCompanion.insert(
@@ -228,7 +253,7 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
               categoryId: drift.Value(_categoryId),
             ),
           );
-      if (mounted) Navigator.pop(context);
+      if (mounted) Navigator.pop(context, billId);
       return;
     }
 
@@ -240,8 +265,9 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
         : null;
 
     final existing = _existing;
+    int id;
     if (existing == null) {
-      await repo.addTransaction(
+      id = await repo.addTransaction(
         amount: amount,
         accountId: accountId,
         categoryId: categoryId,
@@ -253,6 +279,7 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
         date: _date,
       );
     } else {
+      id = existing.id;
       await repo.updateTransaction(
         existing.id,
         amount: amount,
@@ -266,7 +293,7 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
       );
     }
 
-    if (mounted) Navigator.pop(context);
+    if (mounted) Navigator.pop(context, id);
   }
 
   @override

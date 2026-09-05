@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
 
+import '../../core/ai/speech_service.dart';
 import '../../core/database/app_database.dart';
 import '../../core/services/export_service.dart';
 import '../../core/services/notification_service.dart';
@@ -29,7 +29,6 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   quill.QuillController? _controller;
   final _titleController = TextEditingController();
   final _editorFocus = FocusNode();
-  final _speech = stt.SpeechToText();
 
   Note? _note;
   bool _loading = true;
@@ -127,7 +126,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
     _controller?.dispose();
     _titleController.dispose();
     _editorFocus.dispose();
-    _speech.stop();
+    if (_listening) ref.read(speechServiceProvider).stop();
     super.dispose();
   }
 
@@ -219,31 +218,33 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   }
 
   Future<void> _toggleDictation() async {
+    final speech = ref.read(speechServiceProvider);
     if (_listening) {
-      await _speech.stop();
+      await speech.stop();
       setState(() => _listening = false);
       return;
     }
-    final available = await _speech.initialize();
-    if (!available) {
-      _toast('Speech recognition is not available on this device.');
-      return;
-    }
-    setState(() => _listening = true);
-    await _speech.listen(
-      onResult: (r) {
-        if (!r.finalResult) return;
+    final started = await speech.listen(
+      onResult: (words, isFinal) {
+        if (!isFinal || !mounted) return;
+        setState(() => _listening = false);
+        if (words.isEmpty) return;
         final index = _controller!.selection.baseOffset.clamp(
           0,
           _controller!.document.length - 1,
         );
-        _controller!.document.insert(index, '${r.recognizedWords} ');
+        _controller!.document.insert(index, '$words ');
         _controller!.updateSelection(
-          TextSelection.collapsed(offset: index + r.recognizedWords.length + 1),
+          TextSelection.collapsed(offset: index + words.length + 1),
           quill.ChangeSource.local,
         );
       },
     );
+    if (!started) {
+      _toast('Speech recognition is not available on this device.');
+      return;
+    }
+    setState(() => _listening = true);
   }
 
   void _toast(String message) {

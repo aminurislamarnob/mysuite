@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
 
+import '../../core/ai/speech_service.dart';
 import '../../core/database/app_database.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_icons.dart';
@@ -27,13 +27,12 @@ class TasksScreen extends ConsumerStatefulWidget {
 
 class _TasksScreenState extends ConsumerState<TasksScreen> {
   final _quickAdd = TextEditingController();
-  final _speech = stt.SpeechToText();
   bool _listening = false;
 
   @override
   void dispose() {
     _quickAdd.dispose();
-    _speech.stop();
+    if (_listening) ref.read(speechServiceProvider).stop();
     super.dispose();
   }
 
@@ -59,24 +58,25 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
   }
 
   Future<void> _dictate() async {
+    final speech = ref.read(speechServiceProvider);
     if (_listening) {
-      await _speech.stop();
+      await speech.stop();
       setState(() => _listening = false);
       return;
     }
-    if (!await _speech.initialize()) {
+    final started = await speech.listen(
+      onResult: (words, isFinal) {
+        _quickAdd.text = words;
+        if (isFinal && mounted) setState(() => _listening = false);
+      },
+    );
+    if (!started) {
       if (mounted) {
         brandToast(context, 'Speech recognition unavailable on this device.');
       }
       return;
     }
     setState(() => _listening = true);
-    await _speech.listen(
-      onResult: (r) {
-        _quickAdd.text = r.recognizedWords;
-        if (r.finalResult) setState(() => _listening = false);
-      },
-    );
   }
 
   @override

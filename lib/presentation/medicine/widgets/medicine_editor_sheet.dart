@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/ai/ai_drafts.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../core/theme/app_theme.dart';
@@ -16,14 +17,25 @@ import '../utils/dose_reminders.dart';
 import '../utils/schedule_generator.dart';
 
 /// Create/edit a medicine and preview the generated course before saving.
+///
+/// Pops with the saved medicine's id so a prefilled open (the assistant's
+/// preview card) can tell a save from a dismissal.
 class MedicineEditorSheet extends ConsumerStatefulWidget {
   final Medicine? medicine;
-  const MedicineEditorSheet({super.key, this.medicine});
 
-  static Future<void> show(BuildContext context, {Medicine? medicine}) {
-    return brandSheet(
+  /// Prefill for a new medicine; ignored when editing an existing one.
+  final MedicineDraft? draft;
+
+  const MedicineEditorSheet({super.key, this.medicine, this.draft});
+
+  static Future<int?> show(
+    BuildContext context, {
+    Medicine? medicine,
+    MedicineDraft? draft,
+  }) {
+    return brandSheet<int>(
       context: context,
-      builder: (_) => MedicineEditorSheet(medicine: medicine),
+      builder: (_) => MedicineEditorSheet(medicine: medicine, draft: draft),
     );
   }
 
@@ -57,12 +69,30 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
   void initState() {
     super.initState();
     final m = widget.medicine;
-    _name = TextEditingController(text: m?.name ?? '');
-    _dosage = TextEditingController(text: m == null ? '1' : _trim(m.dosage));
-    _dosageUnit = TextEditingController(text: m?.dosageUnit ?? 'tablet');
+    final d = m == null ? widget.draft : null;
+    _name = TextEditingController(text: m?.name ?? d?.name ?? '');
+    _dosage = TextEditingController(
+      text: m != null
+          ? _trim(m.dosage)
+          : d != null
+          ? _trim(d.dosage)
+          : '1',
+    );
+    _dosageUnit = TextEditingController(
+      text: m?.dosageUnit ?? d?.dosageUnit ?? 'tablet',
+    );
     _inventory = TextEditingController(text: '${m?.inventory ?? 0}');
     _doctor = TextEditingController(text: m?.doctorName ?? '');
-    _notes = TextEditingController(text: m?.notes ?? '');
+    _notes = TextEditingController(text: m?.notes ?? d?.notes ?? '');
+
+    if (d != null) {
+      _form = d.form;
+      _times = List.of(d.doseMinutes);
+      _meal = d.meal;
+      _start = d.start;
+      _end = d.end;
+      _profileId = d.profileId;
+    }
 
     if (m != null) {
       _form = m.form;
@@ -204,7 +234,7 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
       }
     }
 
-    if (mounted) Navigator.pop(context);
+    if (mounted) Navigator.pop(context, medicineId);
   }
 
   @override
