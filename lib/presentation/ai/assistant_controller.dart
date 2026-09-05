@@ -8,7 +8,6 @@ import '../../core/ai/ai_client.dart';
 import '../../core/ai/ai_command_executor.dart';
 import '../../core/ai/ai_command_service.dart';
 import '../../core/ai/ai_drafts.dart';
-import '../../core/ai/ai_providers.dart';
 import '../../core/ai/speech_service.dart';
 import '../../core/settings/app_settings.dart';
 
@@ -126,14 +125,17 @@ final assistantControllerProvider =
 /// The screen only renders states and forwards taps; everything that decides
 /// what happens next lives here so it can be exercised without widgets.
 class AssistantController extends StateNotifier<AssistantState> {
-  AssistantController(this._ref) : super(const AssistantIdle()) {
-    _listening = _ref
-        .read(speechServiceProvider)
-        .listening
-        .listen(_onListening);
+  AssistantController(this._ref)
+    : _speech = _ref.read(speechServiceProvider),
+      super(const AssistantIdle()) {
+    _listening = _speech.listening.listen(_onListening);
   }
 
   final Ref _ref;
+
+  // Held from construction: dispose runs while the container may already be
+  // tearing down, when reading a provider is no longer allowed.
+  final SpeechService _speech;
   StreamSubscription<bool>? _listening;
   String _transcript = '';
 
@@ -146,8 +148,7 @@ class AssistantController extends StateNotifier<AssistantState> {
   @override
   void dispose() {
     _listening?.cancel();
-    final speech = _ref.read(speechServiceProvider);
-    if (speech.isListening) speech.cancel();
+    if (_speech.isListening) _speech.cancel();
     super.dispose();
   }
 
@@ -156,19 +157,17 @@ class AssistantController extends StateNotifier<AssistantState> {
   Future<void> startListening() async {
     _transcript = '';
     state = const AssistantListening('');
-    final started = await _ref
-        .read(speechServiceProvider)
-        .listen(
-          onResult: (words, isFinal) {
-            if (!mounted) return;
-            _transcript = words;
-            if (isFinal) {
-              _finishListening();
-            } else {
-              state = AssistantListening(words);
-            }
-          },
-        );
+    final started = await _speech.listen(
+      onResult: (words, isFinal) {
+        if (!mounted) return;
+        _transcript = words;
+        if (isFinal) {
+          _finishListening();
+        } else {
+          state = AssistantListening(words);
+        }
+      },
+    );
     if (!started && mounted) {
       state = const AssistantFailure(
         kind: AssistantErrorKind.noSpeech,
@@ -178,7 +177,7 @@ class AssistantController extends StateNotifier<AssistantState> {
   }
 
   Future<void> stopListening() async {
-    await _ref.read(speechServiceProvider).stop();
+    await _speech.stop();
   }
 
   /// The recogniser went quiet on its own, or after [stopListening]. A final
@@ -221,9 +220,9 @@ class AssistantController extends StateNotifier<AssistantState> {
     }
     state = AssistantThinking(transcript);
 
-    AiCommandResult result;
+    AiCommandRun run;
     try {
-      result = await _ref
+      run = await _ref
           .read(aiCommandServiceProvider)
           .run(transcript, forceOffline: forceOffline);
     } on AiException catch (e) {
@@ -242,6 +241,7 @@ class AssistantController extends StateNotifier<AssistantState> {
     }
     if (!mounted) return;
 
+    final result = run.result;
     if (result.actions.isEmpty) {
       state = AssistantFailure(
         kind: AssistantErrorKind.nothingParsed,
@@ -254,10 +254,9 @@ class AssistantController extends StateNotifier<AssistantState> {
       return;
     }
 
-    final context = await _ref.read(aiRequestContextProvider.future);
     final previews = await _ref
         .read(aiCommandExecutorProvider)
-        .resolve(result.actions, context);
+        .resolve(result.actions, run.context);
     if (!mounted) return;
 
     final preview = AssistantPreview(

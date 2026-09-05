@@ -69,14 +69,17 @@ Future<AiRequestContext> buildAiRequestContext(Ref ref, {DateTime? now}) async {
 
   final people = await ref.read(peopleRepositoryProvider).people();
 
+  // One-shot queries throughout, never `watch().first`: a stream query's
+  // first fetch is scheduled in a way the widget-test binding never advances,
+  // which left the assistant stuck on "thinking" under test.
   var habits = const <Habit>[];
   if (enabled.contains(AppModule.habits)) {
-    habits = await ref.read(habitRepositoryProvider).watchHabits().first;
+    habits = await ref.read(habitRepositoryProvider).habits();
   }
 
   var projects = const <Project>[];
   if (enabled.contains(AppModule.tasks)) {
-    projects = await ref.read(taskRepositoryProvider).watchProjects().first;
+    projects = await ref.read(taskRepositoryProvider).projects();
   }
 
   var profiles = const <Person>[];

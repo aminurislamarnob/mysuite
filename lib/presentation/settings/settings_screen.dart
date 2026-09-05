@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/ai/ai_client.dart';
+import '../../core/ai/ai_command_service.dart';
+import '../../core/ai/ai_provider.dart';
+import '../../core/ai/api_key_store.dart';
 import '../../core/people/people_repository.dart';
 import '../../core/people/person_avatar.dart';
 import '../../core/services/export_service.dart';
@@ -8,6 +12,7 @@ import '../../core/services/notification_service.dart';
 import '../../core/services/security_service.dart';
 import '../../core/settings/app_settings.dart';
 import '../../core/theme/app_icons.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/brand.dart';
 import '../../core/widgets/common.dart';
@@ -240,6 +245,10 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
           ),
+
+          const SizedBox(height: 24),
+          const SectionHeader('AI assistant'),
+          const _AiAssistantCard(),
 
           const SizedBox(height: 24),
           const SectionHeader('Security'),
@@ -543,6 +552,257 @@ class SettingsScreen extends ConsumerWidget {
       return true;
     }
     return false;
+  }
+}
+
+/// Which model the voice assistant talks to, and the key that pays for it.
+///
+/// Every row here is live: the provider and model feed `aiClientProvider`,
+/// the key goes to the keychain, and "Test connection" sends a real request
+/// so a wrong key is found out here rather than mid-command.
+class _AiAssistantCard extends ConsumerWidget {
+  const _AiAssistantCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final notifier = ref.read(settingsProvider.notifier);
+    final provider = settings.aiProvider;
+    // Watched: the key row relabels the moment a key is saved or removed.
+    final last4 = ref.watch(aiKeyStatusProvider).valueOrNull;
+    final muted = context.muted;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TintCard(
+          padding: EdgeInsets.zero,
+          child: TileGroup(
+            children: [
+              BrandTile(
+                leading: const AppIcon(AppIcons.sparkle),
+                title: const Text('Provider'),
+                subtitle: Text(provider.label),
+                trailing: const AppIcon(AppIcons.chevronRight),
+                onTap: () => _pickProvider(context, notifier, provider),
+              ),
+              BrandTile(
+                leading: const AppIcon(AppIcons.edit),
+                title: const Text('Model'),
+                subtitle: Text(
+                  settings.aiModel.isEmpty
+                      ? 'Default · ${provider.defaultModel}'
+                      : settings.aiModel,
+                ),
+                trailing: const AppIcon(AppIcons.chevronRight),
+                onTap: () => _editModel(context, notifier, settings),
+              ),
+              BrandTile(
+                leading: const AppIcon(AppIcons.lock),
+                title: const Text('API key'),
+                subtitle: Text(
+                  last4 == null ? 'Not set' : 'Key saved •••• $last4',
+                ),
+                trailing: last4 == null
+                    ? const AppIcon(AppIcons.chevronRight)
+                    : CircleIconButton(
+                        icon: AppIcons.delete,
+                        tooltip: 'Remove key',
+                        size: 36,
+                        onPressed: () async {
+                          final ok = await brandConfirm(
+                            context,
+                            title: 'Remove the ${provider.label} key?',
+                            message:
+                                'The assistant will use the offline parser '
+                                'until a key is added again.',
+                            confirmLabel: 'Remove',
+                            destructive: true,
+                          );
+                          if (!ok) return;
+                          await ref.read(aiKeyStatusProvider.notifier).clear();
+                          if (context.mounted) {
+                            brandToast(context, 'Key removed.');
+                          }
+                        },
+                      ),
+                onTap: () => _setApiKey(context, ref, provider),
+              ),
+              BrandSwitchTile(
+                leading: const AppIcon(AppIcons.check),
+                title: 'Auto-save without preview',
+                subtitle: 'Only when every entry resolved cleanly',
+                value: settings.aiAutoSave,
+                onChanged: notifier.setAiAutoSave,
+              ),
+              BrandTile(
+                leading: const AppIcon(AppIcons.link),
+                title: const Text('Test connection'),
+                subtitle: Text(
+                  last4 == null
+                      ? 'Add a key first'
+                      : 'Sends a one-word request',
+                ),
+                enabled: last4 != null,
+                onTap: last4 == null
+                    ? null
+                    : () => _testConnection(context, ref),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(4, 10, 4, 0),
+          child: Text(
+            'Only your words and the names of your categories, accounts, '
+            'people, habits and projects are sent to ${provider.label}. '
+            'Nothing else leaves the device. Without a key, a simpler offline '
+            'parser handles the command instead.',
+            style: TextStyle(fontSize: 11, color: muted, height: 1.4),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _pickProvider(
+    BuildContext context,
+    SettingsNotifier notifier,
+    AiProvider current,
+  ) async {
+    final picked = await brandSheet<AiProvider>(
+      context: context,
+      builder: (_) => SheetScaffold(
+        title: 'AI provider',
+        child: TileColumn(
+          children: AiProvider.values
+              .map(
+                (p) => BrandTile(
+                  title: Text(p.label),
+                  subtitle: Text('Default model ${p.defaultModel}'),
+                  selected: p == current,
+                  onTap: () => Navigator.pop(context, p),
+                ),
+              )
+              .toList(),
+        ),
+      ),
+    );
+    if (picked != null && picked != current) notifier.setAiProvider(picked);
+  }
+
+  Future<void> _editModel(
+    BuildContext context,
+    SettingsNotifier notifier,
+    AppSettings settings,
+  ) async {
+    final controller = TextEditingController(text: settings.aiModel);
+    final result = await brandDialog<String>(
+      context,
+      title: 'Model',
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          BrandField(
+            controller: controller,
+            hint: settings.aiProvider.defaultModel,
+            helper: 'Leave blank for the default.',
+            autofocus: true,
+            textInputAction: TextInputAction.done,
+            onSubmit: (v) => Navigator.pop(context, v),
+          ),
+          const SizedBox(height: 20),
+          BrandButton(
+            label: 'Save',
+            onPressed: () => Navigator.pop(context, controller.text),
+          ),
+          const SizedBox(height: 8),
+          BrandButton(
+            label: 'Use default',
+            kind: BrandButtonKind.outline,
+            onPressed: () => Navigator.pop(context, ''),
+          ),
+          const SizedBox(height: 8),
+          BrandButton(
+            label: 'Cancel',
+            kind: BrandButtonKind.ghost,
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
+    if (result != null) notifier.setAiModel(result);
+  }
+
+  Future<void> _setApiKey(
+    BuildContext context,
+    WidgetRef ref,
+    AiProvider provider,
+  ) async {
+    final controller = TextEditingController();
+    String? error;
+
+    // The buttons live in the body rather than in `actions` because they need
+    // the StatefulBuilder's setState to put the validation message on a field.
+    final result = await brandDialog<bool>(
+      context,
+      title: '${provider.label} API key',
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            BrandField(
+              controller: controller,
+              hint: provider.keyHint,
+              helper: 'From ${provider.consoleUrl}. Stored in the keychain.',
+              error: error,
+              autofocus: true,
+              obscure: true,
+              keyboardType: TextInputType.visiblePassword,
+            ),
+            const SizedBox(height: 20),
+            BrandButton(
+              label: 'Save',
+              onPressed: () {
+                final key = controller.text.trim();
+                if (key.isEmpty || key.contains(RegExp(r'\s'))) {
+                  setState(() {
+                    error = key.isEmpty
+                        ? 'Paste the key first'
+                        : 'A key has no spaces';
+                  });
+                  return;
+                }
+                Navigator.pop(context, true);
+              },
+            ),
+            const SizedBox(height: 8),
+            BrandButton(
+              label: 'Cancel',
+              kind: BrandButtonKind.ghost,
+              onPressed: () => Navigator.pop(context, false),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (result == true) {
+      await ref.read(aiKeyStatusProvider.notifier).save(controller.text);
+      if (context.mounted) brandToast(context, 'Key saved.');
+    }
+  }
+
+  Future<void> _testConnection(BuildContext context, WidgetRef ref) async {
+    brandToast(context, 'Testing…', duration: const Duration(seconds: 2));
+    try {
+      final model = await ref.read(aiCommandServiceProvider).testConnection();
+      if (context.mounted) brandToast(context, 'Connected · $model');
+    } on AiException catch (e) {
+      if (context.mounted) brandToast(context, 'Failed: ${e.message}');
+    }
   }
 }
 

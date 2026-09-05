@@ -14,6 +14,10 @@ final aiCommandServiceProvider = Provider<AiCommandService>(
   (ref) => AiCommandService(ref),
 );
 
+/// What one command produced, with the snapshot of names it was parsed
+/// against so the executor resolves ids from the same lists the model saw.
+typedef AiCommandRun = ({AiCommandResult result, AiRequestContext context});
+
 /// Transcript in, actions out. Picks the configured provider when a key is
 /// saved and the offline parser otherwise; either way the result is the same
 /// shape, so the screen never knows which one answered beyond the badge.
@@ -22,7 +26,7 @@ class AiCommandService {
 
   final Ref _ref;
 
-  Future<AiCommandResult> run(
+  Future<AiCommandRun> run(
     String transcript, {
     DateTime? now,
     bool forceOffline = false,
@@ -32,11 +36,12 @@ class AiCommandService {
         ? null
         : await _ref.read(aiClientProvider.future);
     if (client == null) {
-      return LocalCommandParser.parse(
+      final result = LocalCommandParser.parse(
         transcript,
         context: context,
         now: context.now,
       );
+      return (result: result, context: context);
     }
 
     final raw = await client.complete(
@@ -45,11 +50,12 @@ class AiCommandService {
       schema: AiCommandSchema.root,
     );
     debugPrint('AI reply from ${client.provider.name}/${raw.model}');
-    return AiResponseParser.parse(
+    final result = AiResponseParser.parse(
       raw.text,
       source: RemoteSource(client.provider, raw.model),
       now: context.now,
     );
+    return (result: result, context: context);
   }
 
   /// Whether a request would go to a provider rather than the offline parser.

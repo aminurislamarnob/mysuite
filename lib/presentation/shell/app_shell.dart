@@ -54,6 +54,7 @@ class AppShell extends ConsumerWidget {
               ),
               centerAction: QuickAddButton(
                 onPressed: () => showQuickAdd(context, ref),
+                onLongPress: () => context.push('/assistant'),
               ),
               items: const [
                 CurvedNavItem(
@@ -86,20 +87,25 @@ class AppShell extends ConsumerWidget {
 }
 
 /// The round coral `+` that sits in the notch of the bottom bar.
+///
+/// A long press goes straight to the voice assistant: the button is on every
+/// tab, so it is the one place a spoken command is always one gesture away.
 class QuickAddButton extends StatelessWidget {
   final VoidCallback onPressed;
+  final VoidCallback? onLongPress;
 
-  const QuickAddButton({super.key, required this.onPressed});
+  const QuickAddButton({super.key, required this.onPressed, this.onLongPress});
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final primary = scheme.primary;
     return BrandTooltip(
-      message: 'Quick add',
+      message: onLongPress == null ? 'Quick add' : 'Quick add · hold to speak',
       semanticsLabel: 'Quick add',
       child: BrandTappable(
         onPressed: onPressed,
+        onLongPress: onLongPress,
         semanticsLabel: 'Quick add',
         child: DecoratedBox(
           decoration: ShapeDecoration(
@@ -138,6 +144,17 @@ Future<void> showQuickAdd(BuildContext context, WidgetRef ref) {
       title: 'Quick add',
       child: Column(
         children: [
+          // Ungated: the assistant itself honours whichever modules are on.
+          _tile(
+            icon: AppIcons.sparkle,
+            color: Theme.of(context).colorScheme.primary,
+            title: 'Speak a command',
+            subtitle: 'Add several things in one sentence',
+            onTap: () {
+              Navigator.pop(sheetContext);
+              context.push('/assistant');
+            },
+          ),
           if (settings.isEnabled(AppModule.tasks))
             _tile(
               icon: AppIcons.tasks,

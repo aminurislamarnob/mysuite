@@ -21,6 +21,14 @@ class HabitRepository {
     return q.watch();
   }
 
+  /// One-shot form of [watchHabits], for callers that need the list once.
+  Future<List<Habit>> habits({bool includeArchived = false}) {
+    final q = _db.select(_db.habits);
+    if (!includeArchived) q.where((t) => t.isArchived.equals(false));
+    q.orderBy([(t) => OrderingTerm(expression: t.createdAt)]);
+    return q.get();
+  }
+
   Future<Habit?> getHabit(int id) =>
       (_db.select(_db.habits)..where((t) => t.id.equals(id))).getSingleOrNull();
 

@@ -65,6 +65,11 @@ class DashboardScreen extends ConsumerWidget {
                   : () => PersonEditor.show(context, ref, person: self),
               actions: [
                 CircleIconButton(
+                  icon: AppIcons.sparkle,
+                  tooltip: 'Speak a command',
+                  onPressed: () => context.push('/assistant'),
+                ),
+                CircleIconButton(
                   icon: AppIcons.search,
                   tooltip: 'Search everything',
                   onPressed: () => context.push('/search'),

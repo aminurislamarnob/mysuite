@@ -271,6 +271,11 @@ class TaskRepository {
     _db.projects,
   )..orderBy([(t) => OrderingTerm(expression: t.sortOrder)])).watch();
 
+  /// One-shot form of [watchProjects], for callers that need the list once.
+  Future<List<Project>> projects() => (_db.select(
+    _db.projects,
+  )..orderBy([(t) => OrderingTerm(expression: t.sortOrder)])).get();
+
   Future<int> createProject(String name, int color, String icon) => _db
       .into(_db.projects)
       .insert(

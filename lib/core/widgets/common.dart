@@ -1139,6 +1139,7 @@ class BrandDivider extends StatelessWidget {
 /// arbitrary widget tappable.
 class BrandTappable extends StatelessWidget {
   final VoidCallback? onPressed;
+  final VoidCallback? onLongPress;
   final String? semanticsLabel;
   final Widget child;
 
@@ -1146,12 +1147,14 @@ class BrandTappable extends StatelessWidget {
     super.key,
     required this.onPressed,
     required this.child,
+    this.onLongPress,
     this.semanticsLabel,
   });
 
   @override
   Widget build(BuildContext context) => FTappable(
     onPress: onPressed,
+    onLongPress: onLongPress,
     semanticsLabel: semanticsLabel,
     child: child,
   );
