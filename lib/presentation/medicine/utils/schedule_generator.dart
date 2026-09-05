@@ -72,6 +72,18 @@ class ScheduleSpec {
     this.skipDates = const {},
   });
 
+  /// Sensible waking-hour defaults for N doses a day.
+  static List<int> defaultTimesFor(int count) => switch (count) {
+    1 => [480], // 08:00
+    2 => [480, 1200], // 08:00, 20:00
+    3 => [480, 840, 1200], // 08:00, 14:00, 20:00
+    4 => [480, 720, 1020, 1320], // 08:00, 12:00, 17:00, 22:00
+    _ => List.generate(
+      count.clamp(1, 6),
+      (i) => 480 + (i * (840 ~/ count.clamp(1, 6))),
+    ),
+  };
+
   /// Parses the comma-separated `"480,840,1200"` form used in the database.
   static List<int> parseTimes(String raw) {
     return raw

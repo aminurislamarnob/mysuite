@@ -12,6 +12,7 @@ import '../../../core/widgets/common.dart';
 import '../camera_scan_screen.dart';
 import '../providers/medicine_provider.dart';
 import '../repository/medicine_repository.dart';
+import '../utils/dose_reminders.dart';
 import '../utils/schedule_generator.dart';
 
 /// Create/edit a medicine and preview the generated course before saving.
@@ -124,25 +125,13 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
       }
       if (result.timesPerDay != null) {
         _frequency = MedFrequency.timesPerDay;
-        _times = _defaultTimesFor(result.timesPerDay!);
+        _times = ScheduleSpec.defaultTimesFor(result.timesPerDay!);
       }
       if (result.durationDays != null) {
         _end = _start.add(Duration(days: result.durationDays! - 1));
       }
     });
   }
-
-  /// Sensible waking-hour defaults for N doses a day.
-  static List<int> _defaultTimesFor(int count) => switch (count) {
-    1 => [480], // 08:00
-    2 => [480, 1200], // 08:00, 20:00
-    3 => [480, 840, 1200], // 08:00, 14:00, 20:00
-    4 => [480, 720, 1020, 1320], // 08:00, 12:00, 17:00, 22:00
-    _ => List.generate(
-      count.clamp(1, 6),
-      (i) => 480 + (i * (840 ~/ count.clamp(1, 6))),
-    ),
-  };
 
   Future<void> _save() async {
     final name = _name.text.trim();
@@ -196,7 +185,14 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
     // OS permissions that can be denied or revoked, so a failure here must
     // never lose the user's medicine or trap them in the form.
     try {
-      await _scheduleReminders(medicineId, name);
+      await scheduleDoseReminders(
+        repo: repo,
+        notifier: ref.read(notificationServiceProvider),
+        medicineId: medicineId,
+        name: name,
+        dosageLabel: '${_dosage.text.trim()} ${_dosageUnit.text.trim()}',
+        mealHint: _meal.label,
+      );
     } on Exception catch (e) {
       debugPrint('Could not schedule dose reminders: $e');
       if (mounted) {
@@ -209,36 +205,6 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
     }
 
     if (mounted) Navigator.pop(context);
-  }
-
-  /// Schedules notifications for upcoming doses.
-  ///
-  /// Only the near-term window is registered: both platforms cap how many
-  /// pending local notifications an app may hold, and a long course can easily
-  /// generate hundreds.
-  Future<void> _scheduleReminders(int medicineId, String name) async {
-    final repo = ref.read(medicineRepositoryProvider);
-    final notifier = ref.read(notificationServiceProvider);
-    final doses = await repo.dosesFor(medicineId);
-    final horizon = DateTime.now().add(const Duration(days: 14));
-
-    final upcoming = doses
-        .where(
-          (d) =>
-              d.scheduledTime.isAfter(DateTime.now()) &&
-              d.scheduledTime.isBefore(horizon),
-        )
-        .take(50);
-
-    for (final dose in upcoming) {
-      await notifier.scheduleDose(
-        doseId: dose.id,
-        medicineName: name,
-        dosageLabel: '${_dosage.text.trim()} ${_dosageUnit.text.trim()}',
-        mealHint: _meal.label,
-        when: dose.scheduledTime,
-      );
-    }
   }
 
   @override
@@ -419,7 +385,9 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
                     (n) => Pill(
                       label: '${n}x daily',
                       color: Theme.of(context).colorScheme.primary,
-                      onTap: () => setState(() => _times = _defaultTimesFor(n)),
+                      onTap: () => setState(
+                        () => _times = ScheduleSpec.defaultTimesFor(n),
+                      ),
                     ),
                   )
                   .toList(),

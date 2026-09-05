@@ -29,7 +29,10 @@ class ExpenseVoiceParser {
   const ExpenseVoiceParser._();
 
   /// Words that hint at a category but are not the category's own name.
-  static const _categoryHints = <String, List<String>>{
+  ///
+  /// Public because the assistant's name resolver reuses the same hints, so
+  /// "lunch" lands in Food whether it was typed here or spoken there.
+  static const categoryHints = <String, List<String>>{
     'Food': [
       'lunch',
       'dinner',
@@ -119,7 +122,7 @@ class ExpenseVoiceParser {
     }
     if (categoryId == null) {
       outer:
-      for (final entry in _categoryHints.entries) {
+      for (final entry in categoryHints.entries) {
         for (final hint in entry.value) {
           if (!RegExp('\\b$hint').hasMatch(lower)) continue;
           final match = categories

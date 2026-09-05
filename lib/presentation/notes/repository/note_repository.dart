@@ -241,6 +241,15 @@ class NoteRepository {
 
   static const emptyDelta = '[{"insert":"\\n"}]';
 
+  /// A one-paragraph delta from plain text. Quill requires every document to
+  /// end in a newline, so one is appended when the text lacks it.
+  static String deltaFromPlainText(String text) {
+    final body = text.endsWith('\n') ? text : '$text\n';
+    return jsonEncode([
+      {'insert': body},
+    ]);
+  }
+
   /// Flattens a Quill delta to searchable plain text.
   static String plainTextOf(String deltaJson) {
     try {
