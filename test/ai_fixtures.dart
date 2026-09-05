@@ -89,8 +89,20 @@ AiRequestContext seededContext({DateTime? now, Set<AppModule>? enabled}) =>
     );
 
 /// The reply the prompt's own worked example describes, as a provider in
-/// strict mode would return it.
-const canonicalJson = '''
+/// strict mode would return it, with the task due on [fixedNow]'s day.
+const canonicalJson = _canonicalTemplate;
+
+/// The same reply with the task and reminder on [day], for tests that run
+/// against the real clock: the executor warns about a reminder in the past,
+/// so a pinned date would flip those tests once that hour went by.
+String canonicalJsonFor(DateTime day) {
+  final iso =
+      '${day.year}-${day.month.toString().padLeft(2, '0')}-'
+      '${day.day.toString().padLeft(2, '0')}';
+  return _canonicalTemplate.replaceAll('2026-09-05', iso);
+}
+
+const _canonicalTemplate = '''
 {
   "actions": [
     {"kind": "add_expense", "title": "Lunch", "amount": 200, "kind_detail": "expense",

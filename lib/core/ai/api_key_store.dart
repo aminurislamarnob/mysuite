@@ -63,6 +63,10 @@ class AiKeyStatus extends AsyncNotifier<String?> {
 
   Future<void> save(String key) async {
     final provider = ref.read(settingsProvider).aiProvider;
+    // Pass through loading first: a replacement key that happens to end in
+    // the same four characters would otherwise be an equal state, and the
+    // client that watches this would keep the old key.
+    state = const AsyncLoading();
     await ref.read(apiKeyStoreProvider).write(provider, key);
     state = AsyncData(_last4(key.trim()));
   }

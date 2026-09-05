@@ -6,7 +6,6 @@ import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mysuite/core/ai/ai_action.dart';
-import 'package:mysuite/core/ai/ai_client.dart';
 import 'package:mysuite/core/ai/ai_command_executor.dart';
 import 'package:mysuite/core/ai/ai_drafts.dart';
 import 'package:mysuite/core/ai/ai_request_context.dart';
@@ -207,7 +206,9 @@ void main() {
         ], c);
         expect(previews.every((p) => p.clean), isTrue);
 
-        final saved = await executor().saveAll(previews.map((p) => p.draft));
+        final outcome = await executor().saveAll(previews.map((p) => p.draft));
+        expect(outcome.failures, isEmpty);
+        final saved = outcome.saved;
         expect(saved, hasLength(5));
 
         // Expense: the ledger and the balance moved together.
@@ -271,16 +272,11 @@ void main() {
         ...previews.map((p) => p.draft),
       ];
 
-      await expectLater(
-        executor().saveAll(drafts),
-        throwsA(
-          isA<AiException>().having(
-            (e) => e.message,
-            'message',
-            contains('Ghost'),
-          ),
-        ),
-      );
+      final outcome = await executor().saveAll(drafts);
+      expect(outcome.results, hasLength(3));
+      expect(outcome.results.first, isNull);
+      expect(outcome.saved, hasLength(2));
+      expect(outcome.failures.single, contains('Ghost'));
       expect(await db.select(db.expenses).get(), hasLength(1));
       expect(await db.select(db.habitLogs).get(), hasLength(1));
     });

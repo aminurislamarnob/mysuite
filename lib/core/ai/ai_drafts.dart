@@ -249,6 +249,18 @@ class ActionPreview {
   );
 }
 
+/// What a batch save did: one slot per draft, in order, null where that
+/// draft failed, plus a human-readable line per failure.
+@immutable
+class AiSaveOutcome {
+  final List<SavedItem?> results;
+  final List<String> failures;
+
+  const AiSaveOutcome({required this.results, required this.failures});
+
+  List<SavedItem> get saved => results.whereType<SavedItem>().toList();
+}
+
 /// Something that was written, and where to go to see it.
 @immutable
 class SavedItem {

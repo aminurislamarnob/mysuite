@@ -73,7 +73,7 @@ class AnthropicClient implements AiClient {
           if (text is String && text.trim().isNotEmpty) {
             return AiRawResponse(
               text: text,
-              model: (body['model'] as String?) ?? model,
+              model: AiHttp.stringOf(body['model']) ?? model,
             );
           }
         }

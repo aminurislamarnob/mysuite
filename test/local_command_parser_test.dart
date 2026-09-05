@@ -89,6 +89,24 @@ void main() {
     expect(m.days, 10);
   });
 
+  test('a thousands separator is not a clause break', () {
+    final actions = parse('spent 1,200 taka on rent with bank');
+    expect(actions, hasLength(1));
+    expect((actions.single as AddExpenseAction).amount, 1200);
+  });
+
+  test('"remind me to" wins over a habit name in the sentence', () {
+    final t = parse('remind me to drink water at 6').single as AddTaskAction;
+    expect(t.title, 'Drink water');
+    expect(t.reminder, DateTime(2026, 9, 5, 18));
+  });
+
+  test('a category name only matches as a whole word', () {
+    // "brother" contains the seeded category "Other".
+    final t = parse('call my brother at 5').single;
+    expect(t, isA<AddTaskAction>());
+  });
+
   test('anything else is a task, and empty input asks for clarification', () {
     final t = parse('buy milk tomorrow').single as AddTaskAction;
     expect(t.title, 'Buy milk');

@@ -35,7 +35,7 @@ class AiResponseParser {
 
     return AiCommandResult(
       actions: actions,
-      reply: (decoded['reply'] as String?)?.trim() ?? '',
+      reply: _string(decoded['reply']) ?? '',
       needsClarification: decoded['needs_clarification'] == true,
       source: source,
     );

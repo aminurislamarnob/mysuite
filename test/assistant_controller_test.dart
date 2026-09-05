@@ -100,8 +100,13 @@ void main() {
     return c.read(assistantControllerProvider.notifier);
   }
 
+  // Dated tomorrow so the reminder is never "already passed".
+  final canonical = canonicalJsonFor(
+    DateTime.now().add(const Duration(days: 1)),
+  );
+
   test('a typed command previews one card per action', () async {
-    final client = _FakeClient(canonicalJson);
+    final client = _FakeClient(canonical);
     final c = await container(client: client);
     final controller = controllerOf(c);
 
@@ -120,7 +125,7 @@ void main() {
 
   test('auto-save writes straight through when every card is clean', () async {
     final c = await container(
-      client: _FakeClient(canonicalJson),
+      client: _FakeClient(canonical),
       prefs: {'ai_auto_save': true},
     );
     final controller = controllerOf(c);
@@ -179,7 +184,7 @@ void main() {
   });
 
   test('removing every card returns to the transcript', () async {
-    final c = await container(client: _FakeClient(canonicalJson));
+    final c = await container(client: _FakeClient(canonical));
     final controller = controllerOf(c);
     controller.editTranscript('x');
     await controller.submit();
@@ -192,7 +197,7 @@ void main() {
 
   test('a locked module asks the gate and stops when refused', () async {
     final c = await container(
-      client: _FakeClient(canonicalJson),
+      client: _FakeClient(canonical),
       prefs: {
         'locked_modules': ['expenses'],
       },
@@ -207,8 +212,18 @@ void main() {
     await controller.submit();
     expect(await controller.saveAll(), isFalse);
     expect(asked.single, {AppModule.expenses});
-    final state = c.read(assistantControllerProvider) as AssistantFailure;
-    expect(state.kind, AssistantErrorKind.locked);
+    // The preview survives with the reason, so a second Save can retry
+    // without another provider round trip.
+    final state = c.read(assistantControllerProvider) as AssistantPreview;
+    expect(state.error, contains('locked'));
+    expect(state.previews, hasLength(3));
     expect(await db.select(db.tasks).get(), isEmpty);
+
+    // Granting the unlock on the retry writes everything.
+    controller.unlockGate = (_) async => true;
+    expect(await controller.saveAll(), isTrue);
+    expect(c.read(assistantControllerProvider), isA<AssistantSaved>());
+    expect(await db.select(db.tasks).get(), hasLength(1));
+    expect(await db.select(db.expenses).get(), hasLength(1));
   });
 }

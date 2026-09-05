@@ -284,25 +284,26 @@ class AiCommandExecutor {
 
   // --- Save ----------------------------------------------------------------
 
-  /// Saves every draft in order. One failure does not abort the rest; the
-  /// failures are collected and rethrown together after the others have
-  /// been written, so a bad reminder cannot cost the user an expense.
-  Future<List<SavedItem>> saveAll(Iterable<AiDraft> drafts) async {
-    final saved = <SavedItem>[];
+  /// Saves every draft in order. One failure does not abort the rest, and
+  /// the outcome says which drafts were written and which were not, so the
+  /// caller can mark the successes and retry only the failures. Throwing
+  /// here would hide the rows that did land and invite a duplicate write.
+  Future<AiSaveOutcome> saveAll(Iterable<AiDraft> drafts) async {
+    final results = <SavedItem?>[];
     final failures = <String>[];
     for (final draft in drafts) {
       try {
-        saved.add(await save(draft));
+        results.add(await save(draft));
       } on Exception catch (e) {
         debugPrint('Could not save ${draft.kind.wire}: $e');
+        results.add(null);
         failures.add(
           '${draft.kind.label} "${draft.title}": '
           '${e is AiException ? e.message : 'could not be saved'}',
         );
       }
     }
-    if (failures.isNotEmpty) throw AiException(failures.join('\n'));
-    return saved;
+    return AiSaveOutcome(results: results, failures: failures);
   }
 
   Future<SavedItem> save(AiDraft draft) async {

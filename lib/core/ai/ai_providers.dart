@@ -20,16 +20,19 @@ final httpClientProvider = Provider<http.Client>((ref) {
 /// which is the signal to fall back to the offline parser. Rebuilds when the
 /// provider, the model or the key changes.
 final aiClientProvider = FutureProvider<AiClient?>((ref) async {
-  final settings = ref.watch(settingsProvider);
+  // Only the two fields the client is built from; a theme or quiet-hours
+  // change must not re-read the keychain.
+  final (provider, model) = ref.watch(
+    settingsProvider.select((s) => (s.aiProvider, s.effectiveAiModel)),
+  );
   final last4 = await ref.watch(aiKeyStatusProvider.future);
   if (last4 == null) return null;
 
-  final key = await ref.read(apiKeyStoreProvider).read(settings.aiProvider);
+  final key = await ref.read(apiKeyStoreProvider).read(provider);
   if (key == null) return null;
 
   final httpClient = ref.watch(httpClientProvider);
-  final model = settings.effectiveAiModel;
-  return switch (settings.aiProvider) {
+  return switch (provider) {
     AiProvider.anthropic => AnthropicClient(
       apiKey: key,
       model: model,

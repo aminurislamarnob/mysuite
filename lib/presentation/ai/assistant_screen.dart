@@ -427,6 +427,30 @@ class _Preview extends ConsumerWidget {
                   style: const TextStyle(fontSize: 14, height: 1.4),
                 ),
               ],
+              if (state.error != null) ...[
+                const SizedBox(height: 10),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppIcon(
+                      AppIcons.warning,
+                      color: context.brand.danger,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        state.error!,
+                        style: TextStyle(
+                          fontSize: 13,
+                          height: 1.4,
+                          color: context.brand.danger,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 14),
               for (var i = 0; i < state.previews.length; i++)
                 ActionPreviewCard(
@@ -618,12 +642,6 @@ class _Failure extends ConsumerWidget {
         AppIcons.info,
         'Edit and resend',
         controller.editAgain,
-      ),
-      AssistantErrorKind.locked => (
-        'Locked',
-        AppIcons.lock,
-        'Try again',
-        controller.saveAll,
       ),
       AssistantErrorKind.unknown => (
         'Something went wrong',

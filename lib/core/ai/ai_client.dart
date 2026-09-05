@@ -121,6 +121,12 @@ class AiHttp {
     }
   }
 
+  /// A non-empty string field, or null. Provider bodies are not trusted to
+  /// match their documented types; an unchecked cast would throw an `Error`
+  /// past every `on Exception` in the callers.
+  static String? stringOf(Object? value) =>
+      value is String && value.isNotEmpty ? value : null;
+
   /// All four providers report `{"error": {"message": "..."}}`; Gemini also
   /// carries a `status` string worth showing when the message is empty.
   static String? _errorMessage(Map<String, Object?> body) {

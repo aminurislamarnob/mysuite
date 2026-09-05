@@ -43,14 +43,20 @@ class AssistantPreview extends AssistantState {
   final AiCommandResult result;
   final List<ActionPreview> previews;
 
-  /// Cards already written, by index, after a tap-to-edit save.
+  /// Cards already written, by index, after a tap-to-edit save or a save
+  /// that only partly succeeded.
   final Map<int, SavedItem> saved;
+
+  /// Why the last save did not finish: a refused unlock, or the rows that
+  /// could not be written. Shown above the cards; the rest can be retried.
+  final String? error;
 
   const AssistantPreview({
     required this.transcript,
     required this.result,
     required this.previews,
     this.saved = const {},
+    this.error,
   });
 
   /// Cards still to be written by "Save all".
@@ -62,11 +68,14 @@ class AssistantPreview extends AssistantState {
   AssistantPreview copyWith({
     List<ActionPreview>? previews,
     Map<int, SavedItem>? saved,
+    String? error,
+    bool clearError = false,
   }) => AssistantPreview(
     transcript: transcript,
     result: result,
     previews: previews ?? this.previews,
     saved: saved ?? this.saved,
+    error: clearError ? null : (error ?? this.error),
   );
 }
 
@@ -97,7 +106,6 @@ enum AssistantErrorKind {
   refused,
   malformed,
   nothingParsed,
-  locked,
   unknown,
 }
 
@@ -137,6 +145,7 @@ class AssistantController extends StateNotifier<AssistantState> {
   // tearing down, when reading a provider is no longer allowed.
   final SpeechService _speech;
   StreamSubscription<bool>? _listening;
+  Timer? _finishTimer;
   String _transcript = '';
 
   /// Asked before writing into a locked module. Set by the screen, which can
@@ -147,6 +156,7 @@ class AssistantController extends StateNotifier<AssistantState> {
 
   @override
   void dispose() {
+    _finishTimer?.cancel();
     _listening?.cancel();
     if (_speech.isListening) _speech.cancel();
     super.dispose();
@@ -180,15 +190,25 @@ class AssistantController extends StateNotifier<AssistantState> {
     await _speech.stop();
   }
 
-  /// The recogniser went quiet on its own, or after [stopListening]. A final
-  /// result usually arrives first and moves the state on; this only matters
-  /// when it never comes.
+  /// The recogniser went quiet on its own, or after [stopListening].
+  ///
+  /// Both platforms report "not listening" a moment *before* they deliver
+  /// the final result, so finishing here at once would submit the last
+  /// partial and then submit again when the final words landed. Give the
+  /// final result a short window; if it never comes, go with what we have.
   void _onListening(bool active) {
     if (active || !mounted || state is! AssistantListening) return;
-    _finishListening();
+    _finishTimer?.cancel();
+    _finishTimer = Timer(const Duration(milliseconds: 600), _finishListening);
   }
 
+  /// Runs once per listening session: the first of the final result and the
+  /// grace timer wins, and `submit` leaves the Listening state synchronously
+  /// so the other cannot follow.
   void _finishListening() {
+    _finishTimer?.cancel();
+    _finishTimer = null;
+    if (!mounted || state is! AssistantListening) return;
     if (_transcript.trim().isEmpty) {
       state = const AssistantFailure(
         kind: AssistantErrorKind.noSpeech,
@@ -314,11 +334,12 @@ class AssistantController extends StateNotifier<AssistantState> {
   void markSaved(int index, SavedItem item) {
     final s = state;
     if (s is! AssistantPreview) return;
-    state = s.copyWith(saved: {...s.saved, index: item});
+    state = s.copyWith(saved: {...s.saved, index: item}, clearError: true);
   }
 
   /// Writes every pending card. Returns false when a lock prompt was refused
-  /// or a write failed; the state then explains why.
+  /// or a write failed; the preview stays, with the rows that did get written
+  /// marked saved and the reason shown, so a retry only writes the rest.
   Future<bool> saveAll() async {
     final s = state;
     if (s is! AssistantPreview) return false;
@@ -342,13 +363,11 @@ class AssistantController extends StateNotifier<AssistantState> {
       final ok = await unlockGate!(needsUnlock);
       if (!mounted) return false;
       if (!ok) {
-        state = AssistantFailure(
-          kind: AssistantErrorKind.locked,
-          message:
+        state = s.copyWith(
+          error:
               '${needsUnlock.map((m) => m.label).join(', ')} '
               '${needsUnlock.length == 1 ? 'is' : 'are'} locked. '
               'Unlock to save.',
-          transcript: s.transcript,
         );
         return false;
       }
@@ -356,28 +375,27 @@ class AssistantController extends StateNotifier<AssistantState> {
 
     state = AssistantSaving(s.transcript);
     final executor = _ref.read(aiCommandExecutorProvider);
-    final drafts = [for (final i in pending) s.previews[i].draft];
-    List<SavedItem> written;
-    try {
-      written = await executor.saveAll(drafts);
-    } on AiException catch (e) {
-      if (mounted) {
-        state = AssistantFailure(
-          kind: AssistantErrorKind.unknown,
-          message: e.message,
-          transcript: s.transcript,
-        );
-      }
-      return false;
-    }
+    final outcome = await executor.saveAll([
+      for (final i in pending) s.previews[i].draft,
+    ]);
     if (!mounted) return false;
 
-    state = AssistantSaved(
-      items: [...s.saved.values, ...written],
-      reply: s.result.reply,
-      source: s.result.source,
-    );
-    return true;
+    final saved = {...s.saved};
+    for (var k = 0; k < pending.length; k++) {
+      final item = outcome.results[k];
+      if (item != null) saved[pending[k]] = item;
+    }
+
+    if (outcome.failures.isEmpty) {
+      state = AssistantSaved(
+        items: [for (final i in saved.keys.toList()..sort()) saved[i]!],
+        reply: s.result.reply,
+        source: s.result.source,
+      );
+      return true;
+    }
+    state = s.copyWith(saved: saved, error: outcome.failures.join('\n'));
+    return false;
   }
 
   // --- Navigation between states ------------------------------------------

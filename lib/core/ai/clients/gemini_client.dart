@@ -86,7 +86,7 @@ class GeminiClient implements AiClient {
       if (text.trim().isNotEmpty) {
         return AiRawResponse(
           text: text,
-          model: (body['modelVersion'] as String?) ?? model,
+          model: AiHttp.stringOf(body['modelVersion']) ?? model,
         );
       }
     }

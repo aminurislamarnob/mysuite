@@ -82,7 +82,13 @@ class LocalCommandParser {
     final actions = <AiAction>[];
     var incomplete = false;
 
-    for (final raw in transcript.split(_clauseSplit)) {
+    // "1,200" is one number, not a clause break; drop the separator before
+    // splitting on commas.
+    final flat = transcript.replaceAllMapped(
+      RegExp(r'(\d),(\d{3})\b'),
+      (m) => '${m.group(1)}${m.group(2)}',
+    );
+    for (final raw in flat.split(_clauseSplit)) {
       // ", and add Napa" splits at the comma and keeps its conjunction.
       final clause = raw.trim().replaceFirst(_leadingConjunction, '').trim();
       if (clause.isEmpty) continue;
@@ -110,22 +116,33 @@ class LocalCommandParser {
     }
     if (_focusCue.hasMatch(lower)) return _focus(lower);
 
+    // "Remind me to walk the dog" is a task even when a habit is called
+    // Walk, so the task prefix is checked before the habit names.
+    if (_taskPrefix.hasMatch(clause) && !hasMoney) {
+      return _task(clause, lower, now);
+    }
+
     final habit = _habit(lower, c);
     if (habit != null && !hasMoney) return habit;
 
     final amount = _amount.firstMatch(lower.replaceAll('৳', ' '));
-    final namesAccount = c.accounts.any(
-      (a) => lower.contains(a.name.toLowerCase()),
-    );
-    final namesCategory = c.categories.any(
-      (x) => lower.contains(x.name.toLowerCase()),
-    );
-    if (amount != null && (hasMoney || namesAccount || namesCategory)) {
+    if (amount != null &&
+        (hasMoney ||
+            c.accounts.any((a) => _mentions(lower, a.name)) ||
+            c.categories.any((x) => _mentions(lower, x.name)))) {
       return _expense(clause, c);
     }
 
     if (_noteCue.hasMatch(clause)) return _note(clause);
     return _task(clause, lower, now);
+  }
+
+  /// Whole-word containment, so the seeded "Other" category does not match
+  /// inside "brother".
+  static bool _mentions(String lower, String name) {
+    final n = name.trim().toLowerCase();
+    if (n.isEmpty) return false;
+    return RegExp('\\b${RegExp.escape(n)}\\b').hasMatch(lower);
   }
 
   static AiAction? _expense(String clause, AiRequestContext c) {

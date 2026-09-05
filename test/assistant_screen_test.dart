@@ -34,7 +34,10 @@ class _FakeClient implements AiClient {
     required String system,
     required String user,
     required Map<String, Object?> schema,
-  }) async => AiRawResponse(text: canonicalJson, model: model);
+  }) async => AiRawResponse(
+    text: canonicalJsonFor(DateTime.now().add(const Duration(days: 1))),
+    model: model,
+  );
 }
 
 /// Drives the real screen through idle → transcript → preview. The states

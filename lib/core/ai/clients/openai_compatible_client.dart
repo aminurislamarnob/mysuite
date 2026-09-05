@@ -113,7 +113,7 @@ class OpenAiCompatibleClient implements AiClient {
       if (content is String && content.trim().isNotEmpty) {
         return AiRawResponse(
           text: content,
-          model: (body['model'] as String?) ?? model,
+          model: AiHttp.stringOf(body['model']) ?? model,
         );
       }
     }
