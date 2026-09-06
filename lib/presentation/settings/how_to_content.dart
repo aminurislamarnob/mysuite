@@ -301,8 +301,8 @@ const howToGuides = <HowToGuide>[
       'The mic in the entry sheet takes "200 taka lunch with bKash" and '
           'fills the form.',
       'Scan receipt in the top bar pulls the total and merchant off a photo.',
-      'Categories, in the ⋮ menu, lets you rename, recolour and reorder '
-          'them.',
+      'Categories, under the More button in the top bar, lets you rename, '
+          'recolour and reorder them.',
     ],
   ),
   HowToGuide(

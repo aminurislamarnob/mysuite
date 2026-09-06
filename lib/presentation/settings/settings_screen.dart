@@ -851,8 +851,7 @@ class _HowToCard extends StatelessWidget {
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
             subtitle: const Text(
-              'Short guides for every module, the assistant, reminders and '
-              'backups',
+              'Short guides for every part of the app',
               style: TextStyle(fontSize: 12),
             ),
             trailing: const AppIcon(AppIcons.chevronRight),
