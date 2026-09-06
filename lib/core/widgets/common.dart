@@ -358,47 +358,53 @@ class ContributionHeatmap extends StatelessWidget {
     final weeks = (total / 7).ceil();
     final base = context.brand.hairline;
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      reverse: true,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: List.generate(weeks, (w) {
-          return Padding(
-            padding: const EdgeInsets.only(right: 3),
-            child: Column(
-              children: List.generate(7, (d) {
-                final index = w * 7 + d - leading;
-                if (index < 0 || index >= days) {
-                  return SizedBox(height: cell + 3, width: cell);
-                }
-                final day = start.add(Duration(days: index));
-                final v = intensityFor(day).clamp(0.0, 1.0);
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 3),
-                  child: FTooltip(
-                    tipBuilder: (_, _) =>
-                        Text('${day.year}-${day.month}-${day.day}'),
-                    semanticsLabel: '${day.year}-${day.month}-${day.day}',
-                    child: GestureDetector(
-                      onTap: onTapDay == null ? null : () => onTapDay!(day),
-                      child: Container(
-                        width: cell,
-                        height: cell,
-                        decoration: BoxDecoration(
-                          color: v == 0
-                              ? base
-                              : color.withValues(alpha: 0.25 + v * 0.75),
-                          borderRadius: BorderRadius.circular(4),
+    // Latest week at the right edge when there is more than fits, so the
+    // present is what you land on; reading order from the left when it all
+    // fits, so the grid does not hang off the far side of its own label.
+    final width = weeks * (cell + 3);
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        reverse: width > constraints.maxWidth,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: List.generate(weeks, (w) {
+            return Padding(
+              padding: const EdgeInsets.only(right: 3),
+              child: Column(
+                children: List.generate(7, (d) {
+                  final index = w * 7 + d - leading;
+                  if (index < 0 || index >= days) {
+                    return SizedBox(height: cell + 3, width: cell);
+                  }
+                  final day = start.add(Duration(days: index));
+                  final v = intensityFor(day).clamp(0.0, 1.0);
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 3),
+                    child: FTooltip(
+                      tipBuilder: (_, _) =>
+                          Text('${day.year}-${day.month}-${day.day}'),
+                      semanticsLabel: '${day.year}-${day.month}-${day.day}',
+                      child: GestureDetector(
+                        onTap: onTapDay == null ? null : () => onTapDay!(day),
+                        child: Container(
+                          width: cell,
+                          height: cell,
+                          decoration: BoxDecoration(
+                            color: v == 0
+                                ? base
+                                : color.withValues(alpha: 0.25 + v * 0.75),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                );
-              }),
-            ),
-          );
-        }),
+                  );
+                }),
+              ),
+            );
+          }),
+        ),
       ),
     );
   }
@@ -644,6 +650,9 @@ class BrandTile extends StatelessWidget {
         ? const EdgeInsetsGeometryDelta.value(densePadding)
         : null;
     final slot = _TileSlot.of(context);
+    final inCard = CardScope.of(context);
+    // A tile paints its own card only when nothing else is one for it.
+    final fills = slot.fills && !inCard;
     return FTile(
       title: title,
       subtitle: subtitle,
@@ -664,12 +673,12 @@ class BrandTile extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: slot.radius),
         // Both layers, or the lower one still paints: forui stacks
         // `contentDecoration` above `backgroundColor`.
-        backgroundColor: slot.fills ? null : .delta([.all(Colors.transparent)]),
+        backgroundColor: fills ? null : .delta([.all(Colors.transparent)]),
         contentDecoration: .delta([
           .all(
             DecorationDelta.boxDelta(
-              color: slot.fills ? null : Colors.transparent,
-              border: slot.border(context.brand.hairline),
+              color: fills ? null : Colors.transparent,
+              border: slot.border(context.brand.hairline, inCard: inCard),
               borderRadius: slot.radius,
             ),
           ),
@@ -712,10 +721,12 @@ enum TilePosition {
   /// card already draws the boundary, so a tile contributes nothing but the
   /// divider to the row below it — an outline here would sit just inside the
   /// card's own edge as a second, fainter rectangle.
-  Border border(Color color) {
+  Border border(Color color, {bool inCard = false}) {
     final side = BorderSide(color: color);
     return switch (this) {
-      TilePosition.only => Border.fromBorderSide(side),
+      // A lone tile outlines itself unless a card is already doing it.
+      TilePosition.only =>
+        inCard ? const Border() : Border.fromBorderSide(side),
       TilePosition.first || TilePosition.middle => Border(bottom: side),
       TilePosition.last => const Border(),
     };

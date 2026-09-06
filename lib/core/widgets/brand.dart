@@ -24,6 +24,21 @@ import '../theme/app_theme.dart';
 /// Pass [tintIndex] to rotate through the three brand pastels so a row of cards
 /// does not read as one flat block, or [accent] to derive the fill from a
 /// module colour instead.
+/// Marks the subtree of a [TintCard].
+///
+/// A tile inside a card must not paint its own fill or outline — the card is
+/// the surface, and a second one just inside its edge reads as a card within a
+/// card. `BrandTile` reads this to know when to stand down.
+class CardScope extends InheritedWidget {
+  const CardScope({super.key, required super.child});
+
+  static bool of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<CardScope>() != null;
+
+  @override
+  bool updateShouldNotify(CardScope old) => false;
+}
+
 class TintCard extends StatelessWidget {
   final Widget child;
   final int tintIndex;
@@ -57,7 +72,9 @@ class TintCard extends StatelessWidget {
             : AppColors.wash(accent!, brightness: theme.brightness));
 
     final corners = BorderRadius.circular(radius);
-    final body = Padding(padding: padding, child: child);
+    final body = CardScope(
+      child: Padding(padding: padding, child: child),
+    );
 
     return FCard(
       // The tint rotation and the radius are brand decisions, so they are
@@ -260,6 +277,11 @@ class GreetingHeader extends StatelessWidget {
   /// The user's photo, which replaces the gradient circle entirely.
   final String? photoPath;
 
+  /// The circle's colour when there is no photo. Defaults to the brand, which
+  /// is also what a person who never picked a colour resolves to — so the
+  /// Settings card and this header show the same person the same way.
+  final Color? color;
+
   final List<Widget> actions;
   final VoidCallback? onAvatarTap;
 
@@ -269,6 +291,7 @@ class GreetingHeader extends StatelessWidget {
     required this.subtitle,
     this.initials = 'M',
     this.photoPath,
+    this.color,
     this.actions = const [],
     this.onAvatarTap,
   });
@@ -276,7 +299,7 @@ class GreetingHeader extends StatelessWidget {
   /// The brand-coloured circle standing in for a photo that is absent or
   /// unreadable.
   Widget _gradient(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
+    final primary = color ?? Theme.of(context).colorScheme.primary;
     return Container(
       width: 50,
       height: 50,

@@ -21,6 +21,7 @@ import '../notes/repository/note_repository.dart';
 import '../settings/people_screen.dart';
 import '../tasks/providers/tasks_provider.dart';
 import '../tasks/widgets/task_tile.dart';
+import '../../core/people/person_avatar.dart';
 
 /// The home screen, laid out to the fitness reference: greeting header, a hero
 /// card for the next thing due, a pastel "My Plans" row of module stats, an
@@ -56,10 +57,11 @@ class DashboardScreen extends ConsumerWidget {
           children: [
             GreetingHeader(
               greeting: '${Fmt.greeting()},',
-              subtitle: Fmt.fullDate(DateTime.now()),
+              subtitle: Fmt.headerDate(DateTime.now()),
               // Falls back to the app's mark while Self is still unnamed.
               initials: Fmt.initials(self?.name ?? ''),
               photoPath: self?.photoPath,
+              color: self == null ? null : personColor(context, self.color),
               onAvatarTap: self == null
                   ? null
                   : () => PersonEditor.show(context, ref, person: self),

@@ -4,6 +4,20 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_icons.dart';
 
+/// The hex every person is created with. A stored value still equal to it
+/// means nobody has chosen a colour for them yet.
+const personColorSeed = 0xFFFF6547;
+
+/// The colour a person's stored value resolves to.
+///
+/// The seed is a fixed hex — it was the brand coral once — so left alone it
+/// goes stale under any other palette, and every fresh household shows up in
+/// last year's brand. A person who has not picked a colour follows the palette
+/// instead, and keeps following it when the palette changes.
+Color personColor(BuildContext context, int stored) => stored == personColorSeed
+    ? Theme.of(context).colorScheme.primary
+    : Color(stored);
+
 /// A person's photo, or a coloured circle standing in for one.
 ///
 /// Takes the pieces rather than a `Person` so the dashboard's greeting — which

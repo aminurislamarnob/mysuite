@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../database/app_database.dart';
 import '../providers/database_provider.dart';
+import 'person_avatar.dart';
 import 'avatar_storage.dart';
 
 final peopleRepositoryProvider = Provider<PeopleRepository>((ref) {
@@ -78,7 +79,7 @@ class PeopleRepository {
   Future<int> createPerson({
     required String name,
     String relation = 'Family',
-    int color = 0xFFFF6547,
+    int color = personColorSeed,
     String type = PersonType.household,
     String? photoPath,
   }) => _db

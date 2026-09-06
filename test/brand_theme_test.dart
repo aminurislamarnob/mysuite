@@ -213,6 +213,34 @@ void main() {
       }
     });
 
+    testWidgets('a lone tile inside a card paints neither fill nor edge', (
+      tester,
+    ) async {
+      // The Focus screen put one BrandTile inside an accent-washed TintCard
+      // and got a pink tile on a teal card. In a card, the card is the card.
+      await pumpBranded(
+        tester,
+        const TintCard(child: BrandTile(title: Text('inside'))),
+      );
+
+      final tile = find.ancestor(
+        of: find.text('inside'),
+        matching: find.byType(BrandTile),
+      );
+      for (final c in fillsOf(tester, tile).nonNulls) {
+        expect(c.a, 0, reason: 'tile in a card painted $c');
+      }
+      final border = bordersOf(tester, tile).firstOrNull! as Border;
+      for (final side in [
+        border.top,
+        border.left,
+        border.right,
+        border.bottom,
+      ]) {
+        expect(side.style, BorderStyle.none);
+      }
+    });
+
     testWidgets('a lone tile still rounds all four corners', (tester) async {
       await pumpBranded(
         tester,

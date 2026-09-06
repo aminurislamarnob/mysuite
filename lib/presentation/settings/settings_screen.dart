@@ -827,14 +827,14 @@ class _ProfileCard extends ConsumerWidget {
       child: BrandTile(
         leading: PersonAvatar(
           photoPath: self.photoPath,
-          color: Color(self.color),
+          color: personColor(context, self.color),
           size: 52,
           fallback: initials.isEmpty
               ? null
               : Text(
                   initials,
                   style: TextStyle(
-                    color: Color(self.color),
+                    color: personColor(context, self.color),
                     fontWeight: FontWeight.w700,
                     fontSize: 18,
                   ),

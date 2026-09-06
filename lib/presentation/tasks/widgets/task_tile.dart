@@ -73,10 +73,17 @@ class TaskTile extends ConsumerWidget {
     final muted = Theme.of(context).colorScheme.outline;
     final subtasks =
         ref.watch(subtasksProvider(task.id)).valueOrNull ?? const [];
+    // A task due at 5pm is late at 5:01. One due 'today' with no time is
+    // late tomorrow — comparing its midnight against now made every all-day
+    // task light up red from the first minute of its own due date.
+    final now = DateTime.now();
+    final due = task.dueDate;
     final overdue =
-        task.dueDate != null &&
+        due != null &&
         !task.isCompleted &&
-        task.dueDate!.isBefore(DateTime.now());
+        (task.hasDueTime
+            ? due.isBefore(now)
+            : Fmt.dateOnly(due).isBefore(Fmt.dateOnly(now)));
 
     return Slidable(
       key: ValueKey(task.id),

@@ -78,7 +78,7 @@ class _PersonRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final muted = Theme.of(context).colorScheme.outline;
-    final color = Color(person.color);
+    final color = personColor(context, person.color);
 
     return BrandTile(
       dense: true,

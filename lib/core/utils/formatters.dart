@@ -9,6 +9,9 @@ class Fmt {
   static final _dayMonthYear = DateFormat('MMM d, y');
   static final _weekday = DateFormat('EEE');
   static final _fullDate = DateFormat('EEEE, MMMM d');
+  // The dashboard header shares its row with the avatar and three buttons,
+  // which leaves no room for 'Wednesday, September 30' at 17px.
+  static final _headerDate = DateFormat('EEEE, MMM d');
   static final _monthYear = DateFormat('MMMM y');
   static final _iso = DateFormat('yyyy-MM-dd');
 
@@ -17,6 +20,7 @@ class Fmt {
   static String dayMonthYear(DateTime d) => _dayMonthYear.format(d);
   static String weekday(DateTime d) => _weekday.format(d);
   static String fullDate(DateTime d) => _fullDate.format(d);
+  static String headerDate(DateTime d) => _headerDate.format(d);
   static String monthYear(DateTime d) => _monthYear.format(d);
   static String iso(DateTime d) => _iso.format(d);
 
@@ -68,13 +72,16 @@ class Fmt {
       : amount.toString();
 
   static String compactMoney(double amount, String symbol) {
-    if (amount.abs() >= 1000000) {
-      return '$symbol${(amount / 1000000).toStringAsFixed(1)}M';
+    // Sign before the symbol, as [money] does — '-৳1.3k', not '৳-1.3k'.
+    final sign = amount < 0 ? '-' : '';
+    final a = amount.abs();
+    if (a >= 1000000) {
+      return '$sign$symbol${(a / 1000000).toStringAsFixed(1)}M';
     }
-    if (amount.abs() >= 1000) {
-      return '$symbol${(amount / 1000).toStringAsFixed(1)}k';
+    if (a >= 1000) {
+      return '$sign$symbol${(a / 1000).toStringAsFixed(1)}k';
     }
-    return '$symbol${amount.toStringAsFixed(0)}';
+    return '$sign$symbol${a.toStringAsFixed(0)}';
   }
 
   /// "1h 25m", "45m", "0m"

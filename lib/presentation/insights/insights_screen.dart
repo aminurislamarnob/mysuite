@@ -59,7 +59,7 @@ class InsightsScreen extends ConsumerWidget {
                     tintIndex: 0,
                     icon: AppIcons.checkCircle,
                     color: context.brand.task,
-                    label: 'Completed (7d)',
+                    label: 'Done (7d)',
                     value: '${taskStats.completed}',
                   ),
                 ),
@@ -129,31 +129,38 @@ class InsightsScreen extends ConsumerWidget {
 
           if (settings.isEnabled(AppModule.focus) && focusStats != null) ...[
             const SectionHeader('Focus'),
-            Row(
-              children: [
-                Expanded(
-                  child: StatTile(
-                    tintIndex: 3,
-                    icon: AppIcons.focus,
-                    color: context.brand.focus,
-                    label: 'This week',
-                    value: Fmt.duration(focusStats.week),
-                    sublabel: '${focusStats.sessionsWeek} sessions',
+            // 'This week' carries a sublabel and 'Peak hour' does not; left to
+            // centre, the shorter tile floats with its top edge adrift. Stretch
+            // needs a height to stretch to, and a ListView offers none, so the
+            // row measures its tallest child first.
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: StatTile(
+                      tintIndex: 3,
+                      icon: AppIcons.focus,
+                      color: context.brand.focus,
+                      label: 'This week',
+                      value: Fmt.duration(focusStats.week),
+                      sublabel: '${focusStats.sessionsWeek} sessions',
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: StatTile(
-                    tintIndex: 4,
-                    icon: AppIcons.lightMode,
-                    color: context.brand.warning,
-                    label: 'Peak hour',
-                    value: focusStats.bestHour == null
-                        ? '—'
-                        : Fmt.minutesOfDay(focusStats.bestHour! * 60),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: StatTile(
+                      tintIndex: 4,
+                      icon: AppIcons.lightMode,
+                      color: context.brand.warning,
+                      label: 'Peak hour',
+                      value: focusStats.bestHour == null
+                          ? '—'
+                          : Fmt.minutesOfDay(focusStats.bestHour! * 60),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             const SizedBox(height: 24),
           ],
