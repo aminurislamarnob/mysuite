@@ -15,6 +15,7 @@ import '../providers/expenses_provider.dart';
 import '../repository/expense_repository.dart';
 import '../../settings/people_screen.dart';
 import '../categories_screen.dart';
+import '../utils/expense_reminders.dart';
 import '../utils/expense_voice_parser.dart';
 
 /// Two-tap entry: amount is prefilled and focused, category and account are
@@ -240,7 +241,7 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
         _toast('Name the bill first.');
         return;
       }
-      final billId = await ref
+      final bill = await ref
           .read(expenseRepositoryProvider)
           .createRecurring(
             RecurringExpensesCompanion.insert(
@@ -253,7 +254,8 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
               categoryId: drift.Value(_categoryId),
             ),
           );
-      if (mounted) Navigator.pop(context, billId);
+      await ref.read(expenseRemindersProvider).syncBill(bill);
+      if (mounted) Navigator.pop(context, bill.id);
       return;
     }
 
@@ -291,6 +293,10 @@ class _ExpenseEntrySheetState extends ConsumerState<ExpenseEntrySheet> {
         note: drift.Value(note),
         date: _date,
       );
+      // A repayment's amount decides whether its loan is settled.
+      if (existing.loanId != null) {
+        await ref.read(expenseRemindersProvider).syncLoan(existing.loanId!);
+      }
     }
 
     if (mounted) Navigator.pop(context, id);

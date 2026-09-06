@@ -19,6 +19,7 @@ class _IdRange {
   static const habit = 300000;
   static const note = 400000;
   static const bill = 500000;
+  static const loan = 600000;
 }
 
 class NotificationService {
@@ -270,6 +271,31 @@ class NotificationService {
 
   Future<void> cancelBillReminder(int billId) =>
       _plugin.cancel(id: _IdRange.bill + billId);
+
+  /// One nudge on the morning a loan falls due, worded from the user's side:
+  /// what they are still owed, or what they still owe.
+  Future<void> scheduleLoanReminder({
+    required int loanId,
+    required String personName,
+    required bool lent,
+    required double outstanding,
+    required String currency,
+    required DateTime when,
+  }) {
+    final money = '$currency${outstanding.toStringAsFixed(0)}';
+    return _schedule(
+      id: _IdRange.loan + loanId,
+      title: lent
+          ? "$personName's repayment is due"
+          : 'Repayment to $personName is due',
+      body: lent ? '$money still owed to you' : 'You still owe $money',
+      when: when,
+      payload: 'loan:$loanId',
+    );
+  }
+
+  Future<void> cancelLoanReminder(int loanId) =>
+      _plugin.cancel(id: _IdRange.loan + loanId);
 
   /// Fires immediately; used for low-stock and budget-threshold alerts.
   Future<void> notifyNow({

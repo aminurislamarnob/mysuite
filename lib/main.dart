@@ -15,6 +15,7 @@ import 'core/theme/app_forui_theme.dart';
 import 'core/theme/app_icons.dart';
 import 'core/theme/app_theme.dart';
 import 'core/widgets/common.dart';
+import 'presentation/expenses/utils/expense_reminders.dart';
 import 'presentation/notes/repository/note_repository.dart';
 
 Future<void> main() async {
@@ -59,6 +60,19 @@ class _MySuiteAppState extends ConsumerState<MySuiteApp> {
     await ref.read(noteRepositoryProvider).purgeExpiredTrash();
     // Avatar files a half-finished write left behind.
     await ref.read(peopleRepositoryProvider).pruneOrphanedAvatars();
+    // Bills and loans remind on their due date; re-arm them every launch so
+    // rows from before reminders existed get theirs too. A scheduling failure
+    // is the platform's problem, not a reason to abandon the rest of startup.
+    if (ref
+        .read(settingsProvider)
+        .enabledModules
+        .contains(AppModule.expenses)) {
+      try {
+        await ref.read(expenseRemindersProvider).syncAll();
+      } on Exception catch (e) {
+        debugPrint('Could not re-arm expense reminders: $e');
+      }
+    }
   }
 
   @override

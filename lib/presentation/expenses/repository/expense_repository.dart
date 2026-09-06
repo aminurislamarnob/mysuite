@@ -393,6 +393,8 @@ class ExpenseRepository {
 
   Future<Loan?> loan(int id) => _loan(id);
 
+  Future<List<Loan>> loans() => _db.select(_db.loans).get();
+
   Future<double> repaid(int loanId) async {
     final sum = _db.expenses.amount.sum();
     final q = _db.selectOnly(_db.expenses)
@@ -611,15 +613,20 @@ class ExpenseRepository {
             ..orderBy([(t) => OrderingTerm(expression: t.nextDueDate)]))
           .watch();
 
-  Future<int> createRecurring(RecurringExpensesCompanion bill) =>
-      _db.into(_db.recurringExpenses).insert(bill);
+  Future<List<RecurringExpense>> recurring() => (_db.select(
+    _db.recurringExpenses,
+  )..where((t) => t.isActive.equals(true))).get();
+
+  Future<RecurringExpense> createRecurring(RecurringExpensesCompanion bill) =>
+      _db.into(_db.recurringExpenses).insertReturning(bill);
 
   Future<void> deleteRecurring(int id) =>
       (_db.delete(_db.recurringExpenses)..where((t) => t.id.equals(id))).go();
 
   /// Books a due bill as a real transaction and rolls its due date forward.
-  Future<void> payRecurring(RecurringExpense bill) async {
-    if (bill.accountId == null) return;
+  /// Hands back the bill as it now stands so its reminder can follow.
+  Future<RecurringExpense> payRecurring(RecurringExpense bill) async {
+    if (bill.accountId == null) return bill;
     await addTransaction(
       amount: bill.amount,
       accountId: bill.accountId!,
@@ -627,13 +634,11 @@ class ExpenseRepository {
       note: bill.name,
       date: bill.nextDueDate,
     );
-    await (_db.update(
-      _db.recurringExpenses,
-    )..where((t) => t.id.equals(bill.id))).write(
-      RecurringExpensesCompanion(
-        nextDueDate: Value(_advance(bill.nextDueDate, bill.period)),
-      ),
+    final next = bill.copyWith(
+      nextDueDate: _advance(bill.nextDueDate, bill.period),
     );
+    await _db.update(_db.recurringExpenses).replace(next);
+    return next;
   }
 
   static DateTime _advance(DateTime from, String period) => switch (period) {

@@ -10,6 +10,7 @@ import '../../../core/widgets/common.dart';
 import '../../settings/people_screen.dart';
 import '../providers/expenses_provider.dart';
 import '../repository/expense_repository.dart';
+import '../utils/expense_reminders.dart';
 
 /// Opens a loan: who, which way, how much, out of which account.
 class LoanSheet extends ConsumerStatefulWidget {
@@ -60,7 +61,7 @@ class _LoanSheetState extends ConsumerState<LoanSheet> {
       return;
     }
 
-    await ref
+    final id = await ref
         .read(expenseRepositoryProvider)
         .createLoan(
           personId: _personId!,
@@ -70,6 +71,7 @@ class _LoanSheetState extends ConsumerState<LoanSheet> {
           note: _note.text.trim().isEmpty ? null : _note.text.trim(),
           dueDate: _dueDate,
         );
+    await ref.read(expenseRemindersProvider).syncLoan(id);
     if (mounted) Navigator.pop(context);
   }
 
@@ -273,6 +275,7 @@ class _RepaySheetState extends ConsumerState<RepaySheet> {
           accountId: accountId,
           note: widget.row.loan.note,
         );
+    await ref.read(expenseRemindersProvider).syncLoan(widget.row.loan.id);
     if (mounted) Navigator.pop(context);
   }
 

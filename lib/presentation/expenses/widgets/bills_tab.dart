@@ -9,6 +9,7 @@ import '../../../core/widgets/brand.dart';
 import '../../../core/widgets/common.dart';
 import '../providers/expenses_provider.dart';
 import '../repository/expense_repository.dart';
+import '../utils/expense_reminders.dart';
 import 'expense_entry_sheet.dart';
 
 class BillsTab extends ConsumerWidget {
@@ -20,6 +21,7 @@ class BillsTab extends ConsumerWidget {
     final bills = ref.watch(recurringProvider);
     final subsTotal = ref.watch(subscriptionTotalProvider).valueOrNull ?? 0;
     final repo = ref.read(expenseRepositoryProvider);
+    final reminders = ref.read(expenseRemindersProvider);
 
     // The screen's own FAB owns the bottom corner, so the way to add a bill
     // sits in the list where it can be seen.
@@ -89,12 +91,18 @@ class BillsTab extends ConsumerWidget {
                               label: 'Pay',
                               kind: BrandButtonKind.ghost,
                               expand: false,
-                              onPressed: () => repo.payRecurring(b),
+                              onPressed: () async {
+                                final next = await repo.payRecurring(b);
+                                await reminders.syncBill(next);
+                              },
                             ),
                             CircleIconButton(
                               icon: AppIcons.delete,
                               size: 40,
-                              onPressed: () => repo.deleteRecurring(b.id),
+                              onPressed: () async {
+                                await repo.deleteRecurring(b.id);
+                                await reminders.cancelBill(b.id);
+                              },
                             ),
                           ],
                         ),

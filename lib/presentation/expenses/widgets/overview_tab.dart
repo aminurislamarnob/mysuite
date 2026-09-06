@@ -11,6 +11,7 @@ import '../../../core/widgets/brand.dart';
 import '../../../core/widgets/common.dart';
 import '../providers/expenses_provider.dart';
 import '../repository/expense_repository.dart';
+import '../utils/expense_reminders.dart';
 import 'accounts_sheet.dart';
 import 'expense_entry_sheet.dart';
 
@@ -340,13 +341,22 @@ class _TxTile extends ConsumerWidget {
   /// loan link survives the round trip.
   Future<void> _delete(BuildContext context, WidgetRef ref) async {
     final repo = ref.read(expenseRepositoryProvider);
+    final reminders = ref.read(expenseRemindersProvider);
     final deleted = await repo.deleteTransaction(tx.id);
-    if (deleted == null || !context.mounted) return;
+    if (deleted == null) return;
+    // Removing a repayment can reopen its loan, and removing the principal
+    // takes the loan with it; either way the reminder follows the row.
+    final loanId = deleted.loanId;
+    if (loanId != null) await reminders.syncLoan(loanId);
+    if (!context.mounted) return;
     brandToast(
       context,
       'Transaction deleted',
       actionLabel: 'Undo',
-      onAction: () => repo.restoreTransaction(deleted),
+      onAction: () async {
+        await repo.restoreTransaction(deleted);
+        if (loanId != null) await reminders.syncLoan(loanId);
+      },
     );
   }
 }

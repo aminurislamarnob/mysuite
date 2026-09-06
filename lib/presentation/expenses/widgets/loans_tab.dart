@@ -9,6 +9,7 @@ import '../../../core/widgets/brand.dart';
 import '../../../core/widgets/common.dart';
 import '../providers/expenses_provider.dart';
 import '../repository/expense_repository.dart';
+import '../utils/expense_reminders.dart';
 import 'loan_sheet.dart';
 
 /// Money lent and borrowed. The principal and every repayment are real
@@ -201,6 +202,7 @@ class _LoanCard extends ConsumerWidget {
     );
     if (ok) {
       await ref.read(expenseRepositoryProvider).deleteLoan(row.loan.id);
+      await ref.read(expenseRemindersProvider).cancelLoan(row.loan.id);
     }
   }
 }
