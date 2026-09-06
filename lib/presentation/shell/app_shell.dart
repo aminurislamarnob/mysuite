@@ -255,7 +255,11 @@ Widget _tile({
               height: 42,
               alignment: Alignment.center,
               decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-              child: AppIcon(icon, color: Colors.white, size: 21),
+              child: AppIcon(
+                icon,
+                color: context.brand.onAccent(color),
+                size: 21,
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(

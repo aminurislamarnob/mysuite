@@ -494,7 +494,9 @@ class _CalendarTab extends ConsumerWidget {
                           fontWeight: isToday
                               ? FontWeight.w700
                               : FontWeight.w400,
-                          color: isSel ? Colors.white : null,
+                          color: isSel
+                              ? context.brand.onAccent(context.brand.medicine)
+                              : null,
                         ),
                       ),
                       const SizedBox(height: 3),
@@ -949,7 +951,7 @@ class _ProfileDrawer extends ConsumerWidget {
               child: Text(
                 'Profiles',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: context.brand.onAccent(context.brand.medicine),
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
                 ),
@@ -984,9 +986,11 @@ class _ProfileDrawer extends ConsumerWidget {
                               backgroundColor: personColor(context, p.color),
                               child: Text(
                                 p.name.isEmpty ? '?' : p.name[0].toUpperCase(),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
-                                  color: Colors.white,
+                                  color: context.brand.onAccent(
+                                    personColor(context, p.color),
+                                  ),
                                 ),
                               ),
                             ),

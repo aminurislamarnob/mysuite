@@ -293,7 +293,10 @@ class _TxTile extends ConsumerWidget {
             color: context.brand.danger,
             borderRadius: BorderRadius.circular(20),
           ),
-          child: const AppIcon(AppIcons.delete, color: Colors.white),
+          child: AppIcon(
+            AppIcons.delete,
+            color: context.brand.onAccent(context.brand.danger),
+          ),
         ),
         onDismissed: (_) => _delete(context, ref),
         child: BrandTile(

@@ -98,10 +98,12 @@ class ReportsTab extends ConsumerWidget {
                             value: entry.value,
                             radius: 52,
                             title: share < 0.07 ? '' : Fmt.percent(share),
-                            titleStyle: const TextStyle(
+                            titleStyle: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                              color: context.brand.onAccent(
+                                Color(cat?.color ?? 0xFF6C6C6C),
+                              ),
                             ),
                           );
                         }).toList(),

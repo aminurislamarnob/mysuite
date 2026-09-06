@@ -367,7 +367,7 @@ class _NotesDrawer extends ConsumerWidget {
               child: Text(
                 'Notes',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: context.brand.onAccent(context.brand.note),
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
                 ),

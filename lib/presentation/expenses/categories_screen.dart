@@ -5,6 +5,7 @@ import '../../core/database/app_database.dart';
 import '../../core/theme/app_icons.dart';
 import '../../core/widgets/brand.dart';
 import '../../core/widgets/common.dart';
+import '../../core/theme/app_theme.dart';
 import 'providers/expenses_provider.dart';
 import 'repository/expense_repository.dart';
 
@@ -329,7 +330,9 @@ class _IconGrid extends StatelessWidget {
                   child: AppIcon(
                     entry.value,
                     size: 18,
-                    color: entry.key == selected ? Colors.white : muted,
+                    color: entry.key == selected
+                        ? context.brand.onAccent(color)
+                        : muted,
                   ),
                 ),
               ),

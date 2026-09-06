@@ -308,9 +308,9 @@ class _PhotoWell extends StatelessWidget {
                   width: 2,
                 ),
               ),
-              child: const AppIcon(
+              child: AppIcon(
                 AppIcons.camera,
-                color: Colors.white,
+                color: theme.colorScheme.onPrimary,
                 size: 14,
               ),
             ),

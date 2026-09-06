@@ -19,25 +19,29 @@ import 'task_editor_sheet.dart';
 ///
 /// [SlidableAction] takes an [IconData], which a Hugeicons glyph is not, so the
 /// icon-over-label column is rebuilt here on [CustomSlidableAction].
-Widget _slideAction({
+Widget _slideAction(
+  BuildContext context, {
   required SlidableActionCallback onPressed,
   required Color background,
   required HugeIconData icon,
   required String label,
 }) {
+  // White read fine on the light-mode hues; the dark-mode ones lift, and
+  // white on a lifted danger red is nearer 2:1.
+  final foreground = context.brand.onAccent(background);
   return CustomSlidableAction(
     onPressed: onPressed,
     backgroundColor: background,
-    foregroundColor: Colors.white,
+    foregroundColor: foreground,
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        AppIcon(icon, color: Colors.white),
+        AppIcon(icon, color: foreground),
         const SizedBox(height: 4),
         Text(
           label,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: foreground),
         ),
       ],
     ),
@@ -92,6 +96,7 @@ class TaskTile extends ConsumerWidget {
         extentRatio: 0.28,
         children: [
           _slideAction(
+            context,
             onPressed: (_) => context.push('/focus', extra: task.id),
             background: context.brand.focus,
             icon: AppIcons.play,
@@ -104,12 +109,14 @@ class TaskTile extends ConsumerWidget {
         extentRatio: 0.5,
         children: [
           _slideAction(
+            context,
             onPressed: (_) => TaskEditorSheet.show(context, task: task),
             background: Theme.of(context).colorScheme.primary,
             icon: AppIcons.edit,
             label: 'Edit',
           ),
           _slideAction(
+            context,
             onPressed: (_) async {
               await repo.deleteTask(task.id);
               await ref

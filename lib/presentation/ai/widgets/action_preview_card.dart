@@ -62,7 +62,11 @@ class ActionPreviewCard extends ConsumerWidget {
             height: 42,
             alignment: Alignment.center,
             decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
-            child: AppIcon(kind.icon, color: Colors.white, size: 21),
+            child: AppIcon(
+              kind.icon,
+              color: context.brand.onAccent(accent),
+              size: 21,
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(

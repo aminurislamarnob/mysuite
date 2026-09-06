@@ -388,7 +388,9 @@ class _CalendarView extends ConsumerWidget {
                           fontWeight: isToday
                               ? FontWeight.w700
                               : FontWeight.w400,
-                          color: isSelected ? Colors.white : null,
+                          color: isSelected
+                              ? context.brand.onAccent(context.brand.task)
+                              : null,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -809,7 +811,7 @@ class _ProjectDrawer extends ConsumerWidget {
               child: Text(
                 'Projects',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: context.brand.onAccent(context.brand.task),
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
                 ),

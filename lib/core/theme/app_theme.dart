@@ -75,6 +75,26 @@ class BrandColors extends ThemeExtension<BrandColors> {
   /// The pastel fill for the card at [index] in a row or grid.
   Color tint(int index) => tints[index % tints.length];
 
+  /// The foreground for anything filled with an accent or status hue — a
+  /// module glyph on its colour, a swipe action, the Focus timer's button.
+  ///
+  /// Not simply white. In light mode every accent is a mid-dark hue and white
+  /// clears it; in dark mode the accents lift so they read on charcoal, and
+  /// white on a lifted accent lands around 2:1. The page canvas is the other
+  /// candidate: white itself in light, near-black in dark. Whichever contrasts
+  /// more wins, so the rule holds for any accent a future palette brings.
+  Color onAccent(Color accent) {
+    final la = accent.computeLuminance();
+    double ratio(Color c) {
+      final l = c.computeLuminance();
+      final hi = l > la ? l : la;
+      final lo = l > la ? la : l;
+      return (hi + 0.05) / (lo + 0.05);
+    }
+
+    return ratio(canvas) > ratio(Colors.white) ? canvas : Colors.white;
+  }
+
   /// A reasonable stand-in derived from any [ThemeData], for the case where a
   /// widget is built under a theme that never registered the extension.
   factory BrandColors.fallback(ThemeData theme) {

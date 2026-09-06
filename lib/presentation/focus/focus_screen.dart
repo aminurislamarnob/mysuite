@@ -489,13 +489,13 @@ class _RoundAction extends StatelessWidget {
             child: icon != null
                 ? AppIcon(
                     icon!,
-                    color: soft ? color : Colors.white,
+                    color: soft ? color : context.brand.onAccent(color),
                     size: size * 0.42,
                   )
                 : Text(
                     label!,
                     style: TextStyle(
-                      color: soft ? color : Colors.white,
+                      color: soft ? color : context.brand.onAccent(color),
                       fontWeight: FontWeight.w700,
                       fontSize: 16,
                     ),

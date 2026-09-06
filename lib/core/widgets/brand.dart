@@ -151,7 +151,7 @@ class CircleIconButton extends StatelessWidget {
           child: AppIcon(
             icon,
             size: size * 0.45,
-            color: filled ? Colors.white : tone,
+            color: filled ? context.brand.onAccent(tone) : tone,
           ),
         ),
       ),
@@ -319,8 +319,8 @@ class GreetingHeader extends StatelessWidget {
       ),
       child: Text(
         initials.isEmpty ? 'mS' : initials,
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: context.brand.onAccent(primary),
           fontWeight: FontWeight.w700,
           fontSize: 18,
         ),
