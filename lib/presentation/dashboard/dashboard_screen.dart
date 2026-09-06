@@ -22,6 +22,7 @@ import '../settings/people_screen.dart';
 import '../tasks/providers/tasks_provider.dart';
 import '../tasks/widgets/task_tile.dart';
 import '../../core/people/person_avatar.dart';
+import '../../core/database/app_database.dart';
 
 /// The home screen, laid out to the fitness reference: greeting header, a hero
 /// card for the next thing due, a pastel "My Plans" row of module stats, an
@@ -696,12 +697,7 @@ class _NotesWidget extends ConsumerWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    subtitle: Text(
-                      NoteRepository.previewOf(n.content, max: 60),
-                      style: const TextStyle(fontSize: 12),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    subtitle: _NoteMeta(n),
                     onTap: () => context.push('/note_editor', extra: n.id),
                   ),
               ],
@@ -719,3 +715,37 @@ Widget _quiet(BuildContext context, String message) => Padding(
   padding: const EdgeInsets.symmetric(vertical: 4),
   child: Text(message, style: TextStyle(color: context.muted, fontSize: 14)),
 );
+
+/// When a note was last touched, with its first line after it if there is
+/// one. The task tiles show their date this way; a "recent" list without a
+/// date on each row did not say what made it recent.
+class _NoteMeta extends StatelessWidget {
+  final Note note;
+
+  const _NoteMeta(this.note);
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = context.muted;
+    final style = TextStyle(fontSize: 11, color: muted);
+    final preview = NoteRepository.previewOf(note.content, max: 60);
+    return Row(
+      children: [
+        AppIcon(AppIcons.calendar, size: 12, color: muted),
+        const SizedBox(width: 3),
+        Text(Fmt.relativeDay(note.updatedAt), style: style),
+        if (preview.isNotEmpty) ...[
+          Text(' · ', style: style),
+          Expanded(
+            child: Text(
+              preview,
+              style: style,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}

@@ -398,13 +398,22 @@ class _MedicineEditorSheetState extends ConsumerState<MedicineEditorSheet> {
               runSpacing: 8,
               children: [
                 ..._times.map(
+                  // A clock on the chip, and a hint below: these were styled
+                  // exactly like the read-only presets beneath them, so
+                  // nothing said a time could be tapped and changed.
                   (m) => Pill(
+                    icon: AppIcons.clock,
                     label: Fmt.minutesOfDay(m),
                     color: Theme.of(context).colorScheme.primary,
                     onTap: () => _editTime(m),
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Tap a time to change it',
+              style: TextStyle(color: muted, fontSize: 11),
             ),
             const SizedBox(height: 8),
             Wrap(
