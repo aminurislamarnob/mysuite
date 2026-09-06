@@ -8,6 +8,7 @@ import '../../core/theme/app_icons.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/widgets/brand.dart';
 import '../../core/widgets/common.dart';
+import '../../core/people/person_avatar.dart';
 import 'providers/medicine_provider.dart';
 import 'repository/medicine_repository.dart';
 import 'utils/schedule_generator.dart';
@@ -980,7 +981,7 @@ class _ProfileDrawer extends ConsumerWidget {
                           (p) => BrandTile(
                             leading: CircleAvatar(
                               radius: 12,
-                              backgroundColor: Color(p.color),
+                              backgroundColor: personColor(context, p.color),
                               child: Text(
                                 p.name.isEmpty ? '?' : p.name[0].toUpperCase(),
                                 style: const TextStyle(
