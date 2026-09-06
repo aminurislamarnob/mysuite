@@ -316,8 +316,7 @@ class _IconGrid extends StatelessWidget {
         crossAxisSpacing: 8,
         children: [
           for (final entry in AppIcons.categoryIcons.entries)
-            InkWell(
-              borderRadius: BorderRadius.circular(24),
+            GestureDetector(
               onTap: () => onChanged(entry.key),
               child: Container(
                 decoration: BoxDecoration(
