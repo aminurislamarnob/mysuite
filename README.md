@@ -59,6 +59,19 @@ The action schema every provider receives, and the per-kind tool
 catalogue an MCP server would expose if one is ever added, live in
 `lib/core/ai/ai_command_schema.dart`.
 
+## How-to guides
+
+**Settings → How to** opens a page of short guides: a quick start, one
+guide per module, and one each for the assistant, the overview tabs,
+reminders, people and security. Each is a collapsible card of numbered
+steps plus a few "good to know" lines, and a module's card ends with a
+button into that module — or a "Turn on" button when it is switched
+off. The pills on the Settings card open the page at that module.
+
+The text lives in `lib/presentation/settings/how_to_content.dart`, one
+`HowToGuide` per card. It describes what the app does today, so a
+feature change that alters a step should update its line there too.
+
 ## Tests
 
 ```bash

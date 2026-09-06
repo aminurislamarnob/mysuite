@@ -17,6 +17,8 @@ import '../../core/utils/formatters.dart';
 import '../../core/widgets/brand.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/palette_picker.dart';
+import '../modules/modules_screen.dart';
+import 'how_to_screen.dart';
 import 'people_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -53,6 +55,10 @@ class SettingsScreen extends ConsumerWidget {
                   .toList(),
             ),
           ),
+
+          const SizedBox(height: 24),
+          const SectionHeader('How to'),
+          const _HowToCard(),
 
           const SizedBox(height: 24),
           const SectionHeader('People'),
@@ -803,6 +809,79 @@ class _AiAssistantCard extends ConsumerWidget {
     } on AiException catch (e) {
       if (context.mounted) brandToast(context, 'Failed: ${e.message}');
     }
+  }
+}
+
+/// The doorway to the guides: one row that opens the whole set, and a pill
+/// per module that opens it at that module's card.
+///
+/// Sits right under the module switches, since the guides are organised the
+/// same way and a switch is where someone wonders what a module does.
+class _HowToCard extends StatelessWidget {
+  const _HowToCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+
+    void open([String? guide]) => Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => HowToScreen(initialGuide: guide)));
+
+    return TintCard(
+      accent: primary,
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          BrandTile(
+            leading: Container(
+              width: 40,
+              height: 40,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(color: primary, shape: BoxShape.circle),
+              child: AppIcon(
+                AppIcons.idea,
+                size: 20,
+                color: context.brand.onAccent(primary),
+              ),
+            ),
+            title: const Text(
+              'How to use mySuite',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: const Text(
+              'Short guides for every module, the assistant, reminders and '
+              'backups',
+              style: TextStyle(fontSize: 12),
+            ),
+            trailing: const AppIcon(AppIcons.chevronRight),
+            onTap: open,
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final m in AppModule.values)
+                  Builder(
+                    builder: (context) {
+                      final (icon, color) = ModulesScreen.metaFor(context, m);
+                      return Pill(
+                        label: m.label,
+                        icon: icon,
+                        color: color,
+                        onTap: () => open(m.name),
+                      );
+                    },
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
