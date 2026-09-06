@@ -537,7 +537,7 @@ class _AmbientRow extends ConsumerWidget {
           onTap: () => ((_) async {
             final ok = await notifier.toggle(e.key);
             if (!ok && context.mounted) {
-              brandToast(context, '$label sound is not bundled yet.');
+              brandToast(context, 'Could not play the $label sound.');
             }
           })(!(selected)),
         );

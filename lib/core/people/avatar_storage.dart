@@ -38,6 +38,37 @@ class AvatarStorage {
     return dest.path;
   }
 
+  /// Stores raw image bytes under a fresh name and returns the path.
+  ///
+  /// A backup carries an avatar as base64 with no filename, so the extension
+  /// is read back out of the bytes themselves. Nothing decodes by extension —
+  /// `Image.file` sniffs the content — but a file called `.png` that is a
+  /// JPEG is a trap for anyone who later exports or inspects the folder.
+  Future<String> saveBytes(List<int> bytes) async {
+    await _dir.create(recursive: true);
+    final dest = File(p.join(_dir.path, '${_token()}${_extensionFor(bytes)}'));
+    await dest.writeAsBytes(bytes, flush: true);
+    return dest.path;
+  }
+
+  /// The file extension the leading magic bytes call for, defaulting to JPEG,
+  /// which is what both pickers hand back on the platforms this app targets.
+  static String _extensionFor(List<int> bytes) {
+    bool startsWith(List<int> magic, {int at = 0}) =>
+        bytes.length >= at + magic.length &&
+        Iterable<int>.generate(
+          magic.length,
+        ).every((i) => bytes[at + i] == magic[i]);
+
+    if (startsWith(const [0x89, 0x50, 0x4E, 0x47])) return '.png';
+    // "RIFF" then "WEBP" four bytes later, past the chunk size.
+    if (startsWith(const [0x52, 0x49, 0x46, 0x46]) &&
+        startsWith(const [0x57, 0x45, 0x42, 0x50], at: 8)) {
+      return '.webp';
+    }
+    return '.jpg';
+  }
+
   /// Removes a stored avatar. Silent when it is already gone — a file the user
   /// cleared by other means should not block deleting the person.
   Future<void> delete(String? path) async {

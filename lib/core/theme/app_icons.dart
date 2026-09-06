@@ -157,6 +157,7 @@ class AppIcons {
   static const pdf = HugeIcons.strokeRoundedPdf01;
   static const spreadsheet = HugeIcons.strokeRoundedTable01;
   static const backup = HugeIcons.strokeRoundedCloudUpload;
+  static const restoreBackup = HugeIcons.strokeRoundedDatabaseRestore;
 
   // time & measurement
   static const today = HugeIcons.strokeRoundedCalendar01;

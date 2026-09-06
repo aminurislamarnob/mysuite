@@ -1,4 +1,8 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/ai/ai_client.dart';
@@ -9,6 +13,8 @@ import '../../core/people/people_repository.dart';
 import '../../core/people/person_avatar.dart';
 import '../../core/services/export_service.dart';
 import '../../core/services/notification_service.dart';
+import '../../core/services/reminder_sync.dart';
+import '../../core/services/restore_service.dart';
 import '../../core/services/security_service.dart';
 import '../../core/settings/app_settings.dart';
 import '../../core/theme/app_icons.dart';
@@ -376,6 +382,16 @@ class SettingsScreen extends ConsumerWidget {
                   title: 'Habit log (CSV)',
                   build: (e) => e.habitsCsv(),
                 ),
+                BrandTile(
+                  leading: const AppIcon(AppIcons.restoreBackup),
+                  title: const Text('Restore from a backup'),
+                  subtitle: const Text(
+                    'Replaces everything on this device',
+                    style: TextStyle(fontSize: 11),
+                  ),
+                  trailing: const AppIcon(AppIcons.chevronRight),
+                  onTap: () => _restoreBackup(context, ref),
+                ),
               ],
             ),
           ),
@@ -436,6 +452,64 @@ class SettingsScreen extends ConsumerWidget {
         }
       },
     );
+  }
+
+  /// Picks a JSON backup and puts it back, replacing what is here now.
+  ///
+  /// The confirmation comes first and says plainly what is lost, because the
+  /// restore itself has no undo: the previous database is gone the moment the
+  /// transaction commits.
+  Future<void> _restoreBackup(BuildContext context, WidgetRef ref) async {
+    final confirmed = await brandConfirm(
+      context,
+      title: 'Restore from a backup?',
+      message:
+          'Every note, task, habit, medicine, expense and person on this '
+          'device is replaced by the backup you pick. This cannot be undone.',
+      confirmLabel: 'Choose a file',
+      destructive: true,
+    );
+    if (!confirmed) return;
+
+    final FilePickerResult? picked;
+    try {
+      picked = await FilePicker.pickFiles(
+        dialogTitle: 'Pick a mySuite backup',
+        type: FileType.custom,
+        allowedExtensions: const ['json'],
+      );
+    } on PlatformException {
+      if (context.mounted) {
+        brandToast(context, 'No file picker is available on this device.');
+      }
+      return;
+    }
+
+    // A null result is the user backing out of the picker, which needs no
+    // announcement.
+    final files = picked?.files ?? const [];
+    final path = files.isEmpty ? null : files.first.path;
+    if (path == null) return;
+
+    if (!context.mounted) return;
+    brandToast(context, 'Restoring…', duration: const Duration(seconds: 2));
+    try {
+      final summary = await ref
+          .read(restoreServiceProvider)
+          .restoreFromFile(File(path));
+      // Every scheduled reminder names a row id from the database that was
+      // just thrown away, so they are dropped and rebuilt from what landed.
+      await ref.read(notificationServiceProvider).cancelAll();
+      await ref.read(reminderSyncProvider).syncAll();
+      if (context.mounted) {
+        brandToast(
+          context,
+          'Restored ${summary.total} ${summary.total == 1 ? 'entry' : 'entries'}.',
+        );
+      }
+    } on RestoreException catch (e) {
+      if (context.mounted) brandToast(context, e.message);
+    }
   }
 
   Future<int?> _pickTime(BuildContext context, int current) =>

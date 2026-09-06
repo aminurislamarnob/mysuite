@@ -329,8 +329,12 @@ class FocusTimerNotifier extends StateNotifier<FocusState> {
 
 // --- Ambient sound ----------------------------------------------------------
 
-/// Looping background sound. Assets are optional: if a track is missing the
-/// selection simply reports failure rather than crashing the session.
+/// Looping background sound.
+///
+/// The six loops ship in `assets/sounds/`. Playback can still fail — another
+/// app can hold audio focus, and a desktop target may have no output device —
+/// so [AmbientNotifier.toggle] reports that rather than throwing into a
+/// running session.
 final ambientPlayerProvider = StateNotifierProvider<AmbientNotifier, String?>((
   ref,
 ) {
@@ -342,13 +346,15 @@ class AmbientNotifier extends StateNotifier<String?> {
 
   final _player = AudioPlayer();
 
+  /// Keyed by the token the Focus screen's pills use. Paths are relative to
+  /// `assets/`, which is the prefix `AssetSource` prepends.
   static const tracks = <String, String>{
-    'rain': 'sounds/rain.mp3',
-    'cafe': 'sounds/cafe.mp3',
-    'forest': 'sounds/forest.mp3',
-    'white': 'sounds/white_noise.mp3',
-    'brown': 'sounds/brown_noise.mp3',
-    'ocean': 'sounds/ocean.mp3',
+    'rain': 'sounds/rain.wav',
+    'cafe': 'sounds/cafe.wav',
+    'forest': 'sounds/forest.wav',
+    'white': 'sounds/white_noise.wav',
+    'brown': 'sounds/brown_noise.wav',
+    'ocean': 'sounds/ocean.wav',
   };
 
   Future<bool> toggle(String key) async {

@@ -338,6 +338,11 @@ const howToGuides = <HowToGuide>[
         'The bar under the ring tracks minutes against your goal, 120 by '
             'default. Change goal sets another.',
       ),
+      HowToStep(
+        'Put a sound on',
+        'Rain, Café, Forest, White, Brown or Ocean loops quietly while you '
+            'work. Tap the same pill again to stop it.',
+      ),
     ],
     tips: [
       'Stats shows today, this week, your streak, your best hour and a '
@@ -527,10 +532,17 @@ const howToGuides = <HowToGuide>[
             'transactions, medicine or habits, through the system share '
             'sheet.',
       ),
+      HowToStep(
+        'Put a backup back',
+        'Restore from a backup takes a full JSON backup and replaces '
+            'everything on this device with it. Your photos come back too.',
+      ),
     ],
     tips: [
-      'There is no account and no sync. Keep a backup somewhere safe before '
-          'changing phones.',
+      'There is no account and no sync, so a backup is the only way to move '
+          'to a new phone. Take one before you switch.',
+      'A restore cannot be undone, and it replaces your data rather than '
+          'merging with it.',
       'An AI key, if you add one, lives in the platform keychain, never in '
           'plain settings.',
     ],

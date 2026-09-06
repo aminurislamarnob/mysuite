@@ -59,6 +59,36 @@ The action schema every provider receives, and the per-kind tool
 catalogue an MCP server would expose if one is ever added, live in
 `lib/core/ai/ai_command_schema.dart`.
 
+## Backup and restore
+
+**Settings → Data** shares a full JSON backup, and **Restore from a
+backup** reads one back. The restore is the exact inverse of the export:
+every row travels through the drift data class's own `toJson`/`fromJson`
+pair, so a column added to a table cannot be exported and then silently
+dropped on the way back in. Avatars ride along as base64, because the
+path a backup records names a directory on the device that wrote it.
+
+A restore replaces the database rather than merging into it, so it parses
+the whole file before touching a single row — a file that turns out to be
+damaged halfway through is refused with the existing data still in place.
+Foreign keys are deferred for the transaction, since folders nest inside
+each other and no insert order can satisfy that row by row.
+
+`RestoreService.sections` has to name every table; `restore_service_test.dart`
+fails if a new table is added without one, which would otherwise have the
+restore wipe it and never refill it.
+
+## Ambient sounds
+
+The Focus timer's six loops live in `assets/sounds/` as 16-bit mono WAV.
+PCM rather than mp3 or aac because those formats pad the stream, and a
+padded loop clicks at every wrap. They are synthesised rather than
+recorded — each bed is built in the frequency domain with random phase,
+which makes the buffer exactly periodic and the loop seamless by
+construction. The generator is not checked in; `ambient_sounds_test.dart`
+holds the properties that matter (mono 16-bit, no clipping, matched
+loudness, and a seam no larger than an ordinary sample step).
+
 ## How-to guides
 
 **Settings → How to** opens a page of short guides: a quick start, one
