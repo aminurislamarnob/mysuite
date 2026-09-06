@@ -29,6 +29,11 @@ class NotificationService {
   final _plugin = FlutterLocalNotificationsPlugin();
   bool _ready = false;
 
+  /// Called with the notification's payload when the user taps it while the
+  /// app is running or backgrounded. A tap that cold-starts the app is not
+  /// delivered here; see [launchPayload].
+  void Function(String payload)? onTap;
+
   static const _medicineChannel = AndroidNotificationDetails(
     'medicine',
     'Medicine reminders',
@@ -62,7 +67,13 @@ class NotificationService {
       ),
     );
     try {
-      await _plugin.initialize(settings: settings);
+      await _plugin.initialize(
+        settings: settings,
+        onDidReceiveNotificationResponse: (response) {
+          final payload = response.payload;
+          if (payload != null) onTap?.call(payload);
+        },
+      );
       _ready = true;
     } on Exception catch (e) {
       // Leaving _ready false lets a later call retry once the platform side is
@@ -81,6 +92,16 @@ class NotificationService {
       if (now.timeZoneOffset == offset) return entry.key;
     }
     return 'UTC';
+  }
+
+  /// The payload of the notification that launched the app, when it was one.
+  /// Only meaningful once per process; the plugin reports the same details
+  /// on every call, so the caller should act on it a single time.
+  Future<String?> launchPayload() async {
+    await init();
+    final details = await _plugin.getNotificationAppLaunchDetails();
+    if (details?.didNotificationLaunchApp != true) return null;
+    return details?.notificationResponse?.payload;
   }
 
   Future<bool> requestPermissions() async {

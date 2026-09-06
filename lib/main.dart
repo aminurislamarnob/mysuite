@@ -9,13 +9,14 @@ import 'core/people/avatar_storage.dart';
 import 'core/router/app_router.dart';
 import 'core/people/people_repository.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/reminder_sync.dart';
+import 'core/services/reminder_target.dart';
 import 'core/services/security_service.dart';
 import 'core/settings/app_settings.dart';
 import 'core/theme/app_forui_theme.dart';
 import 'core/theme/app_icons.dart';
 import 'core/theme/app_theme.dart';
 import 'core/widgets/common.dart';
-import 'presentation/expenses/utils/expense_reminders.dart';
 import 'presentation/notes/repository/note_repository.dart';
 
 Future<void> main() async {
@@ -55,24 +56,27 @@ class _MySuiteAppState extends ConsumerState<MySuiteApp> {
 
   /// Housekeeping that must not block the first frame.
   Future<void> _startupTasks() async {
-    await ref.read(notificationServiceProvider).init();
+    final notifier = ref.read(notificationServiceProvider);
+    // A tapped reminder lands on the screen it is about. The handler goes in
+    // before init so a tap during startup is not lost.
+    notifier.onTap = _openReminder;
+    await notifier.init();
     // Notes older than the 30-day trash window are dropped once per launch.
     await ref.read(noteRepositoryProvider).purgeExpiredTrash();
     // Avatar files a half-finished write left behind.
     await ref.read(peopleRepositoryProvider).pruneOrphanedAvatars();
-    // Bills and loans remind on their due date; re-arm them every launch so
-    // rows from before reminders existed get theirs too. A scheduling failure
-    // is the platform's problem, not a reason to abandon the rest of startup.
-    if (ref
-        .read(settingsProvider)
-        .enabledModules
-        .contains(AppModule.expenses)) {
-      try {
-        await ref.read(expenseRemindersProvider).syncAll();
-      } on Exception catch (e) {
-        debugPrint('Could not re-arm expense reminders: $e');
-      }
-    }
+    // Whatever the database says is due gets its notification, so reminders
+    // survive rows that arrived without one and schedules that were cleared.
+    await ref.read(reminderSyncProvider).syncAll();
+    // A tap that cold-started the app is reported here rather than to onTap.
+    final launch = await notifier.launchPayload();
+    if (launch != null) _openReminder(launch);
+  }
+
+  void _openReminder(String payload) {
+    final target = ReminderTarget.parse(payload);
+    if (target == null) return;
+    ref.read(appRouterProvider).push(target.route, extra: target.extra);
   }
 
   @override
